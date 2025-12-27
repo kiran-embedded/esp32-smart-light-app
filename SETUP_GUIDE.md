@@ -20,7 +20,7 @@
 
 ---
 
-> **💡 Wiring Diagram**: Check out the [Interactive High-Def Schematic](https://github.com/kiran-embedded/esp32-smart-light-app/releases/download/v1.0.0/NEBULA_SCHEMATIC.html) for a detailed view of all connections.
+> **💡 Wiring Diagram**: Check out the [Interactive High-Def Schematic](https://kiran-embedded.github.io/esp32-smart-light-app/NEBULA_SCHEMATIC.html) for a detailed view of all connections.
 
 ## ⚡ Wiring Instructions
 
