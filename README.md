@@ -502,7 +502,7 @@ See [LICENSE](LICENSE) file for full details.
 - **📖 Documentation**: See guides in `/docs` folder
 - **🐛 Bug Reports**: [GitHub Issues](https://github.com/yourusername/nebula_core/issues)
 - **💬 Discussions**: [GitHub Discussions](https://github.com/yourusername/nebula_core/discussions)
-- **📧 Email**: support@nebula-core.dev
+- **📧 Email**: kiran.cybergrid@gmail.com
 
 ### Troubleshooting
 
