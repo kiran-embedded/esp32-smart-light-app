@@ -102,28 +102,34 @@ Google Sign-In will work on Android!
 
 ---
 
-## ✅ Step 4: Set Up Firestore Security Rules (IMPORTANT)
+## ✅ Step 4: Set Up Realtime Database Rules (IMPORTANT)
 
 ### Why:
 - Protects your data
 - Controls who can read/write
 
 ### How:
-1. Go to **Firestore Database**
+1. Go to **Realtime Database**
 2. Click **"Rules"** tab
-3. Replace with this (for development):
+3. Replace with this **Professional Configuration**:
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Users can only access their own data
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Devices under user
-      match /devices/{deviceId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+```json
+{
+  "rules": {
+    "devices": {
+      "$deviceId": {
+        "commands": {
+          ".read": true,
+          ".write": true
+        },
+        "telemetry": {
+          ".read": true,
+          ".write": true
+        },
+        "relayNames": {
+          ".read": true,
+          ".write": true
+        }
       }
     }
   }
@@ -132,13 +138,8 @@ service cloud.firestore {
 
 4. Click **"Publish"**
 
-### ⚠️ For Production:
-- Review and tighten security rules
-- Add validation
-- Restrict access based on user roles
-
 ### ✅ Done!
-Your data is now protected!
+Your database structure is now professionally secured!
 
 ---
 

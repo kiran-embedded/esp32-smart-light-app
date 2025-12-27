@@ -30,7 +30,7 @@ Follow these steps to set up your own Firebase backend for the Nebula Core IoT a
 1. Go to **Build** -> **Realtime Database**.
 2. Click **Create Database**.
 3. Choose a location (e.g., `us-central1` or `asia-southeast1`).
-4. Select **Start in test mode** (Remember to update rules later!).
+4. Select **Start in test mode** (Remember to update rules later in Step 8!).
 5. Click **Enable**.
 
 ## 5. Get Web Client ID (Optional)
@@ -68,3 +68,29 @@ Follow these steps to set up your own Firebase backend for the Nebula Core IoT a
 3. Upload to your ESP32.
 4. The Serial Monitor will show your unique **Device ID** (derived from Chip ID).
 5. Ensure the app and ESP32 are on the same Firebase project!
+
+## 8. Professional Security Rules
+To secure your Realtime Database, go to the **Rules** tab in Firebase Console and paste the following. This structure ensures specific access control for commands, telemetry, and relay names.
+
+```json
+{
+  "rules": {
+    "devices": {
+      "$deviceId": {
+        "commands": {
+          ".read": true,
+          ".write": true
+        },
+        "telemetry": {
+          ".read": true,
+          ".write": true
+        },
+        "relayNames": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+  }
+}
+```
