@@ -294,14 +294,14 @@ if (_pendingSwitches.containsKey(device.id)) {
 
 <p float="left" align="center">
   <img src="app_screenshots/01_splash.png" width="24%" />
-  <img src="app_screenshots/02_login.png" width="24%" /> 
-  <img src="app_screenshots/03_setup.png" width="24%" />
-  <img src="app_screenshots/04_dashboard.png" width="24%" />
+  <img src="app_screenshots/02_dashboard.png" width="24%" /> 
+  <img src="app_screenshots/03_controls.png" width="24%" />
+  <img src="app_screenshots/04_settings.png" width="24%" />
 </p>
 <p float="left" align="center">
-  <img src="app_screenshots/05_controls.png" width="30%" />
-  <img src="app_screenshots/06_settings_1.png" width="30%" />
-  <img src="app_screenshots/07_settings_2.png" width="30%" />
+  <img src="app_screenshots/05_login.png" width="30%" />
+  <img src="app_screenshots/06_setup.png" width="30%" />
+  <img src="app_screenshots/07_settings_extra.png" width="30%" />
 </p>
 
 ### Design Philosophy
