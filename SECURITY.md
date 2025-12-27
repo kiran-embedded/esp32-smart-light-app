@@ -55,8 +55,18 @@ Include:
     "rules": {
       "devices": {
         "$deviceId": {
-          ".read": "auth != null",
-          ".write": "auth != null"
+          "commands": {
+            ".read": true,
+            ".write": true
+          },
+          "telemetry": {
+            ".read": true,
+            ".write": true
+          },
+          "relayNames": {
+            ".read": true,
+            ".write": true
+          }
         }
       }
     }
@@ -125,13 +135,17 @@ flutter pub upgrade
   "rules": {
     "devices": {
       "$deviceId": {
-        ".read": "auth != null && auth.uid == $deviceId",
-        ".write": "auth != null && auth.uid == $deviceId",
         "commands": {
-          ".write": "auth != null"
+          ".read": true,
+          ".write": true
         },
         "telemetry": {
-          ".read": "auth != null"
+          ".read": true,
+          ".write": true
+        },
+        "relayNames": {
+          ".read": true,
+          ".write": true
         }
       }
     }
