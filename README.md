@@ -292,6 +292,16 @@ if (_pendingSwitches.containsKey(device.id)) {
 
 ## 🎨 UI Showcase
 
+<p float="left" align="center">
+  <img src="app_screenshots/screenshot_1.png" width="30%" />
+  <img src="app_screenshots/screenshot_2.png" width="30%" /> 
+  <img src="app_screenshots/screenshot_3.png" width="30%" />
+</p>
+<p float="left" align="center">
+  <img src="app_screenshots/screenshot_4.png" width="30%" />
+  <img src="app_screenshots/screenshot_5.png" width="30%" />
+</p>
+
 ### Design Philosophy
 - **Glassmorphism** - Frosted glass effects with backdrop blur
 - **Neon Aesthetics** - Dynamic HSL-based color gradients (unique per switch)
