@@ -14,9 +14,15 @@
 ⚠️ **Firebase** - For Google Sign-In & Cloud sync  
 ⚠️ **Google Home** - Requires Firebase setup  
 ⚠️ **Google Assistant** - Requires microphone permissions  
+⚠️ **Relay Module** (4-Channel, 5V)
+⚠️ **Power Supply** (Hi-Link 5V or Buck Converter)
 ⚠️ **Weather API** - Optional (currently uses mock data)  
 
 ---
+
+> **💡 Wiring Diagram**: Check out the [Interactive High-Def Schematic](../docs/NEBULA_SCHEMATIC.html) for a detailed view of all connections.
+
+## ⚡ Wiring Instructions
 
 ## 📋 Setup Instructions
 

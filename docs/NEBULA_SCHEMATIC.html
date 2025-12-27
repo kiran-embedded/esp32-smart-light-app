@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Core Pro Circuit</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f1115; /* Deeper dark background */
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #00e5ff;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+        }
+        .container {
+            background: #181a1f;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border: 1px solid #2a2d35;
+            max-width: 1300px;
+            width: 100%;
+            overflow: auto;
+        }
+        .legend {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #b0b0b0;
+            font-family: monospace;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #252830;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            transition: all 0.2s;
+        }
+        .legend-item:hover {
+            border-color: #555;
+            background: #2e323b;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+    </style>
+</head>
+<body>
+
+    <h1>Nebula Core: System Schematic</h1>
+    
+    <div class="container">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 850" style="width: 100%; height: auto;">
+            <defs>
+                <!-- HD Gradients & Filters -->
+                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                    <feOffset dx="4" dy="4" result="offsetblur"/>
+                    <feComponentTransfer>
+                        <feFuncA type="linear" slope="0.4"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                        <feMergeNode/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+                
+                <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+
+                <!-- PCB Gradient -->
+                <linearGradient id="pcb-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#0055aa;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#002244;stop-opacity:1" />
+                </linearGradient>
+
+                <!-- Metal Gradient -->
+                <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#777;stop-opacity:1" />
+                    <stop offset="30%" style="stop-color:#ddd;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#fff;stop-opacity:1" />
+                    <stop offset="70%" style="stop-color:#ddd;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#777;stop-opacity:1" />
+                </linearGradient>
+                
+                <!-- Bulb Gradient -->
+                <radialGradient id="bulb-on" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" style="stop-color:#fff;stop-opacity:1" />
+                    <stop offset="60%" style="stop-color:#ffeb3b;stop-opacity:0.9" />
+                    <stop offset="100%" style="stop-color:#fbc02d;stop-opacity:0.1" />
+                </radialGradient>
+
+                <!-- LED Realistic Dome Gradient -->
+                <radialGradient id="led-dome" cx="30%" cy="30%" r="80%" fx="30%" fy="30%">
+                    <stop offset="0%" style="stop-color:rgba(255,255,255,0.9)" />
+                    <stop offset="15%" style="stop-color:rgba(255,255,255,0.4)" />
+                    <stop offset="40%" style="stop-color:rgba(255,255,255,0.1)" />
+                    <stop offset="100%" style="stop-color:rgba(255,255,255,0)" />
+                </radialGradient>
+                
+                 <radialGradient id="led-body" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" style="stop-color:#f0f0f0;stop-opacity:1" />
+                    <stop offset="80%" style="stop-color:#d0d0d0;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#a0a0a0;stop-opacity:1" />
+                </radialGradient>
+            </defs>
+
+            <!-- Electronic Grid Background -->
+            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#252525" stroke-width="1"/>
+                <circle cx="0" cy="0" r="1.5" fill="#333"/>
+            </pattern>
+            <rect width="1300" height="850" fill="url(#grid)" />
+
+            <!-- ================= COMPONENTS ================= -->
+
+            <!-- 5V BUCK CONVERTER (LM2596 Style) -->
+            <g transform="translate(450, 70)" filter="url(#shadow)">
+                <rect x="0" y="0" width="180" height="100" rx="4" fill="url(#pcb-blue)" stroke="#0066cc" stroke-width="1"/>
+                <text x="90" y="85" fill="rgba(255,255,255,0.7)" text-anchor="middle" font-size="10" font-family="monospace">LM2596 BUCK</text>
+                
+                <!-- Components -->
+                <circle cx="70" cy="50" r="25" fill="#221100" stroke="#cc8800" stroke-width="2"/> <!-- Inductor -->
+                <text x="70" y="54" fill="#cc8800" text-anchor="middle" font-size="10" font-weight="bold">330</text>
+                <circle cx="30" cy="30" r="12" fill="#222" stroke="#888" stroke-width="1"/> <!-- Cap In -->
+                <rect x="25" y="25" width="10" height="10" fill="#bbb"/>
+                <circle cx="150" cy="30" r="12" fill="#222" stroke="#888" stroke-width="1"/> <!-- Cap Out -->
+                <rect x="145" y="25" width="10" height="10" fill="#bbb"/>
+                <rect x="60" y="10" width="30" height="20" fill="#111" stroke="#555"/> <!-- IC -->
+                <rect x="110" y="50" width="15" height="25" fill="#004499" stroke="#002255"/> <!-- Pot -->
+                <circle cx="117.5" cy="55" r="3" fill="#ffd700"/>
+
+                <!-- Terminals -->
+                <g>
+                    <!-- IN -->
+                    <text x="-15" y="35" fill="#fff" font-size="10" text-anchor="end">IN+</text>
+                    <circle cx="5" cy="30" r="4" fill="#ccc" id="buck_in_pos"/>
+                    <text x="-15" y="75" fill="#fff" font-size="10" text-anchor="end">IN-</text>
+                    <circle cx="5" cy="70" r="4" fill="#ccc" id="buck_in_neg"/>
+                    <!-- OUT -->
+                    <text x="195" y="35" fill="#44ff44" font-size="10" font-weight="bold">5V+</text>
+                    <circle cx="175" cy="30" r="4" fill="#ccc" id="buck_out_pos"/>
+                    <text x="195" y="75" fill="#aaa" font-size="10" font-weight="bold">GND</text>
+                    <circle cx="175" cy="70" r="4" fill="#ccc" id="buck_out_neg"/>
+                </g>
+            </g>
+
+            <!-- DC POWER ADAPTER -->
+            <g transform="translate(150, 100)">
+                <rect x="0" y="0" width="60" height="80" rx="6" fill="#1a1a1a" stroke="#444" stroke-width="2"/>
+                <text x="30" y="30" fill="#eee" text-anchor="middle" font-size="11" font-weight="bold">12V DC</text>
+                <text x="30" y="45" fill="#999" text-anchor="middle" font-size="9">SOURCE</text>
+                <path d="M 30 55 L 30 70" stroke="#666" stroke-width="3"/>
+            </g>
+
+            <!-- ZMPT101B AC SENSOR (Left) - NOW WITH AC INPUT PINS -->
+            <g transform="translate(80, 400)" filter="url(#shadow)">
+                <!-- PCB -->
+                <rect x="0" y="0" width="120" height="160" rx="4" fill="#1b4d20" stroke="#2d6e32" stroke-width="2"/>
+                <text x="60" y="25" fill="#fff" text-anchor="middle" font-weight="bold" font-size="12" letter-spacing="1px">VOLTAGE</text>
+                <text x="60" y="40" fill="#aaffaa" text-anchor="middle" font-size="10">ZMPT101B</text>
+                
+                <!-- Blue Transformer -->
+                <rect x="30" y="60" width="60" height="50" rx="4" fill="#0044aa" stroke="#5599ff" stroke-width="1"/>
+                <circle cx="60" cy="85" r="16" fill="#111" stroke="#222" stroke-width="2"/>
+                
+                <!-- AC Input Terminal Block (Left/Top) -->
+                <rect x="10" y="125" width="40" height="25" fill="#0066cc" stroke="#fff" stroke-width="0.5"/>
+                <circle cx="20" cy="137.5" r="3" fill="#ddd" stroke="#555"/> <!-- L Screw -->
+                <circle cx="40" cy="137.5" r="3" fill="#ddd" stroke="#555"/> <!-- N Screw -->
+                <text x="20" y="158" fill="#fff" font-size="9" text-anchor="middle" font-weight="bold">L</text>
+                <text x="40" y="158" fill="#fff" font-size="9" text-anchor="middle" font-weight="bold">N</text>
+                <text x="30" y="120" fill="#ffaa00" font-size="9" text-anchor="middle">AC IN</text>
+
+                <!-- Output Pins (Right) -->
+                <rect x="110" y="50" width="10" height="60" fill="#111"/>
+                <circle cx="120" cy="60" r="3" fill="#ccc"/> <text x="105" y="63" fill="#ddd" font-size="9" text-anchor="end">VCC</text>
+                <circle cx="120" cy="80" r="3" fill="#ccc"/> <text x="105" y="83" fill="#ddd" font-size="9" text-anchor="end">GND</text>
+                <circle cx="120" cy="100" r="3" fill="#ccc"/> <text x="105" y="103" fill="#ddd" font-size="9" text-anchor="end">OUT</text>
+            </g>
+
+            <!-- ESP32 DEVKIT V1 (Center) -->
+            <g transform="translate(450, 250)" filter="url(#shadow)">
+                <rect x="0" y="0" width="180" height="320" rx="8" fill="#111" stroke="#333" stroke-width="2"/>
+                <!-- USB Connector -->
+                <rect x="65" y="310" width="50" height="15" fill="url(#metal-grad)"/>
+                <!-- Shield -->
+                <rect x="30" y="40" width="120" height="100" fill="#252525" stroke="#444"/>
+                <circle cx="120" cy="110" r="10" fill="#333"/>
+                <text x="90" y="220" fill="#fff" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="18">ESP-32</text>
+                
+                <!-- PINS LEFT STRIP -->
+                <g fill="#d4af37">
+                    <!-- D34 --> <circle cx="10" cy="70" r="4" id="esp_34"/> <text x="25" y="74" fill="#ccc" font-size="10" font-family="monospace">D34</text>
+                    <!-- D25 --> <circle cx="10" cy="190" r="4" id="esp_25"/> <text x="25" y="194" fill="#ccc" font-size="10" font-family="monospace">D25</text>
+                    <!-- D26 --> <circle cx="10" cy="210" r="4" id="esp_26"/> <text x="25" y="214" fill="#ccc" font-size="10" font-family="monospace">D26</text>
+                    <!-- D27 --> <circle cx="10" cy="230" r="4" id="esp_27"/> <text x="25" y="234" fill="#ccc" font-size="10" font-family="monospace">D27</text>
+                    <!-- D33 --> <circle cx="10" cy="170" r="4" id="esp_33"/> <text x="25" y="174" fill="#ccc" font-size="10" font-family="monospace">D33</text>
+                </g>
+
+                <!-- PINS RIGHT STRIP -->
+                <g fill="#d4af37">
+                    <!-- D19 --> <circle cx="170" cy="190" r="4" id="esp_19"/> <text x="155" y="194" fill="#ccc" font-size="10" font-family="monospace" text-anchor="end">D19</text>
+                    <!-- D5V --> <circle cx="170" cy="270" r="4" id="esp_5v"/> <text x="155" y="274" fill="#ff5555" font-size="10" font-family="monospace" text-anchor="end">VIN</text>
+                    <!-- D17 --> <circle cx="170" cy="150" r="4" id="esp_17"/> <text x="155" y="154" fill="#ccc" font-size="10" font-family="monospace" text-anchor="end">D17</text>
+                    <!-- D16 --> <circle cx="170" cy="130" r="4" id="esp_16"/> <text x="155" y="134" fill="#ccc" font-size="10" font-family="monospace" text-anchor="end">D16</text>
+                    <!-- GND --> <circle cx="170" cy="290" r="4" id="esp_gnd"/> <text x="155" y="294" fill="#aaa" font-size="10" font-family="monospace" text-anchor="end">GND</text>
+                </g>
+            </g>
+
+            <!-- 4-CHANNEL RELAY MODULE (Right) -->
+            <g transform="translate(800, 250)" filter="url(#shadow)">
+                <rect x="0" y="0" width="180" height="320" rx="4" fill="#002244" stroke="#004488" stroke-width="2"/>
+                <text x="90" y="25" fill="#fff" text-anchor="middle" font-family="monospace" font-weight="bold">4-CH RELAY</text>
+
+                <!-- Input Pins (Left) -->
+                <rect x="-15" y="80" width="25" height="160" fill="#111"/>
+                <circle cx="0" cy="95" r="4" fill="#ccc"/> <text x="15" y="99" fill="#ddd" font-size="10">GND</text>
+                <circle cx="0" cy="115" r="4" fill="#ccc"/> <text x="15" y="119" fill="#ddd" font-size="10">IN1</text>
+                <circle cx="0" cy="135" r="4" fill="#ccc"/> <text x="15" y="139" fill="#ddd" font-size="10">IN2</text>
+                <circle cx="0" cy="155" r="4" fill="#ccc"/> <text x="15" y="159" fill="#ddd" font-size="10">IN3</text>
+                <circle cx="0" cy="175" r="4" fill="#ccc"/> <text x="15" y="179" fill="#ddd" font-size="10">IN4</text>
+                <circle cx="0" cy="195" r="4" fill="#ccc"/> <text x="15" y="199" fill="#ddd" font-size="10">VCC</text>
+
+                <!-- Relay Cubes & Screw Terminals (Right) -->
+                <!-- R1 -->
+                <rect x="40" y="45" width="70" height="50" fill="#0066cc" stroke="#fff" stroke-width="1"/>
+                <rect x="120" y="55" width="50" height="30" fill="#2d6e32"/>
+                <circle cx="130" cy="70" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+                <circle cx="160" cy="70" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+                
+                <!-- R2 -->
+                <rect x="40" y="115" width="70" height="50" fill="#0066cc" stroke="#fff" stroke-width="1"/>
+                <rect x="120" y="125" width="50" height="30" fill="#2d6e32"/>
+                <circle cx="130" cy="140" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+                <circle cx="160" cy="140" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+
+                <!-- R3 -->
+                <rect x="40" y="185" width="70" height="50" fill="#0066cc" stroke="#fff" stroke-width="1"/>
+                <rect x="120" y="195" width="50" height="30" fill="#2d6e32"/>
+                <circle cx="130" cy="210" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+                <circle cx="160" cy="210" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+
+                <!-- R4 -->
+                <rect x="40" y="255" width="70" height="50" fill="#0066cc" stroke="#fff" stroke-width="1"/>
+                <rect x="120" y="265" width="50" height="30" fill="#2d6e32"/>
+                <circle cx="130" cy="280" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+                <circle cx="160" cy="280" r="4" fill="#444" stroke="#ccc" stroke-width="1"/>
+            </g>
+
+            <!-- AC LOADS -->
+            <g transform="translate(1120, 250)">
+                <!-- B1 -->
+                <g filter="url(#neon-glow)">
+                    <circle cx="0" cy="70" r="25" fill="url(#bulb-on)" stroke="#fbc02d" stroke-width="2"/>
+                    <text x="0" y="73" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="#333">LOAD 1</text>
+                    <path d="M -12 70 l 8 -8 l 8 8 l 8 -8" fill="none" stroke="#e65100" stroke-width="1.5" opacity="0.5"/>
+                    <rect x="-10" y="93" width="20" height="15" fill="#555"/>
+                </g>
+                
+                <!-- B2 -->
+                <g filter="url(#neon-glow)">
+                    <circle cx="0" cy="140" r="25" fill="url(#bulb-on)" stroke="#fbc02d" stroke-width="2"/>
+                    <text x="0" y="143" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="#333">LOAD 2</text>
+                    <path d="M -12 140 l 8 -8 l 8 8 l 8 -8" fill="none" stroke="#e65100" stroke-width="1.5" opacity="0.5"/>
+                    <rect x="-10" y="163" width="20" height="15" fill="#555"/>
+                </g>
+
+                <!-- B3 -->
+                <g filter="url(#neon-glow)">
+                    <circle cx="0" cy="210" r="25" fill="url(#bulb-on)" stroke="#fbc02d" stroke-width="2"/>
+                    <text x="0" y="213" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="#333">LOAD 3</text> <!-- Changed Text -->
+                    <path d="M -12 210 l 8 -8 l 8 8 l 8 -8" fill="none" stroke="#e65100" stroke-width="1.5" opacity="0.5"/>
+                    <rect x="-10" y="233" width="20" height="15" fill="#555"/>
+                </g>
+
+                <!-- B4 -->
+                <g filter="url(#neon-glow)">
+                    <circle cx="0" cy="280" r="25" fill="url(#bulb-on)" stroke="#fbc02d" stroke-width="2"/>
+                    <text x="0" y="283" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="#333">LOAD 4</text> <!-- Changed Text -->
+                    <path d="M -12 280 l 8 -8 l 8 8 l 8 -8" fill="none" stroke="#e65100" stroke-width="1.5" opacity="0.5"/>
+                    <rect x="-10" y="303" width="20" height="15" fill="#555"/>
+                </g>
+            </g>
+
+            <!-- ULTRA REALISTIC RGB LED -->
+            <g transform="translate(540, 680)" filter="url(#shadow)">
+                <!-- Glass Dome -->
+                <circle cx="0" cy="0" r="30" fill="url(#led-body)" stroke="#888" stroke-width="0.5"/>
+                <circle cx="0" cy="0" r="28" fill="url(#led-dome)"/>
+                
+                <!-- Internal LED Elements (The Chip) -->
+                <rect x="-8" y="-8" width="16" height="16" fill="#333" rx="2"/>
+                <circle cx="-3" cy="-3" r="2" fill="#ff5555" filter="url(#neon-glow)" opacity="0.8"/>
+                <circle cx="3" cy="-3" r="2" fill="#55ff55" filter="url(#neon-glow)" opacity="0.8"/>
+                <circle cx="0" cy="3" r="2" fill="#5555ff" filter="url(#neon-glow)" opacity="0.8"/>
+                
+                <!-- Highlight Reflection -->
+                <ellipse cx="-10" cy="-10" rx="6" ry="4" fill="#fff" opacity="0.7" transform="rotate(-45 -10 -10)"/>
+
+                <text x="0" y="50" text-anchor="middle" font-size="12" font-weight="bold" fill="#eee" letter-spacing="1px">RGB MODULE</text>
+                
+                <!-- Legs -->
+                <g transform="translate(0, 30)">
+                    <rect x="-12" y="0" width="3" height="30" fill="#bbb"/> <text x="-12" y="42" font-size="10" fill="#ff5555" font-weight="bold">R</text>
+                    <rect x="-4" y="0" width="3" height="40" fill="#bbb"/> <text x="-4" y="52" font-size="10" fill="#aaa" font-weight="bold">GND</text>
+                    <rect x="4" y="0" width="3" height="30" fill="#bbb"/> <text x="4" y="42" font-size="10" fill="#55ff55" font-weight="bold">G</text>
+                    <rect x="12" y="0" width="3" height="30" fill="#bbb"/> <text x="12" y="42" font-size="10" fill="#5555ff" font-weight="bold">B</text>
+                </g>
+            </g>
+
+            <!-- ================= WIRING ================= -->
+            <style>
+                .wire { fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: 0.9; }
+                .wire:hover { stroke-width: 6; opacity: 1; cursor: pointer; filter: url(#neon-glow); }
+                .wire-live { stroke: #d45d00; stroke-width: 3.5; } /* Orange/Brown Neon */
+                .wire-neutral { stroke: #0088ff; stroke-width: 3.5; } /* Blue Neon */
+                .wire-5v { stroke: #ff3333; stroke-width: 3; }
+                .wire-gnd { stroke: #555; stroke-width: 3; }
+                .wire-sig { stroke-width: 2; opacity: 1; }
+            </style>
+
+            <!-- 1. POWER BUS (BUCK CONVERTER OUTPUT) -->
+            <!-- 12V Input -->
+            <path d="M 180 100 L 450 100" class="wire wire-5v" stroke="#f00" stroke-dasharray="2,2"/>
+            <path d="M 180 140 L 450 140" class="wire wire-gnd" stroke="#555" stroke-dasharray="2,2"/>
+            
+            <!-- 5V DISTRIBUTION -->
+            <!-- To Relay -->
+            <path d="M 625 100 L 750 100 L 750 445 L 800 445" class="wire wire-5v" />
+            <!-- To ESP -->
+            <path d="M 625 100 L 680 100 L 680 520 L 620 520" class="wire wire-5v" />
+             <!-- To Sensor -->
+             <path d="M 625 100 L 680 100 L 680 550 L 280 550 L 280 460 L 200 460" class="wire wire-5v" />
+             <circle cx="680" cy="100" r="3" fill="#ff3333"/> 
+
+            <!-- GND DISTRIBUTION -->
+            <!-- To Relay -->
+            <path d="M 625 140 L 765 140 L 765 345 L 785 345" class="wire wire-gnd" />
+            <!-- To ESP -->
+            <path d="M 625 140 L 700 140 L 700 540 L 620 540" class="wire wire-gnd" />
+            <!-- To Sensor -->
+             <path d="M 700 540 L 700 570 L 260 570 L 260 480 L 200 480" class="wire wire-gnd" />
+            <!-- To LED -->
+            <path d="M 700 540 L 700 650 L 536 650 L 536 710" class="wire wire-gnd" />
+            <circle cx="700" cy="540" r="3" fill="#666"/>
+
+
+            <!-- 2. SIGNAL LINES (ESP -> RELAYS) -->
+            <!-- D26 -> IN1 -->
+            <path d="M 460 460 L 420 460 L 420 180 L 720 180 L 720 365 L 785 365" class="wire wire-sig" stroke="#FFD700"/>
+            <!-- D27 -> IN2 -->
+            <path d="M 460 480 L 400 480 L 400 160 L 730 160 L 730 385 L 785 385" class="wire wire-sig" stroke="#9370DB"/>
+            <!-- D25 -> IN3 -->
+            <path d="M 460 440 L 440 440 L 440 200 L 710 200 L 710 405 L 785 405" class="wire wire-sig" stroke="#00CED1"/>
+            <!-- D33 -> IN4 -->
+            <path d="M 460 420 L 450 420 L 450 220 L 700 220 L 700 425 L 785 425" class="wire wire-sig" stroke="#32CD32"/>
+
+            <!-- 3. SIGNAL LINES (ESP -> LED) -->
+            <!-- D19 -> R -->
+            <path d="M 620 440 L 640 440 L 640 650 L 528 650 L 528 710" class="wire wire-sig" stroke="#ff4444"/>
+            <!-- D16 -> G -->
+            <path d="M 620 380 L 660 380 L 660 660 L 544 660 L 544 710" class="wire wire-sig" stroke="#44ff44"/>
+            <!-- D17 -> B -->
+            <path d="M 620 400 L 650 400 L 650 655 L 552 655 L 552 710" class="wire wire-sig" stroke="#4488ff"/>
+
+            <!-- 4. ANALOG SENSOR (ZMPT -> ESP) -->
+            <!-- OUT -> D34 -->
+            <path d="M 200 500 L 240 500 L 240 320 L 460 320" class="wire wire-sig" stroke="#ffaa00"/>
+
+            <!-- ================= AC HIGH VOLTAGE WIRING ================= -->
+            
+            <!-- AC Source Symbol (Top Right) -->
+            <g transform="translate(1000, 50)">
+                <circle cx="0" cy="0" r="25" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+                <path d="M -10 0 Q 0 -10 10 0 Q 0 10 -10 0" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+                <text x="35" y="5" fill="#fff" font-weight="bold" font-size="14">220V AC</text>
+            </g>
+
+            <!-- AC LIVE (BROWN/ORANGE) -->
+            <!-- Main Bus down -->
+            <path d="M 1000 75 L 1000 120 L 930 120 L 930 320" class="wire wire-live" /> 
+            
+            <!-- Branch to ZMPT Sensor (Across Top) -->
+            <path d="M 1000 80 L 1000 30 L 100 30 L 100 535" class="wire wire-live" stroke-dasharray="6,2"/> <!-- Route to sensor -->
+            <path d="M 100 535 L 120 535" class="wire wire-live"/> <!-- Connect to L screw -->
+            
+            <!-- Relay Connections -->
+            <circle cx="930" cy="320" r="4" fill="#d45d00"/>
+            <path d="M 930 320 L 930 390" class="wire wire-live" /> 
+            <circle cx="930" cy="390" r="4" fill="#d45d00"/>
+            <path d="M 930 390 L 930 460" class="wire wire-live" /> 
+            <circle cx="930" cy="460" r="4" fill="#d45d00"/>
+            <path d="M 930 460 L 930 530" class="wire wire-live" /> 
+
+            <!-- RELAY OUTPUTS -->
+            <path d="M 960 320 L 1000 320 L 1000 320 L 1120 320" class="wire wire-live" stroke-dasharray="5,2"/> <!-- R1 -> B1 -->
+            <path d="M 960 390 L 1010 390 L 1010 390 L 1120 390" class="wire wire-live" stroke-dasharray="5,2"/> <!-- R2 -> B2 -->
+            <path d="M 960 460 L 1020 460 L 1020 460 L 1120 460" class="wire wire-live" stroke-dasharray="5,2"/> <!-- R3 -> B3 -->
+            <path d="M 960 530 L 1030 530 L 1030 530 L 1120 530" class="wire wire-live" stroke-dasharray="5,2"/> <!-- R4 -> B4 -->
+
+            <!-- AC NEUTRAL (BLUE) -->
+            <!-- Main Bus -->
+            <path d="M 980 50 L 950 50 L 950 20 L 1250 20 L 1250 343 L 1110 343" class="wire wire-neutral"/> <!-- To B1 -->
+            <path d="M 1250 343 L 1250 413 L 1110 413" class="wire wire-neutral"/> <!-- To B2 -->
+            <path d="M 1250 413 L 1250 483 L 1110 483" class="wire wire-neutral"/> <!-- To B3 -->
+            <path d="M 1250 483 L 1250 553 L 1110 553" class="wire wire-neutral"/> <!-- To B4 -->
+
+            <!-- Branch to ZMPT Sensor (Across Top) -->
+             <path d="M 960 20 L 960 15 L 80 15 L 80 535" class="wire wire-neutral" stroke-dasharray="6,2"/> <!-- Route to sensor -->
+             <path d="M 80 535 L 100 535" class="wire wire-neutral"/> <!-- Connect to N screw -->
+
+        </svg>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background:#ff3333"></div> 5V DC (Red)</div>
+            <div class="legend-item"><div class="dot" style="background:#666"></div> GND (Gray)</div>
+            <div class="legend-item"><div class="dot" style="background:#d45d00"></div> AC Live (Orange)</div>
+            <div class="legend-item"><div class="dot" style="background:#0088ff"></div> AC Neutral (Blue)</div>
+            <div class="legend-item"><div class="dot" style="background:#FFD700"></div> Signal Lines</div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -298,6 +298,15 @@ if (_pendingSwitches.containsKey(device.id)) {
   <img src="app_screenshots/03_controls.png" width="24%" />
   <img src="app_screenshots/04_settings.png" width="24%" />
 </p>
+
+## 🔌 System Schematic
+
+We have designed a **professional-grade wiring diagram** for your reference.
+
+Since this diagram is interactive and high-definition, it is available as a standalone file.
+**[👉 Click here to view the Interactive Neon Schematic](docs/NEBULA_SCHEMATIC.html)**
+
+> **Pro Tip:** Download the HTML file and open it in your browser for the best experience (glow effects, animations).
 <p float="left" align="center">
   <img src="app_screenshots/05_login.png" width="30%" />
   <img src="app_screenshots/06_setup.png" width="30%" />
