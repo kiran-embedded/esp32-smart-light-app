@@ -304,7 +304,7 @@ if (_pendingSwitches.containsKey(device.id)) {
 We have designed a **professional-grade wiring diagram** for your reference.
 
 Since this diagram is interactive and high-definition, it is available as a standalone file.
-**[👉 Click here to view the Interactive Neon Schematic](docs/NEBULA_SCHEMATIC.html)**
+**[👉 Click here to view the Interactive Neon Schematic](https://github.com/kiran-embedded/esp32-smart-light-app/releases/download/v1.0.0/NEBULA_SCHEMATIC.html)**
 
 > **Pro Tip:** Download the HTML file and open it in your browser for the best experience (glow effects, animations).
 <p float="left" align="center">
