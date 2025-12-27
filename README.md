@@ -293,13 +293,15 @@ if (_pendingSwitches.containsKey(device.id)) {
 ## 🎨 UI Showcase
 
 <p float="left" align="center">
-  <img src="app_screenshots/screenshot_1.png" width="30%" />
-  <img src="app_screenshots/screenshot_2.png" width="30%" /> 
-  <img src="app_screenshots/screenshot_3.png" width="30%" />
+  <img src="app_screenshots/01_splash.png" width="24%" />
+  <img src="app_screenshots/02_login.png" width="24%" /> 
+  <img src="app_screenshots/03_setup.png" width="24%" />
+  <img src="app_screenshots/04_dashboard.png" width="24%" />
 </p>
 <p float="left" align="center">
-  <img src="app_screenshots/screenshot_4.png" width="30%" />
-  <img src="app_screenshots/screenshot_5.png" width="30%" />
+  <img src="app_screenshots/05_controls.png" width="30%" />
+  <img src="app_screenshots/06_settings_1.png" width="30%" />
+  <img src="app_screenshots/07_settings_2.png" width="30%" />
 </p>
 
 ### Design Philosophy
