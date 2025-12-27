@@ -51,7 +51,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/nebula_core.git
+   git clone https://github.com/kiran-embedded/esp32-smart-light-app.git
    cd nebula_core
    ```
 
@@ -428,7 +428,7 @@ Contributions are welcome! Here's how to get started:
 1. **Fork the repository**
 2. **Clone your fork**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/nebula_core.git
+   git clone https://github.com/kiran-embedded/esp32-smart-light-app.git
    cd nebula_core
    ```
 3. **Create a feature branch**:
@@ -500,8 +500,8 @@ See [LICENSE](LICENSE) file for full details.
 
 ### Get Help
 - **📖 Documentation**: See guides in `/docs` folder
-- **🐛 Bug Reports**: [GitHub Issues](https://github.com/yourusername/nebula_core/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/yourusername/nebula_core/discussions)
+- **🐛 Bug Reports**: [GitHub Issues](https://github.com/kiran-embedded/esp32-smart-light-app/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/kiran-embedded/esp32-smart-light-app/discussions)
 - **📧 Email**: kiran.cybergrid@gmail.com
 
 ### Troubleshooting
