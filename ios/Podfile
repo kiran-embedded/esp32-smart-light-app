@@ -1,0 +1,42 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '12.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root = File.expand_path(File.join(File.dirname(__FILE__), '..'))
+def flutter_application_path = File.join(flutter_root, '..')
+load File.join(flutter_root, 'Flutter', 'ephemeral', '.symlinks', 'plugins', 'ios', 'Flutter', 'Generated.xcconfig')
+load File.join(flutter_root, 'Flutter', 'ephemeral', '.symlinks', 'plugins', 'ios', 'Flutter', 'Generated.xcconfig')
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  # Flutter Pods
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Firebase Pods (from google-services.json configuration)
+  # Project ID: nebula-smartpowergrid
+  # Bundle ID: com.example.nebulacontroller (from JSON)
+  pod 'Firebase/Auth'
+  pod 'Firebase/Firestore'
+  pod 'Firebase/Core'
+  pod 'Firebase/Analytics'
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+    end
+  end
+end
+

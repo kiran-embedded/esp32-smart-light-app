@@ -1,0 +1,379 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../constants/app_constants.dart';
+
+enum AppThemeMode {
+  darkNeon,
+  softDark,
+  light,
+  cyberNeon,
+  liquidGlass,
+  raindrop,
+  amoledCyberpunk,
+  darkSpace,
+}
+
+class AppTheme {
+  static ThemeData getTheme(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.darkNeon:
+        return _darkNeonTheme;
+      case AppThemeMode.softDark:
+        return _softDarkTheme;
+      case AppThemeMode.light:
+        return _lightTheme;
+      case AppThemeMode.cyberNeon:
+        return _cyberNeonTheme;
+      case AppThemeMode.liquidGlass:
+        return _liquidGlassTheme;
+      case AppThemeMode.raindrop:
+        return _raindropTheme;
+      case AppThemeMode.amoledCyberpunk:
+        return _amoledCyberpunkTheme;
+      case AppThemeMode.darkSpace:
+        return _darkSpaceTheme;
+    }
+  }
+
+  // ... (Existing themes _darkNeonTheme, _softDarkTheme, _lightTheme remain if you want to keep them,
+  // but I will output the FULL file content or just the new methods to append if I was appending,
+  // but here I will just add the new ones and keep the old ones via the tool logic if I can,
+  // however replace_file_content replaces a block. I should probably just replace the whole class or add carefully.)
+  // Actually, I'll replace the class content to ensure all are present.
+
+  static ThemeData get _darkNeonTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+      colorScheme: const ColorScheme.dark(
+        primary: Color(AppConstants.neonCyan),
+        secondary: Color(AppConstants.neonBlue),
+        surface: Color(0xFF1A1A1A),
+        error: Color(0xFFFF4444),
+        onPrimary: Color(0xFF000000),
+        onSecondary: Color(0xFFFFFFFF),
+        onSurface: Color(0xFFFFFFFF),
+        onError: Color(0xFFFFFFFF),
+      ),
+      // Reduced transparency from 0.6 to 0.8 for better visibility
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1A1A1A).withOpacity(0.8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      textTheme: _baseTextTheme,
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _softDarkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF64B5F6),
+        secondary: Color(0xFF81C784),
+        surface: Color(0xFF1E1E1E),
+        error: Color(0xFFE57373),
+        onPrimary: Color(0xFF000000),
+        onSecondary: Color(0xFFFFFFFF),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1E1E1E).withOpacity(0.9), // Less transparent
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      textTheme: _baseTextTheme,
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFF1976D2),
+        secondary: Color(0xFF388E3C),
+        surface: Color(0xFFFFFFFF),
+        error: Color(0xFFD32F2F),
+        onPrimary: Color(0xFFFFFFFF),
+        onSecondary: Color(0xFFFFFFFF),
+        onSurface: Color(0xFF000000),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFFFFFFFF),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      textTheme: _lightTextTheme, // need to define or inline
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+      ),
+    );
+  }
+
+  // --- NEW THEMES ---
+
+  static ThemeData get _cyberNeonTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF050510), // Deep blue-black
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF00FF9D), // Spring Green Neon
+        secondary: Color(0xFFBC13FE), // Electric Purple
+        surface: Color(0xFF0F0F25),
+        onSurface: Color(0xFFE0E0FF),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF0F0F25).withOpacity(0.85),
+        elevation: 5,
+        shadowColor: const Color(0xFF00FF9D).withOpacity(0.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      textTheme: _baseTextTheme,
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _liquidGlassTheme {
+    // iPhone 26 like - Ultra clean, white/silver, high blur feel (simulated via colors)
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFE0E5EC), // Neumorphic grey-ish
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFF2979FF), // Vivid Blue
+        secondary: Color(0xFF00E5FF),
+        surface: Color(0xFFF0F5FA),
+        onSurface: Color(0xFF2D3142),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFFFFFFFF).withOpacity(0.6), // Glassy but visible
+        elevation: 0, // No shadow for glass
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
+        ),
+      ),
+      textTheme: _lightTextTheme,
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _raindropTheme {
+    // Moody, dark blue/purple, like rain on a window
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(
+        0xFF0D1117,
+      ), // GitHub Dark Dimmed style
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF58A6FF), // Soft Blue
+        secondary: Color(0xFF79C0FF),
+        surface: Color(0xFF161B22),
+        onSurface: Color(0xFFC9D1D9),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF161B22).withOpacity(0.9),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Color(0xFF30363D), width: 1),
+        ),
+      ),
+      textTheme: _baseTextTheme,
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _amoledCyberpunkTheme {
+    // True Black, High Contrast
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF000000), // True Amoled Black
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFFFF0055), // Neon Pink
+        secondary: Color(0xFFE9FF00), // Neon Yellow
+        surface: Color(0xFF000000),
+        onSurface: Color(0xFFFFFFFF),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF111111), // Almost black for contrast cards
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(0), // Sharp edges for cyberpunk
+          side: BorderSide(color: Color(0xFF333333), width: 1),
+        ),
+      ),
+      textTheme: _baseTextTheme,
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _darkSpaceTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF0A0D12), // Deep black-blue
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF00E676), // Dynamic Neon Green
+        secondary: Color(0xFF00BCD4), // Cyan
+        tertiary: Color(0xFFD500F9), // Soft Violet
+        surface: Color(0x4DFFFFFF), // Glassmorphism surface (30% opacity)
+        onSurface: Color(0xFFE0E0E0),
+        error: Color(0xFFCF6679),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: const Color(0xFF121212).withOpacity(0.95),
+        elevation: 24,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: const Color(0xFF1E1E1E).withOpacity(0.9),
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(
+          0xFFFFFFFF,
+        ).withOpacity(0.25), // Increased opacity for legibility
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
+        ),
+      ),
+      textTheme: _baseTextTheme.copyWith(
+        displayLarge: _baseTextTheme.displayLarge?.copyWith(
+          fontFamily: 'Outfit', // Futuristic Geometric Rounded
+          letterSpacing: 1.2,
+        ),
+        bodyLarge: _baseTextTheme.bodyLarge?.copyWith(
+          fontFamily: 'Roboto', // Clean modern sans
+        ),
+      ),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  // --- HELPERS ---
+
+  static const AppBarTheme _baseAppBarTheme = AppBarTheme(
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    systemOverlayStyle: SystemUiOverlayStyle.light,
+  );
+
+  static const TextTheme _baseTextTheme = TextTheme(
+    displayLarge: TextStyle(
+      color: Color(0xFFFFFFFF),
+      fontSize: 32,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+    ),
+    displayMedium: TextStyle(
+      color: Color(0xFFFFFFFF),
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+    ),
+    displaySmall: TextStyle(
+      color: Color(0xFFFFFFFF),
+      fontSize: 24,
+      fontWeight: FontWeight.w600,
+    ),
+    headlineMedium: TextStyle(
+      color: Color(0xFFFFFFFF),
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    ),
+    titleLarge: TextStyle(
+      color: Color(0xFFFFFFFF),
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+    ),
+    titleMedium: TextStyle(
+      color: Color(0xFFFFFFFF),
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+    ),
+    bodyLarge: TextStyle(color: Color(0xFFFFFFFF), fontSize: 16),
+    bodyMedium: TextStyle(color: Color(0xFFCCCCCC), fontSize: 14),
+    bodySmall: TextStyle(color: Color(0xFF999999), fontSize: 12),
+  );
+
+  static const TextTheme _lightTextTheme = TextTheme(
+    displayLarge: TextStyle(
+      color: Color(0xFF000000),
+      fontSize: 32,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+    ),
+    displayMedium: TextStyle(
+      color: Color(0xFF000000),
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+    ),
+    displaySmall: TextStyle(
+      color: Color(0xFF000000),
+      fontSize: 24,
+      fontWeight: FontWeight.w600,
+    ),
+    headlineMedium: TextStyle(
+      color: Color(0xFF000000),
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    ),
+    titleLarge: TextStyle(
+      color: Color(0xFF000000),
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+    ),
+    titleMedium: TextStyle(
+      color: Color(0xFF000000),
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+    ),
+    bodyLarge: TextStyle(color: Color(0xFF000000), fontSize: 16),
+    bodyMedium: TextStyle(color: Color(0xFF424242), fontSize: 14),
+    bodySmall: TextStyle(color: Color(0xFF757575), fontSize: 12),
+  );
+}
+
+// Glassmorphic decoration helper
+class GlassmorphicDecoration {
+  static BoxDecoration getDecoration({
+    required Color baseColor,
+    double opacity = 0.15,
+    double blur = 45.0,
+    double borderRadius = 28,
+    Color? borderColor,
+    double borderWidth = 0.8,
+  }) {
+    return BoxDecoration(
+      color: baseColor.withOpacity(opacity),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(
+        color: borderColor ?? Colors.white.withOpacity(0.15),
+        width: borderWidth,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: blur,
+          spreadRadius: -8,
+        ),
+      ],
+    );
+  }
+}

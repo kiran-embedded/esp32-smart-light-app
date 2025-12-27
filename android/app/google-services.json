@@ -1,0 +1,91 @@
+{
+  "project_info": {
+    "project_number": "883218584898",
+    "firebase_url": "https://nebula-smartpowergrid-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "nebula-smartpowergrid",
+    "storage_bucket": "nebula-smartpowergrid.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:883218584898:android:b294e7b3221ef873d5a4db",
+        "android_client_info": {
+          "package_name": "com.iot.nebulacontroller"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "883218584898-gcatugiggntcs12nqnokm7ntbh7elabm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.iot.nebulacontroller",
+            "certificate_hash": "85c01251a741f84da31a1850eb7549e9dba77523"
+          }
+        },
+        {
+          "client_id": "883218584898-44s9o2f8p1lasnqlsbm7t8jaitbcu9dp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9zs6xhRcEwwGLO6cI417b2FO52PiXaxs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "883218584898-44s9o2f8p1lasnqlsbm7t8jaitbcu9dp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "883218584898-631678ucv0dcp5jokisfur51b8orgqgb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.nebulacontroller"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:883218584898:android:2ee8e95e14e7b834d5a4db",
+        "android_client_info": {
+          "package_name": "com.iot.nebulasmart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "883218584898-44s9o2f8p1lasnqlsbm7t8jaitbcu9dp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9zs6xhRcEwwGLO6cI417b2FO52PiXaxs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "883218584898-44s9o2f8p1lasnqlsbm7t8jaitbcu9dp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "883218584898-631678ucv0dcp5jokisfur51b8orgqgb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.nebulacontroller"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
