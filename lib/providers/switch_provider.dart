@@ -64,11 +64,46 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       final hardwareNames = await firebaseService.getHardwareNames();
 
       if (hardwareNames.isNotEmpty) {
-        state = [
-          for (final device in state)
-            device.copyWith(name: hardwareNames[device.id] ?? device.name),
-        ];
-        final msg = 'Synced: $hardwareNames';
+        // 1. Update names for EXISTING devices
+        final Map<String, SwitchDevice> updatedDevices = {
+          for (var device in state)
+            device.id: device.copyWith(
+              name: hardwareNames[device.id] ?? device.name,
+            ),
+        };
+
+        // 2. Create NEW devices for keys found in Firebase but not in state
+        for (final key in hardwareNames.keys) {
+          if (!updatedDevices.containsKey(key) && key.startsWith("relay")) {
+            updatedDevices[key] = SwitchDevice(
+              id: key,
+              name:
+                  hardwareNames[key] ?? 'Switch ${key.replaceAll("relay", "")}',
+              isActive: false,
+              icon: 'power',
+              gpioPin: 0,
+              mqttTopic: '',
+              isConnected: false,
+              nickname: null, // New devices have no local nickname yet
+            );
+          }
+        }
+
+        // 3. Convert to list and SORT naturally (relay1, relay2, ..., relay10)
+        final List<SwitchDevice> newList = updatedDevices.values.toList();
+        newList.sort((a, b) {
+          // Extract numbers for natural sort
+          int? nA = int.tryParse(a.id.replaceAll(RegExp(r'[^0-9]'), ''));
+          int? nB = int.tryParse(b.id.replaceAll(RegExp(r'[^0-9]'), ''));
+          if (nA != null && nB != null) return nA.compareTo(nB);
+          return a.id.compareTo(b.id);
+        });
+
+        // 4. Update state
+        state = newList;
+
+        final msg =
+            'Synced & Discovered: ${hardwareNames.length} devices found.';
         print('DEBUG: $msg');
         return msg;
       } else {
