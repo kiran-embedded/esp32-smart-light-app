@@ -12,6 +12,8 @@ import 'screens/main/main_screen.dart';
 import 'services/persistence_service.dart';
 import 'services/firebase_switch_service.dart';
 import 'providers/switch_provider.dart';
+import 'providers/immersive_provider.dart';
+import 'core/system/runtime_stability_buffer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,15 +40,16 @@ void main() async {
         ),
       );
       debugPrint('Firebase initialized with custom config');
-    } else {
-      debugPrint('No valid Firebase config found, skipping initialization');
-    }
+    } else {}
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }
 
   // Load nicknames BEFORE the app starts
   final nicknames = await PersistenceService.getNicknames();
+
+  // Stability Optimization
+  RuntimeStabilityBuffer.optimize();
 
   runApp(
     ProviderScope(
@@ -96,6 +99,9 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
     final themeMode = ref.watch(themeProvider);
     final authState = ref.watch(authProvider);
 
+    // Watch immersive mode to apply changes
+    ref.watch(immersiveModeProvider);
+
     // After splash, show destination screen based on auth state
     Widget destination;
     switch (authState) {
@@ -113,6 +119,8 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
       title: 'NEBULA CORE',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getTheme(themeMode),
+      // Composition Engine removed from global scope
+      builder: (context, child) => child!,
       home: Listener(
         onPointerDown: (_) {
           // PRE-WARM CONNECTION: Wake up Firebase socket on functionality

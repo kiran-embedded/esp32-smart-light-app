@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/app_constants.dart';
+import '../../core/ui/adaptive_text_engine.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 enum AppThemeMode {
   darkNeon,
@@ -11,6 +13,12 @@ enum AppThemeMode {
   raindrop,
   amoledCyberpunk,
   darkSpace,
+  // New Themes
+  kaliLinux,
+  nothingDot,
+  appleGlass,
+  crimsonVampire,
+  neonTokyo,
 }
 
 class AppTheme {
@@ -32,6 +40,16 @@ class AppTheme {
         return _amoledCyberpunkTheme;
       case AppThemeMode.darkSpace:
         return _darkSpaceTheme;
+      case AppThemeMode.kaliLinux:
+        return _kaliLinuxTheme;
+      case AppThemeMode.nothingDot:
+        return _nothingTheme;
+      case AppThemeMode.appleGlass:
+        return _appleGlassTheme;
+      case AppThemeMode.crimsonVampire:
+        return _crimsonTheme;
+      case AppThemeMode.neonTokyo:
+        return _neonTokyoTheme;
     }
   }
 
@@ -260,6 +278,167 @@ class AppTheme {
         bodyLarge: _baseTextTheme.bodyLarge?.copyWith(
           fontFamily: 'Roboto', // Clean modern sans
         ),
+      ),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  // --- EXPANDED THEMES ---
+
+  static ThemeData get _kaliLinuxTheme {
+    // Hacker / Terminal Vibe
+    const primary = Color(0xFF00FF00); // Terminal Green
+    const bg = Color(0xFF000000);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: const Color(0xFF1B1B1B),
+        surface: const Color(0xFF0D0D0D),
+        onPrimary: AdaptiveTextEngine.compute(primary), // Auto-adaptive
+        onSurface: const Color(0xFF00FF00), // Text is green too
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF0D0D0D),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero, // Sharp edges
+          side: BorderSide(color: primary.withOpacity(0.5)),
+        ),
+      ),
+      textTheme: GoogleFonts.robotoMonoTextTheme(
+        _baseTextTheme,
+      ).apply(bodyColor: primary, displayColor: primary),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _nothingTheme {
+    // Retro-Futuristic Dot Matrix
+    const primary = Color(0xFFD71921); // Nothing Red
+    const bg = Color(0xFF000000);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: Colors.white,
+        surface: const Color(0xFF101010),
+        onPrimary: AdaptiveTextEngine.compute(primary),
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF101010),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withOpacity(0.2)),
+        ),
+      ),
+      textTheme: GoogleFonts.dotGothic16TextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _appleGlassTheme {
+    // Clean, Airy, Frosted
+    const primary = Color(0xFF007AFF); // Apple Blue
+    const bg = Color(0xFFF5F5F7); // Light Grey
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.light(
+        primary: primary,
+        secondary: const Color(0xFF5AC8FA),
+        surface: Colors.white.withOpacity(0.8),
+        onPrimary: AdaptiveTextEngine.compute(primary),
+        onSurface: Colors.black,
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white.withOpacity(
+          0.65,
+        ), // Frosted feel requires UI blur usually, simulating with opacity
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.white.withOpacity(0.5)),
+        ),
+      ),
+      textTheme: GoogleFonts.interTextTheme(_lightTextTheme),
+      appBarTheme: _baseAppBarTheme.copyWith(
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+      ),
+    );
+  }
+
+  static ThemeData get _crimsonTheme {
+    // Vampire / Gothic Luxury
+    const primary = Color(0xFFDC143C); // Crimson
+    const secondary = Color(0xFFFFD700); // Gold
+    const bg = Color(0xFF050000); // Deepest Red/Black
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF1A0505),
+        onPrimary: AdaptiveTextEngine.compute(primary),
+        onSurface: const Color(0xFFFFE5E5),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1A0505),
+        elevation: 10,
+        shadowColor: primary.withOpacity(0.4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: primary.withOpacity(0.3)),
+        ),
+      ),
+      textTheme: GoogleFonts.cinzelTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _neonTokyoTheme {
+    // 80s Synthwave
+    const primary = Color(0xFF00FFFF); // Cyan
+    const secondary = Color(0xFFFF00FF); // Magenta
+    const bg = Color(0xFF0b0014); // Deep Purple space
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF180227),
+        onPrimary: AdaptiveTextEngine.compute(primary),
+        onSurface: const Color(0xFFFFD1FF),
+        tertiary: const Color(0xFFFFFF00),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF180227).withOpacity(0.8),
+        elevation: 8,
+        shadowColor: secondary.withOpacity(0.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+          side: BorderSide(color: secondary.withOpacity(0.6), width: 1.5),
+        ),
+      ),
+      textTheme: GoogleFonts.orbitronTextTheme(_baseTextTheme).apply(
+        bodyColor: const Color(0xFFFFD1FF),
+        displayColor: const Color(0xFF00FFFF),
       ),
       appBarTheme: _baseAppBarTheme,
     );

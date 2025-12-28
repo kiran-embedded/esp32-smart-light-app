@@ -5,6 +5,7 @@ class PersistenceService {
   static const String _nicknamesKey = 'switch_nicknames';
   static const String _configKey = 'firebase_config';
   static const String _webClientIdKey = 'google_web_client_id';
+  static const String _immersiveModeKey = 'immersive_mode';
 
   static Future<void> saveFirebaseConfig(Map<String, String> config) async {
     final prefs = await SharedPreferences.getInstance();
@@ -42,5 +43,16 @@ class PersistenceService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_configKey);
     await prefs.remove(_nicknamesKey);
+  }
+
+  static Future<void> saveImmersiveMode(bool isEnabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_immersiveModeKey, isEnabled);
+  }
+
+  static Future<bool> getImmersiveMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_immersiveModeKey) ??
+        true; // Default to true (Immersive)
   }
 }

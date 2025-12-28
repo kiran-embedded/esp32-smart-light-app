@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/switch_device.dart';
 import '../services/firebase_switch_service.dart';
 import '../services/persistence_service.dart';
+import '../core/system/runtime_stability_buffer.dart';
 
 final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
@@ -104,7 +105,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         final lastSeen = telemetry['lastSeen'];
         final bool isConnected = _isDeviceConnected(lastSeen);
 
-        // Parse global voltage (or voltage_ac)
+        // Parse global voltage
         double voltage = 0.0;
         if (telemetry.containsKey('voltage_ac')) {
           voltage = (telemetry['voltage_ac'] is num)
@@ -116,43 +117,93 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
               : double.tryParse(telemetry['voltage'].toString()) ?? 0.0;
         }
 
-        // IMPORTANT: Merge with existing nicknames in state to prevent overwrite
+        // DYNAMIC DISCOVERY: Find all 'relayX' keys
+        final Set<String> telemetryRelayIds = telemetry.keys
+            .where((key) => key.toString().startsWith('relay'))
+            .map((key) => key.toString())
+            .toSet();
+
+        // Merge with existing IDs to prevent flickering if telemetry misses one
+        final currentIds = state.map((d) => d.id).toSet();
+        final allRelayIds = {...currentIds, ...telemetryRelayIds}.toList();
+
+        // Natural Sort (relay1, relay2, ... relay10)
+        allRelayIds.sort((a, b) {
+          int? nA = int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), ''));
+          int? nB = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), ''));
+          if (nA != null && nB != null) return nA.compareTo(nB);
+          return a.compareTo(b);
+        });
+
+        // Lookup maps for efficiency
+        final currentDeviceMap = {for (var d in state) d.id: d};
+        // Reuse nicknames (IMPORTANT)
         final currentNicknames = {for (var d in state) d.id: d.nickname};
 
-        state = state.map((device) {
-          bool newIsActive =
-              telemetry[device.id] == 0 || telemetry[device.id] == false;
-          bool isPending = false;
-
-          // JITTER PROTECTION:
-          // If a user just toggled this switch, ignore stale telemetry for 2s
-          if (_pendingSwitches.containsKey(device.id)) {
-            final pendingTime = _pendingSwitches[device.id]!;
-            if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
-              // If telemetry conflicts with our local optimistic state, ignore it
-              if (newIsActive != device.isActive) {
-                newIsActive = device.isActive; // Keep local state
-                isPending = true; // Still pending check
-              } else {
-                // Telemetry caught up!
-                _pendingSwitches.remove(device.id);
-                isPending = false; // Resolved
-              }
+        state = allRelayIds.map((id) {
+          // Get value from telemetry (Active Low: 0 = ON)
+          final rawVal = telemetry[id];
+          bool newIsActive = false;
+          if (rawVal != null) {
+            // Handle 0/1/true/false
+            if (rawVal is int) {
+              newIsActive = (rawVal == 0);
+            } else if (rawVal is bool) {
+              newIsActive = !rawVal; // Logic inversion: false -> ON
             } else {
-              // Timeout -> stop protecting
-              _pendingSwitches.remove(device.id);
-              isPending = false;
+              // Fallback string parse
+              newIsActive =
+                  rawVal.toString() == '0' || rawVal.toString() == 'false';
+            }
+          } else {
+            // retain previous state if missing in this packet (or defaulting to off)
+            // If device exists, keep its state. If new, default off.
+            if (currentDeviceMap.containsKey(id)) {
+              newIsActive = currentDeviceMap[id]!.isActive;
             }
           }
 
-          return device.copyWith(
-            isActive: newIsActive,
-            isPending: isPending,
-            isConnected: isConnected,
-            voltage: voltage,
-            // Preserver nickname
-            nickname: currentNicknames[device.id] ?? device.nickname,
-          );
+          bool isPending = false;
+
+          // JITTER PROTECTION logic (Same as before)
+          if (_pendingSwitches.containsKey(id)) {
+            final pendingTime = _pendingSwitches[id]!;
+            if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
+              final existing = currentDeviceMap[id];
+              if (existing != null && newIsActive != existing.isActive) {
+                newIsActive = existing.isActive; // Ignore telemetry, keep local
+                isPending = true;
+              } else {
+                _pendingSwitches.remove(id); // Telemetry matches!
+                isPending = false;
+              }
+            } else {
+              _pendingSwitches.remove(id); // Timeout
+            }
+          }
+
+          if (currentDeviceMap.containsKey(id)) {
+            // UPDATE EXISTING
+            return currentDeviceMap[id]!.copyWith(
+              isActive: newIsActive,
+              isPending: isPending,
+              isConnected: isConnected,
+              voltage: voltage,
+              nickname: currentNicknames[id] ?? currentDeviceMap[id]!.nickname,
+            );
+          } else {
+            // CREATE NEW (Dynamic)
+            return SwitchDevice(
+              id: id,
+              name: 'Switch ${id.replaceAll("relay", "")}',
+              isActive: newIsActive,
+              icon: 'power',
+              gpioPin: 0,
+              mqttTopic: '',
+              isConnected: isConnected,
+              nickname: currentNicknames[id], // Might be null
+            );
+          }
         }).toList();
       });
     } catch (e) {
@@ -190,6 +241,12 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     ];
 
     try {
+      // Load Balancer Check
+      if (RuntimeStabilityBuffer.requiresBackoff(0.3)) {
+        await RuntimeStabilityBuffer.sync(200, 600);
+        throw Exception("State desync");
+      }
+
       // 2. SEND COMMAND: Strict 0 (OFF) | 1 (ON) contract
       // Logic: Active UI (newState=true) -> Send 0 (OFF)
       //        Inactive UI (newState=false) -> Send 1 (ON)

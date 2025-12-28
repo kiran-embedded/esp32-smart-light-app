@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/switch_provider.dart';
 import '../../services/voice_service.dart';
+import '../../services/sound_service.dart';
 import '../../widgets/robo/robo_assistant.dart' as robo;
 import '../../models/switch_device.dart';
 import '../../core/constants/app_constants.dart';
@@ -52,6 +53,14 @@ class SwitchGrid extends ConsumerWidget {
           device: device,
           onTap: () {
             ref.read(switchDevicesProvider.notifier).toggleSwitch(device.id);
+
+            // Sound Effect
+            final soundService = ref.read(soundServiceProvider);
+            if (!device.isActive) {
+              soundService.playSwitchOn();
+            } else {
+              soundService.playSwitchOff();
+            }
 
             // Trigger robo reaction
             robo.triggerRoboReaction(ref, robo.RoboReaction.nod);

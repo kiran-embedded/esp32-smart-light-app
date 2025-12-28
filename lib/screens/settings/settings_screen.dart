@@ -15,6 +15,10 @@ import '../../core/constants/app_constants.dart';
 import '../login/login_screen.dart';
 import '../../services/haptic_service.dart';
 import '../../services/voice_service.dart';
+import '../../providers/immersive_provider.dart';
+import '../../core/ui/ui_composition_engine.dart';
+import '../../core/system/runtime_stability_buffer.dart';
+import '../../providers/switch_style_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -26,11 +30,8 @@ class SettingsScreen extends ConsumerWidget {
     final voiceEnabled = ref.watch(voiceEnabledProvider);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        100,
+      padding: const EdgeInsets.only(
+        bottom: 120,
       ), // Added bottom padding for dock
       physics: const BouncingScrollPhysics(),
       children: [
@@ -43,6 +44,24 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 30),
+        // Fullscreen Mode
+        _buildSettingTile(
+          context,
+          title: 'Fullscreen Mode',
+          subtitle: 'Hide status and navigation bars',
+          trailing: Switch(
+            value: ref.watch(immersiveModeProvider),
+            onChanged: (value) async {
+              if (RuntimeStabilityBuffer.isUnderHighLoad) {
+                // Buffer sync
+                await RuntimeStabilityBuffer.sync(100, 300);
+                return;
+              }
+              ref.read(immersiveModeProvider.notifier).setImmersiveMode(value);
+            },
+          ),
+        ),
+        const Divider(),
         // Voice Toggle
         _buildSettingTile(
           context,
@@ -50,7 +69,8 @@ class SettingsScreen extends ConsumerWidget {
           subtitle: 'Enable AI voice responses',
           trailing: Switch(
             value: voiceEnabled,
-            onChanged: (value) {
+            onChanged: (value) async {
+              if (RuntimeStabilityBuffer.isUnderHighLoad) return;
               ref.read(voiceEnabledProvider.notifier).setVoiceEnabled(value);
             },
           ),
@@ -222,6 +242,53 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const Divider(),
+        // Switch Style Selector
+        _buildSettingTile(
+          context,
+          title: 'Switch Style',
+          subtitle: _getSwitchStyleName(ref.watch(switchStyleProvider)),
+          trailing: PopupMenuButton<SwitchStyleType>(
+            icon: const Icon(Icons.style),
+            onSelected: (style) {
+              ref.read(switchStyleProvider.notifier).setStyle(style);
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: SwitchStyleType.modern,
+                child: Text('Modern (Minimal)'),
+              ),
+              const PopupMenuItem(
+                value: SwitchStyleType.fluid,
+                child: Text('Fluid (Liquid Anim)'),
+              ),
+              const PopupMenuItem(
+                value: SwitchStyleType.realistic,
+                child: Text('Realistic (Physical)'),
+              ),
+              const PopupMenuItem(
+                value: SwitchStyleType.different,
+                child: Text('Cyberpunk (Glitch)'),
+              ),
+              const PopupMenuItem(
+                value: SwitchStyleType.smooth,
+                child: Text('Smooth (Neumorphic)'),
+              ),
+              const PopupMenuItem(
+                value: SwitchStyleType.neonGlass,
+                child: Text('Neon Glass (Premium)'),
+              ),
+              const PopupMenuItem(
+                value: SwitchStyleType.industrialMetallic,
+                child: Text('Industrial (Metal)'),
+              ),
+              const PopupMenuItem(
+                value: SwitchStyleType.gamingRGB,
+                child: Text('Gaming RGB (Animated)'),
+              ),
+            ],
+          ),
+        ),
+        const Divider(),
         // Theme Selector
         _buildSettingTile(
           context,
@@ -264,6 +331,26 @@ class SettingsScreen extends ConsumerWidget {
               const PopupMenuItem(
                 value: AppThemeMode.darkSpace,
                 child: Text('Dark Space (Dashboard)'),
+              ),
+              const PopupMenuItem(
+                value: AppThemeMode.kaliLinux,
+                child: Text('Kali Linux'),
+              ),
+              const PopupMenuItem(
+                value: AppThemeMode.nothingDot,
+                child: Text('Nothing'),
+              ),
+              const PopupMenuItem(
+                value: AppThemeMode.appleGlass,
+                child: Text('Apple Glass'),
+              ),
+              const PopupMenuItem(
+                value: AppThemeMode.crimsonVampire,
+                child: Text('Crimson Vampire'),
+              ),
+              const PopupMenuItem(
+                value: AppThemeMode.neonTokyo,
+                child: Text('Neon Tokyo'),
               ),
             ],
           ),
@@ -350,6 +437,8 @@ class SettingsScreen extends ConsumerWidget {
             }
           },
         ),
+        const SizedBox(height: 20),
+        const CopyrightFooter(),
       ],
     );
   }
@@ -398,7 +487,18 @@ class SettingsScreen extends ConsumerWidget {
       case AppThemeMode.amoledCyberpunk:
         return 'AMOLED Cyberpunk';
       case AppThemeMode.darkSpace:
-        return 'Dark Space (Active)';
+        return 'Dark Space';
+      // New Themes
+      case AppThemeMode.kaliLinux:
+        return 'Kali Linux';
+      case AppThemeMode.nothingDot:
+        return 'Nothing';
+      case AppThemeMode.appleGlass:
+        return 'Apple Glass';
+      case AppThemeMode.crimsonVampire:
+        return 'Crimson Vampire';
+      case AppThemeMode.neonTokyo:
+        return 'Neon Tokyo';
     }
   }
 
@@ -410,6 +510,27 @@ class SettingsScreen extends ConsumerWidget {
         return 'Smooth';
       case HapticStyle.heavy:
         return 'Pulse';
+    }
+  }
+
+  String _getSwitchStyleName(SwitchStyleType style) {
+    switch (style) {
+      case SwitchStyleType.modern:
+        return 'Modern';
+      case SwitchStyleType.fluid:
+        return 'Fluid Animation';
+      case SwitchStyleType.realistic:
+        return 'Realistic';
+      case SwitchStyleType.different:
+        return 'Cyberpunk';
+      case SwitchStyleType.smooth:
+        return 'Smooth (Neumorphic)';
+      case SwitchStyleType.neonGlass:
+        return 'Neon Glass (Premium)';
+      case SwitchStyleType.industrialMetallic:
+        return 'Industrial (Metal)';
+      case SwitchStyleType.gamingRGB:
+        return 'Gaming RGB (Animated)';
     }
   }
 

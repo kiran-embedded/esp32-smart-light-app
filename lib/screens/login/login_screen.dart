@@ -302,11 +302,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         TextField(
           controller: _ipController,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: theme.colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: 'ESP32 IP Address (e.g. 192.168.1.10)',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-            prefixIcon: const Icon(Icons.wifi_tethering, color: Colors.white),
+            hintStyle: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
+            ),
+            prefixIcon: Icon(
+              Icons.wifi_tethering,
+              color: theme.colorScheme.onSurface,
+            ),
             filled: true,
             fillColor: Colors.white.withOpacity(0.05),
             border: OutlineInputBorder(
@@ -324,7 +329,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onPressed: _isLoading ? null : _handleLocalSignIn,
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.secondary,
-              foregroundColor: Colors.white,
+              foregroundColor: theme.colorScheme.onSecondary,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -343,12 +348,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: ElevatedButton.icon(
         onPressed: _isLoading ? null : _handleGoogleSignIn,
         icon: _isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.colorScheme.onPrimary,
+                  ),
                 ),
               )
             : const Icon(Icons.login),
@@ -442,14 +449,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white70,
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
               const SizedBox(height: 2),
               SelectableText(
                 value,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   fontFamily: 'monospace',
                   fontSize: 10,
                 ),
