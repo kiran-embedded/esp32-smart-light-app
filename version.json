@@ -1,5 +1,5 @@
 {
-  "version": "31.1.0+5",
+  "version": "v1.1.0+5",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest",
-  "release_notes": "• Improved Audio Engine\n• Fixed Location Permission\n• OTA Update Logic Fixed"
+  "release_notes": "• Update v1.1.0+5\n• Fixed Versioning Scheme\n• Improved Build Number Detection"
 }
