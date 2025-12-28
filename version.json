@@ -1,5 +1,5 @@
 {
   "version": "v1.1.0+5",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest",
-  "release_notes": "• Update v1.1.0+5\n• Fixed Versioning Scheme\n• Improved Build Number Detection"
+  "release_notes": "• ✨ New Animations & UI Smoothing\n• 🚀 Performance Optimized List Rendering\n• 🔊 Realtime Audio Engine (Zero Latency)\n• 📍 Fixed Location Permission Nagging\n• 🔄 OTA Updates with Build Priority\n• 🛠️ Fixed Versioning Scheme"
 }
