@@ -23,11 +23,41 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/animation_provider.dart';
 import '../../services/update_service.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with AutomaticKeepAliveClientMixin {
+  List<String> _voiceEngines = [];
+  bool _isLoadingEngines = true;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVoiceEngines();
+  }
+
+  Future<void> _loadVoiceEngines() async {
+    final service = ref.read(voiceServiceProvider);
+    final engines = await service.getEngines();
+    if (mounted) {
+      setState(() {
+        _voiceEngines = engines;
+        _isLoadingEngines = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final theme = Theme.of(context);
     final currentTheme = ref.watch(themeProvider);
     final voiceEnabled = ref.watch(voiceEnabledProvider);
@@ -125,80 +155,64 @@ class SettingsScreen extends ConsumerWidget {
                   },
                 ),
                 const SizedBox(height: 16),
-                FutureBuilder<List<String>>(
-                  future: ref.read(voiceServiceProvider).getEngines(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Voice Engine',
-                              style: theme.textTheme.titleSmall,
+                if (_isLoadingEngines)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                else if (_voiceEngines.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Voice Engine', style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceVariant.withOpacity(
+                              0.3,
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant
-                                    .withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: DropdownButton<String>(
-                                value:
-                                    ref.watch(voiceEngineProvider) ??
-                                    (snapshot.data!.contains(
-                                          "com.google.android.tts",
-                                        )
-                                        ? "com.google.android.tts"
-                                        : snapshot.data!.first),
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                dropdownColor: theme.colorScheme.surface,
-                                items: snapshot.data!
-                                    .map(
-                                      (e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e,
-                                          style: const TextStyle(fontSize: 13),
-                                        ),
-                                      ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: DropdownButton<String>(
+                            value:
+                                ref.watch(voiceEngineProvider) ??
+                                (_voiceEngines.contains(
+                                      "com.google.android.tts",
                                     )
-                                    .toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    ref
-                                        .read(voiceEngineProvider.notifier)
-                                        .setEngine(val);
-                                    ref
-                                        .read(voiceServiceProvider)
-                                        .setEngine(val);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
+                                    ? "com.google.android.tts"
+                                    : _voiceEngines.first),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            dropdownColor: theme.colorScheme.surface,
+                            items: _voiceEngines
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(
+                                      e,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                ref
+                                    .read(voiceEngineProvider.notifier)
+                                    .setEngine(val);
+                                ref.read(voiceServiceProvider).setEngine(val);
+                              }
+                            },
+                          ),
                         ),
-                      );
-                    }
-
-                    return const SizedBox.shrink();
-                  },
-                ),
+                      ],
+                    ),
+                  ),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.record_voice_over),
                   label: const Text("Test Voice & Diagnose"),
