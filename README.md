@@ -21,7 +21,8 @@
 - **🔌 Smart Relay Control** - Control up to 4 relays per ESP32 device with instant response
 - **🔥 Firebase Realtime Database** - 100% Firebase-based command/telemetry architecture
 - **⚡ Real-time Synchronization** - Bidirectional state updates with optimistic UI
-- **🎨 Premium UI/UX** - Glassmorphic design with neon animations and smooth 60fps transitions
+- **🎨 Premium UI/UX** - 8 Unique Switch Styles (Neon, Industrial, RGB, etc.) with 60fps animations
+- **🔊 Zero-Latency Audio** - Instant sound effects for startup, tab switching, and toggles
 - **🤖 AI Voice Assistant** - Text-to-speech and speech recognition for hands-free control
 - **📊 Live Telemetry** - Real-time voltage, current, and power monitoring
 - **🌡️ Weather Integration** - Location-based weather data display
