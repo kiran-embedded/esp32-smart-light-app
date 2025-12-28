@@ -1,5 +1,5 @@
 {
-  "version": "31.2.0",
+  "version": "31.1.0+5",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest",
-  "release_notes": "• Improved Audio Engine (Sound Pool for Realtime Response)\n• Fixed Location Permission Issues\n• OTA Update Support Added"
+  "release_notes": "• Improved Audio Engine\n• Fixed Location Permission\n• OTA Update Logic Fixed"
 }
