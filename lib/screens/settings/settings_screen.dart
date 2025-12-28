@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/common/frosted_glass.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/theme_provider.dart';
@@ -17,8 +18,10 @@ import '../../services/haptic_service.dart';
 import '../../services/voice_service.dart';
 import '../../providers/immersive_provider.dart';
 import '../../core/ui/ui_composition_engine.dart';
-import '../../core/system/runtime_stability_buffer.dart';
 import '../../providers/switch_style_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../providers/animation_provider.dart';
+import '../../services/update_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -46,35 +49,43 @@ class SettingsScreen extends ConsumerWidget {
         const SizedBox(height: 30),
         // Fullscreen Mode
         _buildSettingTile(
-          context,
-          title: 'Fullscreen Mode',
-          subtitle: 'Hide status and navigation bars',
-          trailing: Switch(
-            value: ref.watch(immersiveModeProvider),
-            onChanged: (value) async {
-              if (RuntimeStabilityBuffer.isUnderHighLoad) {
-                // Buffer sync
-                await RuntimeStabilityBuffer.sync(100, 300);
-                return;
-              }
-              ref.read(immersiveModeProvider.notifier).setImmersiveMode(value);
-            },
-          ),
-        ),
+              context,
+              title: 'Fullscreen Mode',
+              subtitle: 'Hide status and navigation bars',
+              trailing: Switch(
+                value: ref.watch(immersiveModeProvider),
+                onChanged: (value) async {
+                  ref
+                      .read(immersiveModeProvider.notifier)
+                      .setImmersiveMode(value);
+                },
+              ),
+            )
+            .animate()
+            .fadeIn(duration: 400.ms, delay: 100.ms)
+            .slideX(begin: -0.1, end: 0, curve: Curves.easeOutCubic),
+        const Divider(),
+        // Animation Engine
+        _buildSectionHeader(context, 'Animation Engine'),
+        _buildAnimationSettings(context, ref),
         const Divider(),
         // Voice Toggle
         _buildSettingTile(
-          context,
-          title: 'Voice Feedback',
-          subtitle: 'Enable AI voice responses',
-          trailing: Switch(
-            value: voiceEnabled,
-            onChanged: (value) async {
-              if (RuntimeStabilityBuffer.isUnderHighLoad) return;
-              ref.read(voiceEnabledProvider.notifier).setVoiceEnabled(value);
-            },
-          ),
-        ),
+              context,
+              title: 'Voice Feedback',
+              subtitle: 'Enable AI voice responses',
+              trailing: Switch(
+                value: voiceEnabled,
+                onChanged: (value) async {
+                  ref
+                      .read(voiceEnabledProvider.notifier)
+                      .setVoiceEnabled(value);
+                },
+              ),
+            )
+            .animate()
+            .fadeIn(duration: 400.ms, delay: 150.ms)
+            .slideX(begin: -0.1, end: 0, curve: Curves.easeOutCubic),
         // Pitch & Rate Sliders
         if (voiceEnabled) ...[
           Padding(
@@ -438,6 +449,30 @@ class SettingsScreen extends ConsumerWidget {
           },
         ),
         const SizedBox(height: 20),
+        const Divider(),
+        // App Info
+        _buildSettingTile(
+          context,
+          title: 'Version',
+          subtitle: '1.1.0+4', // TODO: Get from package_info
+          trailing: const Icon(Icons.system_update),
+          onTap: () => _checkForUpdates(context, ref),
+        ),
+        _buildSettingTile(
+          context,
+          title: 'GitHub Repository',
+          subtitle: 'View source code & releases',
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () async {
+            final uri = Uri.parse(
+              'https://github.com/kirancybergrid/nebula_core_restore/releases/latest',
+            );
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+        ),
+        const SizedBox(height: 20),
         const CopyrightFooter(),
       ],
     );
@@ -453,17 +488,20 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: FrostedGlass(
-        opacity: 0.1,
-        blur: 25,
-        radius: BorderRadius.circular(20),
-        child: ListTile(
-          title: Text(title, style: theme.textTheme.titleMedium),
-          subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
-          trailing: trailing,
-          onTap: onTap,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+      child: RepaintBoundary(
+        child: FrostedGlass(
+          opacity: 0.1,
+          blur: 15,
+          disableBlur: true, // Boosts list scrolling performance drastically
+          radius: BorderRadius.circular(20),
+          child: ListTile(
+            title: Text(title, style: theme.textTheme.titleMedium),
+            subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
+            trailing: trailing,
+            onTap: onTap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
           ),
         ),
       ),
@@ -609,5 +647,156 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: theme.colorScheme.primary.withOpacity(0.8),
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimationSettings(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(animationSettingsProvider);
+    final notifier = ref.read(animationSettingsProvider.notifier);
+
+    return Column(
+      children: [
+        // Launch animation is now fixed to standard iOS style
+        _buildDropdownTile<UiTransitionAnimation>(
+          context,
+          title: 'UI Visuals',
+          subtitle: 'Navigation & touch feel',
+          value: settings.uiType,
+          items: UiTransitionAnimation.values,
+          onChanged: (val) {
+            notifier.setUiAnimation(val!);
+            HapticService.selection();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownTile<T>(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required T value,
+    required List<T> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    final theme = Theme.of(context);
+    return _buildSettingTile(
+      context,
+      title: title,
+      subtitle: subtitle,
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<T>(
+            value: value,
+            dropdownColor: const Color(0xFF1E1E1E),
+            isDense: true,
+            icon: Icon(
+              Icons.arrow_drop_down_rounded,
+              color: theme.colorScheme.primary,
+            ),
+            items: items.map((item) {
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(
+                  item
+                      .toString()
+                      .split('.')
+                      .last
+                      .replaceAllMapped(
+                        RegExp(r'([A-Z])'),
+                        (Match m) => ' ${m[1]}',
+                      )
+                      .trim(), // "iPhoneBlend" -> "iPhone Blend"
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _checkForUpdates(BuildContext context, WidgetRef ref) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final updateInfo = await ref.read(updateServiceProvider).checkUpdate();
+
+    if (context.mounted) Navigator.pop(context);
+
+    if (!context.mounted) return;
+
+    if (updateInfo.hasUpdate) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Update Available'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('New Version: ${updateInfo.latestVersion}'),
+              const SizedBox(height: 10),
+              Text(
+                updateInfo.releaseNotes.isEmpty
+                    ? 'General bug fixes and improvements.'
+                    : updateInfo.releaseNotes,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                ref
+                    .read(updateServiceProvider)
+                    .launchUpdateUrl(updateInfo.downloadUrl);
+              },
+              child: const Text('Update Now'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are on the latest version.')),
+      );
+    }
   }
 }

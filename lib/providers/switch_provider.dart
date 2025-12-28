@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/switch_device.dart';
 import '../services/firebase_switch_service.dart';
 import '../services/persistence_service.dart';
-import '../core/system/runtime_stability_buffer.dart';
 
 final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
@@ -276,12 +275,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     ];
 
     try {
-      // Load Balancer Check
-      if (RuntimeStabilityBuffer.requiresBackoff(0.3)) {
-        await RuntimeStabilityBuffer.sync(200, 600);
-        throw Exception("State desync");
-      }
-
       // 2. SEND COMMAND: Strict 0 (OFF) | 1 (ON) contract
       // Logic: Active UI (newState=true) -> Send 0 (OFF)
       //        Inactive UI (newState=false) -> Send 1 (ON)

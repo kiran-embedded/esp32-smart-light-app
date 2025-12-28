@@ -9,11 +9,29 @@ enum HapticStyle {
 }
 
 class HapticService {
-  static Future<void> feedback(HapticStyle style) async {
-    final hasVibrator = await Vibration.hasVibrator();
+  // Cache hardware capabilities to avoid async platform channel calls on every tap
+  static bool _initialized = false;
+  static bool _hasVibrator = false;
+  static bool _hasCustomSupport = false;
 
-    // Fallback to basic haptics if no advanced control or custom vibration fails
-    if (hasVibrator != true) {
+  static Future<void> init() async {
+    if (_initialized) return;
+    try {
+      _hasVibrator = await Vibration.hasVibrator() ?? false;
+      _hasCustomSupport = await Vibration.hasCustomVibrationsSupport() ?? false;
+    } catch (_) {
+      _hasVibrator = false;
+      _hasCustomSupport = false;
+    }
+    _initialized = true;
+  }
+
+  static Future<void> feedback(HapticStyle style) async {
+    // Ensure initialized (lazy init fallback, though main() should call init)
+    if (!_initialized) await init();
+
+    // Fallback to basic haptics if no advanced control
+    if (!_hasVibrator) {
       // Just try standard system feedback as a last resort
       await HapticFeedback.mediumImpact();
       return;
@@ -23,30 +41,30 @@ class HapticService {
       switch (style) {
         case HapticStyle.light:
           // "Butter" - Very short, crisp
-          if (await Vibration.hasCustomVibrationsSupport()) {
-            await Vibration.vibrate(duration: 10);
+          if (_hasCustomSupport) {
+            Vibration.vibrate(duration: 10);
           } else {
-            await HapticFeedback.lightImpact();
+            HapticFeedback.lightImpact();
           }
           break;
 
         case HapticStyle.medium:
           // "Smooth" - Noticeable bump
-          if (await Vibration.hasCustomVibrationsSupport()) {
-            await Vibration.vibrate(duration: 30);
+          if (_hasCustomSupport) {
+            Vibration.vibrate(duration: 30);
           } else {
-            await HapticFeedback.mediumImpact();
+            HapticFeedback.mediumImpact();
           }
           break;
 
         case HapticStyle.heavy:
           // "Pulse" - Strong, undeniable vibration
-          await Vibration.vibrate(duration: 70);
+          Vibration.vibrate(duration: 70);
           break;
       }
     } catch (e) {
       // Fallback on error
-      await HapticFeedback.mediumImpact();
+      HapticFeedback.mediumImpact();
     }
   }
 

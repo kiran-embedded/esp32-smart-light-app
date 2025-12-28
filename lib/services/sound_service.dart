@@ -1,88 +1,78 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
 final soundServiceProvider = Provider((ref) => SoundService());
 
 class SoundService {
-  // Use separate players for overlapping sounds and to avoid source switching delay
-  final AudioPlayer _onPlayer = AudioPlayer();
-  final AudioPlayer _offPlayer = AudioPlayer();
-  final AudioPlayer _tabPlayer = AudioPlayer(); // New
-  final AudioPlayer _startupPlayer = AudioPlayer(); // New
+  final AudioPlayer _startupPlayer = AudioPlayer();
+  // Store loaded sound handles
+  final Map<String, AudioSource> _sounds = {};
 
   SoundService() {
     _init();
   }
 
   Future<void> _init() async {
-    // optimize for low latency (UI sounds)
     try {
-      await _onPlayer.setReleaseMode(ReleaseMode.stop);
-      await _offPlayer.setReleaseMode(ReleaseMode.stop);
-      await _tabPlayer.setReleaseMode(ReleaseMode.stop);
-      await _startupPlayer.setReleaseMode(ReleaseMode.stop);
+      // Initialize SoLoud engine (C++ backend for zero latency)
+      await SoLoud.instance.init();
 
-      // Preload sources
-      await _onPlayer.setSource(AssetSource('audio/switch_on.mp3'));
-      await _offPlayer.setSource(AssetSource('audio/switch_off.mp3'));
-      await _tabPlayer.setSource(AssetSource('audio/tab_switch.mp3'));
+      // Preload assets into memory
+      // Note: flutter_soloud loads assets differently.
+      // We load them as AudioSource.
+      _sounds['on'] = await SoLoud.instance.loadAsset(
+        'assets/audio/switch_on.mp3',
+      );
+      _sounds['off'] = await SoLoud.instance.loadAsset(
+        'assets/audio/switch_off.mp3',
+      );
+      _sounds['tab'] = await SoLoud.instance.loadAsset(
+        'assets/audio/tab_switch.mp3',
+      );
+    } catch (e) {
+      debugPrint('SoLoud init error: $e');
+    }
+
+    // Init legacy player for startup sound
+    try {
+      await _startupPlayer.setReleaseMode(ReleaseMode.stop);
       await _startupPlayer.setSource(AssetSource('audio/startup.mp3'));
     } catch (e) {
-      print('Audio init error: $e');
+      debugPrint('Startup player init error: $e');
     }
   }
 
-  Future<void> playSwitchOn() async {
+  Future<void> _play(String key) async {
     try {
-      if (_onPlayer.state == PlayerState.playing) {
-        await _onPlayer.stop();
+      final source = _sounds[key];
+      if (source != null) {
+        // Fire and forget, zero latency
+        await SoLoud.instance.play(source);
       }
-      await _onPlayer.resume();
     } catch (e) {
-      // Fallback if preload failed or first run
-      try {
-        await _onPlayer.play(AssetSource('audio/switch_on.mp3'));
-      } catch (_) {}
+      debugPrint('Error playing sound $key: $e');
     }
   }
 
-  Future<void> playSwitchOff() async {
-    try {
-      if (_offPlayer.state == PlayerState.playing) {
-        await _offPlayer.stop();
-      }
-      await _offPlayer.resume();
-    } catch (e) {
-      try {
-        await _offPlayer.play(AssetSource('audio/switch_off.mp3'));
-      } catch (_) {}
-    }
-  }
-
-  Future<void> playTabSwitch() async {
-    try {
-      if (_tabPlayer.state == PlayerState.playing) {
-        await _tabPlayer.stop();
-      }
-      // Fire and forget to prevent UI blocking
-      _tabPlayer.resume().then((_) {}, onError: (_) {});
-    } catch (e) {
-      try {
-        _tabPlayer.play(AssetSource('audio/tab_switch.mp3'));
-      } catch (_) {}
-    }
-  }
+  Future<void> playSwitchOn() async => _play('on');
+  Future<void> playSwitchOff() async => _play('off');
+  Future<void> playTabSwitch() async => _play('tab');
 
   Future<void> playStartup() async {
     try {
-      if (_startupPlayer.state == PlayerState.playing) {
-        await _startupPlayer.stop();
-      }
-      await _startupPlayer.resume();
+      await _startupPlayer.stop();
+      await _startupPlayer.setReleaseMode(ReleaseMode.stop);
+      await _startupPlayer.play(AssetSource('audio/startup.mp3'));
     } catch (e) {
-      try {
-        await _startupPlayer.play(AssetSource('audio/startup.mp3'));
-      } catch (_) {}
+      debugPrint('Startup sound error: $e');
     }
+  }
+
+  void dispose() {
+    SoLoud.instance.deinit();
+    _startupPlayer.dispose();
   }
 }

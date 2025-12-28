@@ -56,8 +56,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     });
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.fastLinearToSlowEaseIn, // iOS-like friction/spring feel
     );
   }
 
@@ -92,64 +92,67 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         ),
       ),
       child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 45, sigmaY: 45), // Unified blur
-          child: Container(
-            color: Colors.black.withOpacity(0.8),
-            child: BottomNavigationBar(
-              currentIndex: _currentPage,
-              onTap: _onBottomNavTapped,
-              backgroundColor: Colors.transparent,
-              selectedItemColor: theme.colorScheme.primary,
-              unselectedItemColor: Colors.white.withOpacity(0.3),
-              showSelectedLabels: true,
-              showUnselectedLabels: true,
-              selectedLabelStyle: GoogleFonts.outfit(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+        child: RepaintBoundary(
+          // Cache the blur
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 45, sigmaY: 45), // Unified blur
+            child: Container(
+              color: Colors.black.withOpacity(0.8),
+              child: BottomNavigationBar(
+                currentIndex: _currentPage,
+                onTap: _onBottomNavTapped,
+                backgroundColor: Colors.transparent,
+                selectedItemColor: theme.colorScheme.primary,
+                unselectedItemColor: Colors.white.withOpacity(0.3),
+                showSelectedLabels: true,
+                showUnselectedLabels: true,
+                selectedLabelStyle: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+                unselectedLabelStyle: GoogleFonts.outfit(
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                ),
+                elevation: 0,
+                type: BottomNavigationBarType.fixed,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.dashboard_rounded, size: 22),
+                    activeIcon: Icon(
+                      Icons.dashboard_rounded,
+                      size: 22,
+                      shadows: [
+                        BoxShadow(color: Colors.greenAccent, blurRadius: 15),
+                      ],
+                    ),
+                    label: 'DASHBOARD',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.grid_view_rounded, size: 22),
+                    activeIcon: Icon(
+                      Icons.grid_view_rounded,
+                      size: 22,
+                      shadows: [
+                        BoxShadow(color: Colors.greenAccent, blurRadius: 15),
+                      ],
+                    ),
+                    label: 'SWITCHES',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.settings_suggest_rounded, size: 22),
+                    activeIcon: Icon(
+                      Icons.settings_suggest_rounded,
+                      size: 22,
+                      shadows: [
+                        BoxShadow(color: Colors.greenAccent, blurRadius: 15),
+                      ],
+                    ),
+                    label: 'SETTINGS',
+                  ),
+                ],
               ),
-              unselectedLabelStyle: GoogleFonts.outfit(
-                fontSize: 10,
-                letterSpacing: 0.5,
-              ),
-              elevation: 0,
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.dashboard_rounded, size: 22),
-                  activeIcon: Icon(
-                    Icons.dashboard_rounded,
-                    size: 22,
-                    shadows: [
-                      BoxShadow(color: Colors.greenAccent, blurRadius: 15),
-                    ],
-                  ),
-                  label: 'DASHBOARD',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.grid_view_rounded, size: 22),
-                  activeIcon: Icon(
-                    Icons.grid_view_rounded,
-                    size: 22,
-                    shadows: [
-                      BoxShadow(color: Colors.greenAccent, blurRadius: 15),
-                    ],
-                  ),
-                  label: 'SWITCHES',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings_suggest_rounded, size: 22),
-                  activeIcon: Icon(
-                    Icons.settings_suggest_rounded,
-                    size: 22,
-                    shadows: [
-                      BoxShadow(color: Colors.greenAccent, blurRadius: 15),
-                    ],
-                  ),
-                  label: 'SETTINGS',
-                ),
-              ],
             ),
           ),
         ),

@@ -81,20 +81,29 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
 
   Future<void> _loadWeather() async {
     try {
-      // 1. Request Permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
       double lat = 0;
-      if (permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse) {
-        final pos = await Geolocator.getCurrentPosition();
-        lat = pos.latitude;
+
+      // 1. Check Service Status FIRST
+      // This prevents Android from asking "Turn on Location" if GPS is off.
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+      if (serviceEnabled) {
+        LocationPermission permission = await Geolocator.checkPermission();
+
+        if (permission == LocationPermission.always ||
+            permission == LocationPermission.whileInUse) {
+          try {
+            final pos = await Geolocator.getCurrentPosition(
+              timeLimit: const Duration(seconds: 5),
+            );
+            lat = pos.latitude;
+          } catch (e) {
+            if (kDebugMode) print('Location fetch failed: $e');
+          }
+        }
       }
 
-      // 2. Fetch Weather (Simulating API hit with location context)
+      // 2. Fetch Weather (Simulating API hit with location context or fallback)
       final now = DateTime.now();
       final hour = now.hour;
 
@@ -113,6 +122,9 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
       } else if (lat != 0) {
         // Industry Level: Location context
         desc = lat > 0 ? 'Northern Sky' : 'Southern Sky';
+      } else {
+        // Fallback for "Internet Location" (Simulated)
+        desc = 'United States'; // Default or based on timezone if we had it
       }
 
       state = state.copyWith(

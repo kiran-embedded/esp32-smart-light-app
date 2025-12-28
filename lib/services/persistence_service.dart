@@ -55,4 +55,24 @@ class PersistenceService {
     return prefs.getBool(_immersiveModeKey) ??
         true; // Default to true (Immersive)
   }
+
+  static const String _animLaunchKey = 'anim_launch_type';
+  static const String _animUiKey = 'anim_ui_type';
+
+  static Future<void> saveAnimationSettings(
+    int launchIndex,
+    int uiIndex,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_animLaunchKey, launchIndex);
+    await prefs.setInt(_animUiKey, uiIndex);
+  }
+
+  static Future<Map<String, int>> getAnimationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'launch': prefs.getInt(_animLaunchKey) ?? 0, // Default 0 (iPhoneBlend)
+      'ui': prefs.getInt(_animUiKey) ?? 0, // Default 0 (iOSSlide)
+    };
+  }
 }

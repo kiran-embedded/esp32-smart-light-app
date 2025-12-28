@@ -79,6 +79,18 @@ class _CinematicSplashScreenState extends State<CinematicSplashScreen>
     Future.delayed(1200.ms, () {
       if (mounted) HapticFeedback.mediumImpact();
     });
+
+    // OPENING SOUND EFFECT
+    // Trigger a distinct sound/haptic right before the splash ends
+    Future.delayed(_mainController.duration! - 500.ms, () {
+      if (mounted) {
+        // Heavy impact to simulate "Lock Unlock" click or "Engine Start"
+        HapticFeedback.heavyImpact();
+        // If we had assets, we'd play 'assets/sounds/unlock.mp3' here via AudioPlayer
+        // For now, simulate closest system sound
+        SystemSound.play(SystemSoundType.click);
+      }
+    });
   }
 
   @override
