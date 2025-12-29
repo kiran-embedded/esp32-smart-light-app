@@ -1,5 +1,5 @@
 {
-  "version": "v1.1.0+7",
+  "version": "v1.1.0+9",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/app-release.apk",
-  "release_notes": "• Update v1.1.0+7\n• Fixed Versioning Scheme\n• Improved Build Number Detection"
+  "release_notes": "• Hyper-Login (Auto-Restart)\n• Intelligent Performance Engine\n• Robo 2.0 (New Emotions)\n• 16 Switch Styles\n• Max FPS Lock"
 }
