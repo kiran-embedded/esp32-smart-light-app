@@ -294,6 +294,70 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
           contentColor,
           iconInfo,
         );
+      case SwitchStyleType.holographic:
+        return _buildHolographicStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
+      case SwitchStyleType.liquidMetal:
+        return _buildLiquidMetalStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
+      case SwitchStyleType.quantumDot:
+        return _buildQuantumDotStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
+      case SwitchStyleType.cosmicPulse:
+        return _buildCosmicPulseStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
+      case SwitchStyleType.retroVapor:
+        return _buildRetroVaporStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
+      case SwitchStyleType.bioOrganic:
+        return _buildBioOrganicStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
+      case SwitchStyleType.crystalPrism:
+        return _buildCrystalPrismStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
+      case SwitchStyleType.voidAbyss:
+        return _buildVoidAbyssStyle(
+          theme,
+          displayName,
+          uniqueColor,
+          contentColor,
+          iconInfo,
+        );
     }
   }
 
@@ -306,19 +370,24 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     DeviceIconInfo iconInfo,
   ) {
     final isActive = widget.device.isActive;
+    final isLight = theme.brightness == Brightness.light;
+    final offColor = isLight
+        ? Colors.white.withOpacity(0.6)
+        : const Color(0xFF1E1E1E);
+    final borderColor = isActive
+        ? Colors.transparent
+        : (isLight
+              ? Colors.black.withOpacity(0.05)
+              : Colors.white.withOpacity(0.1));
+
     return RepaintBoundary(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: isActive ? color : const Color(0xFF1E1E1E),
+          color: isActive ? color : offColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isActive
-                ? Colors.transparent
-                : Colors.white.withOpacity(0.1),
-            width: 2,
-          ),
+          border: Border.all(color: borderColor, width: 2),
           boxShadow: isActive
               ? [
                   BoxShadow(
@@ -327,7 +396,16 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                     spreadRadius: 1,
                   ),
                 ]
-              : [],
+              : (isLight
+                    ? [
+                        // Soft shadow for off state in light mode
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : []),
         ),
         child: Center(
           child: Column(
@@ -341,7 +419,9 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                     isActive ? iconInfo.iconOn : iconInfo.iconOff,
                     color: isActive
                         ? contentColor
-                        : Colors.white.withOpacity(0.5),
+                        : (isLight
+                              ? Colors.black.withOpacity(0.6)
+                              : Colors.white.withOpacity(0.5)),
                     size: 40,
                   ),
                 ),
@@ -350,7 +430,11 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               Text(
                 name.toUpperCase(),
                 style: GoogleFonts.inter(
-                  color: isActive ? contentColor : Colors.white,
+                  color: isActive
+                      ? contentColor
+                      : (isLight
+                            ? Colors.black.withOpacity(0.8)
+                            : Colors.white),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -992,7 +1076,540 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     );
   }
 
-  // REUSABLE ICON BUILDER FOR SOME STYLES
+  // 9. HOLOGRAPHIC (PRO): Futuristic Projection
+  Widget _buildHolographicStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          // Base
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.black,
+              border: Border.all(
+                color: isActive ? color.withOpacity(0.8) : Colors.white10,
+                width: 1,
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(isActive ? 4 : 16),
+                bottomRight: Radius.circular(isActive ? 4 : 16),
+              ),
+            ),
+          ),
+          // Hologram Projection
+          if (isActive)
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.2,
+                child: CustomPaint(painter: _HologramGridPainter(color: color)),
+              ),
+            ),
+
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Glitchy Icon
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 100),
+                  builder: (context, value, child) {
+                    return ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [color, Colors.white, color],
+                        stops: [0, 0.5, 1],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        transform: GradientRotation(
+                          _iconAnimController.value * 6.28,
+                        ),
+                      ).createShader(bounds),
+                      child: Icon(
+                        isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                        size: 38,
+                        color: Colors.white, // Mask handles color
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  name.toUpperCase(),
+                  style: GoogleFonts.rajdhani(
+                    color: isActive ? color : Colors.white54,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 10. LIQUID METAL: Chrome, Reflective
+  Widget _buildLiquidMetalStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.elasticOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isActive
+                ? [
+                    const Color(0xFFE0E0E0),
+                    const Color(0xFF9E9E9E),
+                    const Color(0xFF616161),
+                  ]
+                : [const Color(0xFF424242), const Color(0xFF212121)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isActive ? color.withOpacity(0.6) : Colors.black45,
+              blurRadius: isActive ? 20 : 5,
+              spreadRadius: isActive ? 2 : 0,
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (isActive)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: Container(color: color.withOpacity(0.1)),
+                  ),
+                ),
+              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildAnimatedIcon(
+                  isActive,
+                  widget.device.isConnected,
+                  Colors.black, // Dark icon on metal
+                  isActive ? Colors.black87 : Colors.white24,
+                  iconInfo,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  name,
+                  style: GoogleFonts.exo2(
+                    color: isActive ? Colors.black87 : Colors.white38,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 11. QUANTUM DOT: Particles
+  Widget _buildQuantumDotStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          Container(color: const Color(0xFF050505)),
+          if (isActive)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _QuantumDotPainter(
+                  color: color,
+                  animation: _iconAnimController,
+                ),
+              ),
+            ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isActive ? color : Colors.white10,
+                      width: 2,
+                    ),
+                    boxShadow: isActive
+                        ? [BoxShadow(color: color, blurRadius: 15)]
+                        : [],
+                  ),
+                  child: Center(
+                    child: Icon(
+                      isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                      color: isActive ? Colors.white : Colors.white24,
+                      size: 28,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  name,
+                  style: GoogleFonts.orbitron(
+                    color: Colors.white,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 12. COSMIC PULSE: Galaxy, Stars, Rotation
+  Widget _buildCosmicPulseStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.black,
+              image: const DecorationImage(
+                image: AssetImage(
+                  'assets/images/nebula_bg_1.jpg',
+                ), // Assuming exists or fallback
+                fit: BoxFit.cover,
+                opacity: 0.4,
+              ),
+            ),
+          ),
+          if (isActive)
+            Positioned.fill(
+              child: RotationTransition(
+                turns: _iconAnimController,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: SweepGradient(
+                      colors: [
+                        color.withOpacity(0),
+                        color.withOpacity(0.5),
+                        color.withOpacity(0),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildAnimatedIcon(
+                  isActive,
+                  widget.device.isConnected,
+                  color,
+                  Colors.white,
+                  iconInfo,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  name,
+                  style: GoogleFonts.audiowide(
+                    color: Colors.white,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 13. RETRO VAPOR: 80s Grid, Sun
+  Widget _buildRetroVaporStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2E003E), Color(0xFFFF007A)],
+          ),
+          border: Border.all(color: Colors.cyanAccent, width: 2),
+        ),
+        child: Stack(
+          children: [
+            // Grid
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _HologramGridPainter(color: Colors.cyanAccent),
+              ),
+            ),
+            // Sun
+            if (isActive)
+              Positioned(
+                bottom: -20,
+                right: -20,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.yellow, Colors.orange, Colors.red],
+                    ),
+                  ),
+                ),
+              ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                    color: Colors.cyanAccent,
+                    size: 30,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    name,
+                    style: GoogleFonts.vt323(
+                      color: Colors.yellowAccent,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 14. BIO ORGANIC: Breathing, blobs
+  Widget _buildBioOrganicStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: AnimatedContainer(
+        duration: const Duration(seconds: 1),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: isActive ? color.withOpacity(0.2) : Colors.grey[900],
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(20),
+            bottomRight: const Radius.circular(20),
+            topRight: Radius.circular(isActive ? 40 : 10),
+            bottomLeft: Radius.circular(isActive ? 40 : 10),
+          ),
+          border: Border.all(
+            color: isActive ? color : Colors.grey[800]!,
+            width: 2,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ScaleTransition(
+                scale: _iconAnimController, // Breathing
+                child: Icon(
+                  isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                  color: isActive ? color : Colors.grey,
+                  size: 34,
+                ),
+              ),
+              Text(
+                name,
+                style: GoogleFonts.comfortaa(
+                  color: isActive ? color : Colors.grey,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 15. CRYSTAL PRISM: Refractive Glass
+  Widget _buildCrystalPrismStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          Container(color: Colors.black),
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ShaderMask(
+                        shaderCallback: (rect) => LinearGradient(
+                          colors: [Colors.blue, Colors.purple, Colors.pink],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(rect),
+                        child: Icon(
+                          isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        name,
+                        style: GoogleFonts.geo(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (isActive)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.white.withOpacity(0.5), Colors.transparent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 16. VOID ABYSS: Minimal Dark
+  Widget _buildVoidAbyssStyle(
+    ThemeData theme,
+    String name,
+    Color color,
+    Color contentColor,
+    DeviceIconInfo iconInfo,
+  ) {
+    final isActive = widget.device.isActive;
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          boxShadow: isActive
+              ? [BoxShadow(color: color, blurRadius: 30, spreadRadius: -10)]
+              : [],
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                color: isActive ? Colors.white : Colors.white24,
+                size: 30,
+              ),
+              if (isActive)
+                Container(
+                  margin: const EdgeInsets.only(top: 5),
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAnimatedIcon(
     bool isActive,
     bool isConnected,
@@ -1072,4 +1689,74 @@ class _CyberpunkGlitchPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true; // Always repaint for glitch effect
+}
+
+class _HologramGridPainter extends CustomPainter {
+  final Color color;
+  _HologramGridPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withOpacity(0.3)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    // Draw grid
+    final step = 10.0;
+    for (double i = 0; i < size.width; i += step) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += step) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+
+    // Scanline
+    final scanPaint = Paint()
+      ..color = color.withOpacity(0.1)
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.transparent, color, Colors.transparent],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), scanPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _QuantumDotPainter extends CustomPainter {
+  final Color color;
+  final Animation<double> animation;
+
+  _QuantumDotPainter({required this.color, required this.animation})
+    : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final random = math.Random(
+      42,
+    ); // Seeded for consistancy but animated via time
+
+    for (int i = 0; i < 20; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      final radius = random.nextDouble() * 2 + 1;
+
+      final pulse = math.sin((animation.value * 6.28) + i);
+      final alpha = (pulse + 1) / 2 * 0.5 + 0.2;
+
+      paint.color = color.withOpacity(alpha);
+      canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _QuantumDotPainter oldDelegate) => true;
 }

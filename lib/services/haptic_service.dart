@@ -38,20 +38,28 @@ class HapticService {
     }
 
     try {
+      // "Butter" feel optimization
+      if (style == HapticStyle.light && _hasCustomSupport) {
+        // Ultra-sharp 10ms click for premium feel
+        Vibration.vibrate(duration: 8, amplitude: 30);
+        return;
+      }
+
       switch (style) {
         case HapticStyle.light:
           // "Butter" - Very short, crisp
           if (_hasCustomSupport) {
+            // Fallback for custom support but no amplitude control
             Vibration.vibrate(duration: 10);
           } else {
-            HapticFeedback.lightImpact();
+            HapticFeedback.lightImpact(); // System standard
           }
           break;
 
         case HapticStyle.medium:
           // "Smooth" - Noticeable bump
           if (_hasCustomSupport) {
-            Vibration.vibrate(duration: 30);
+            Vibration.vibrate(duration: 25, amplitude: 60);
           } else {
             HapticFeedback.mediumImpact();
           }
@@ -59,7 +67,11 @@ class HapticService {
 
         case HapticStyle.heavy:
           // "Pulse" - Strong, undeniable vibration
-          Vibration.vibrate(duration: 70);
+          if (_hasCustomSupport) {
+            Vibration.vibrate(duration: 50, amplitude: 128);
+          } else {
+            HapticFeedback.heavyImpact();
+          }
           break;
       }
     } catch (e) {

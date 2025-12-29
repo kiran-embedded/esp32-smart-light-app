@@ -5,7 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/voice_service.dart'; // Kept for future use if needed
 
-enum RoboReaction { idle, wakeUp, nod, blink, speak, dim, tilt, jump }
+enum RoboReaction {
+  idle,
+  wakeUp,
+  nod,
+  blink,
+  speak,
+  dim,
+  tilt,
+  jump,
+  thinking,
+  confused,
+  happy,
+  sleeping,
+}
 
 final roboReactionProvider = StateProvider<RoboReaction>((ref) {
   return RoboReaction.idle;
@@ -213,6 +226,32 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
       case RoboReaction.idle:
         _reactionController.reset();
         break;
+      case RoboReaction.thinking:
+        // Float stops, rotate continuously slowly
+        _microController.duration = const Duration(seconds: 1);
+        _microController.repeat();
+        break;
+      case RoboReaction.confused:
+        // Tilt head and hold
+        _reactionController.forward();
+        break;
+      case RoboReaction.happy:
+        // Jump twice quickly
+        _jumpController.duration = const Duration(milliseconds: 300);
+        _jumpController
+            .forward()
+            .then((_) => _jumpController.reverse())
+            .then(
+              (_) => _jumpController.forward().then(
+                (_) => _jumpController.reverse(),
+              ),
+            );
+        break;
+      case RoboReaction.sleeping:
+        // Slow breathing, dim eyes handled in build
+        _floatController.duration = const Duration(seconds: 6);
+        _floatController.repeat(reverse: true);
+        break;
     }
 
     // Reset to idle after reaction
@@ -300,18 +339,35 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
         HapticFeedback.heavyImpact(); // Stronger feedback
 
         // Trigger a random fun reaction
+        // Trigger a random fun reaction
         final random =
-            DateTime.now().millisecondsSinceEpoch % 4; // Expanded pool
-        // final voiceService = ref.read(voiceServiceProvider); // Removed strict voice dependency for pure UI speed
+            DateTime.now().millisecondsSinceEpoch % 8; // Expanded pool to 8
 
-        if (random == 0) {
-          triggerRoboReaction(ref, RoboReaction.jump); // New Jump!
-        } else if (random == 1) {
-          triggerRoboReaction(ref, RoboReaction.speak);
-        } else if (random == 2) {
-          triggerRoboReaction(ref, RoboReaction.nod);
-        } else {
-          triggerRoboReaction(ref, RoboReaction.tilt);
+        switch (random) {
+          case 0:
+            triggerRoboReaction(ref, RoboReaction.jump);
+            break;
+          case 1:
+            triggerRoboReaction(ref, RoboReaction.speak);
+            break;
+          case 2:
+            triggerRoboReaction(ref, RoboReaction.nod);
+            break;
+          case 3:
+            triggerRoboReaction(ref, RoboReaction.tilt);
+            break;
+          case 4:
+            triggerRoboReaction(ref, RoboReaction.thinking);
+            break;
+          case 5:
+            triggerRoboReaction(ref, RoboReaction.confused);
+            break;
+          case 6:
+            triggerRoboReaction(ref, RoboReaction.happy);
+            break;
+          case 7:
+            triggerRoboReaction(ref, RoboReaction.sleeping);
+            break;
         }
       },
       child: SizedBox(

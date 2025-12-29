@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/persistence_service.dart';
@@ -110,7 +111,13 @@ class AuthService {
 
   Future<void> signOut() async {
     final googleSignIn = await _getGoogleSignIn();
+    try {
+      await googleSignIn.disconnect();
+    } catch (e) {
+      debugPrint("Google disconnect failed (likely already disconnected): $e");
+    }
     await googleSignIn.signOut();
     await _auth.signOut();
+    _googleSignIn = null; // Force fresh instance next time
   }
 }

@@ -10,6 +10,14 @@ enum SwitchStyleType {
   neonGlass, // New
   industrialMetallic, // New
   gamingRGB, // New
+  holographic,
+  liquidMetal,
+  quantumDot,
+  cosmicPulse, // 12
+  retroVapor, // 13
+  bioOrganic, // 14
+  crystalPrism, // 15
+  voidAbyss, // 16
 }
 
 final switchStyleProvider =

@@ -34,7 +34,11 @@ class UpdateService {
       final currentVersion =
           '${packageInfo.version}+${packageInfo.buildNumber}';
 
-      final response = await http.get(Uri.parse(_versionCheckUrl));
+      final response = await http.get(
+        Uri.parse(
+          '$_versionCheckUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+        ),
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

@@ -21,6 +21,17 @@ class FirebaseSwitchService {
     });
   }
 
+  Stream<Map<String, dynamic>> listenToCommands({String? deviceId}) {
+    final id = deviceId ?? AppConstants.defaultDeviceId;
+    final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
+
+    return _database.child(path).onValue.map((event) {
+      final data = event.snapshot.value;
+      if (data == null || data is! Map) return {};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
   /// Write a command strictly to /devices/{deviceId}/commands/{relayKey}
   /// value: 0 = OFF, 1 = ON
   /// Uses update() to avoid overwriting other keys.

@@ -68,24 +68,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final prefs = await SharedPreferences.getInstance();
     final jsonAuth = prefs.getBool('json_authenticated') ?? false;
     final localAuth = prefs.getBool('local_authenticated') ?? false;
+    // New: Check generic authenticated flag
+    final isAuthenticated = prefs.getBool('is_authenticated') ?? false;
 
-    if (jsonAuth || localAuth) {
+    if (jsonAuth || localAuth || isAuthenticated) {
       state = AuthState.authenticated;
       return;
     }
 
     // Check if Firebase is actually initialized
     if (Firebase.apps.isEmpty) {
-      state = AuthState.unauthenticated; // Or maybe stay in unconfigured?
+      state = AuthState.unauthenticated;
       return;
     }
 
     final authService = _ref.read(authServiceProvider);
     try {
       final user = authService.currentUser;
-      state = user != null
-          ? AuthState.authenticated
-          : AuthState.unauthenticated;
+      // If Firebase user exists, we are authenticated.
+      // If not, and we didn't match the prefs above, then unauthenticated.
+      if (user != null) {
+        state = AuthState.authenticated;
+        // Ensure pref is consistent
+        await prefs.setBool('is_authenticated', true);
+      } else {
+        state = AuthState.unauthenticated;
+      }
     } catch (e) {
       state = AuthState.unauthenticated;
     }

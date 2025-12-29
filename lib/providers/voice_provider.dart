@@ -6,8 +6,11 @@ final voiceEnabledProvider = StateNotifierProvider<VoiceNotifier, bool>((ref) {
 });
 
 class VoiceNotifier extends StateNotifier<bool> {
-  VoiceNotifier() : super(true) {
-    _loadVoiceSetting();
+  VoiceNotifier([bool initialValue = true]) : super(initialValue) {
+    if (initialValue) {
+      // Only load if we assumed true, otherwise trust the seed
+      _loadVoiceSetting();
+    }
   }
 
   Future<void> _loadVoiceSetting() async {

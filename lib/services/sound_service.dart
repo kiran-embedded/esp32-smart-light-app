@@ -4,14 +4,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
-final soundServiceProvider = Provider((ref) => SoundService());
+import '../providers/sound_settings_provider.dart';
+
+final soundServiceProvider = Provider((ref) => SoundService(ref));
 
 class SoundService {
+  final Ref _ref;
   final AudioPlayer _startupPlayer = AudioPlayer();
   // Store loaded sound handles
   final Map<String, AudioSource> _sounds = {};
 
-  SoundService() {
+  SoundService(this._ref) {
     _init();
   }
 
@@ -49,8 +52,24 @@ class SoundService {
     try {
       final source = _sounds[key];
       if (source != null) {
+        // Check settings
+        final settings = _ref.read(soundSettingsProvider);
+        if (!settings.masterSound) return;
+
+        // Specific checks based on key
+        if ((key == 'on' || key == 'off' || key == 'tab') &&
+            !settings.switchSound) {
+          return;
+        }
+
+        // Calculate volume
+        double volume = settings.masterVolume;
+        if (key == 'on' || key == 'off' || key == 'tab') {
+          volume *= settings.switchVolume;
+        }
+
         // Fire and forget, zero latency
-        await SoLoud.instance.play(source);
+        await SoLoud.instance.play(source, volume: volume);
       }
     } catch (e) {
       debugPrint('Error playing sound $key: $e');
@@ -63,8 +82,13 @@ class SoundService {
 
   Future<void> playStartup() async {
     try {
+      final settings = _ref.read(soundSettingsProvider);
+      if (!settings.masterSound || !settings.appOpeningSound) return;
+
       await _startupPlayer.stop();
       await _startupPlayer.setReleaseMode(ReleaseMode.stop);
+      final volume = settings.masterVolume * settings.appOpeningVolume;
+      await _startupPlayer.setVolume(volume);
       await _startupPlayer.play(AssetSource('audio/startup.mp3'));
     } catch (e) {
       debugPrint('Startup sound error: $e');

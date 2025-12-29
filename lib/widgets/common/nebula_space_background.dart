@@ -71,8 +71,8 @@ class _StarFieldPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.white;
 
-    // Draw 300 subtle deep stars
-    for (int i = 0; i < 300; i++) {
+    // Draw 100 subtle deep stars (Optimized from 300)
+    for (int i = 0; i < 100; i++) {
       final x = _random.nextDouble() * size.width;
       final y = _random.nextDouble() * size.height;
 

@@ -129,120 +129,162 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     );
   }
 
+  Map<String, dynamic> _lastTelemetry = {};
+  Map<String, dynamic> _lastCommands = {};
+  StreamSubscription<Map<String, dynamic>>? _commandsSubscription;
+
   void _initTelemetryListener() {
     try {
       final firebaseService = _ref.read(firebaseSwitchServiceProvider);
 
+      // Listener 1: Telemetry
       _telemetrySubscription = firebaseService.listenToTelemetry().listen((
         telemetry,
       ) {
-        final lastSeen = telemetry['lastSeen'];
-        final bool isConnected = _isDeviceConnected(lastSeen);
+        _lastTelemetry = telemetry;
+        _mergeAndEmit();
+      });
 
-        // Parse global voltage
-        double voltage = 0.0;
-        if (telemetry.containsKey('voltage_ac')) {
-          voltage = (telemetry['voltage_ac'] is num)
-              ? (telemetry['voltage_ac'] as num).toDouble()
-              : double.tryParse(telemetry['voltage_ac'].toString()) ?? 0.0;
-        } else if (telemetry.containsKey('voltage')) {
-          voltage = (telemetry['voltage'] is num)
-              ? (telemetry['voltage'] as num).toDouble()
-              : double.tryParse(telemetry['voltage'].toString()) ?? 0.0;
-        }
-
-        // DYNAMIC DISCOVERY: Find all 'relayX' keys
-        final Set<String> telemetryRelayIds = telemetry.keys
-            .where((key) => key.toString().startsWith('relay'))
-            .map((key) => key.toString())
-            .toSet();
-
-        // Merge with existing IDs to prevent flickering if telemetry misses one
-        final currentIds = state.map((d) => d.id).toSet();
-        final allRelayIds = {...currentIds, ...telemetryRelayIds}.toList();
-
-        // Natural Sort (relay1, relay2, ... relay10)
-        allRelayIds.sort((a, b) {
-          int? nA = int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), ''));
-          int? nB = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), ''));
-          if (nA != null && nB != null) return nA.compareTo(nB);
-          return a.compareTo(b);
-        });
-
-        // Lookup maps for efficiency
-        final currentDeviceMap = {for (var d in state) d.id: d};
-        // Reuse nicknames (IMPORTANT)
-        final currentNicknames = {for (var d in state) d.id: d.nickname};
-
-        state = allRelayIds.map((id) {
-          // Get value from telemetry (Active Low: 0 = ON)
-          final rawVal = telemetry[id];
-          bool newIsActive = false;
-          if (rawVal != null) {
-            // Handle 0/1/true/false
-            if (rawVal is int) {
-              newIsActive = (rawVal == 0);
-            } else if (rawVal is bool) {
-              newIsActive = !rawVal; // Logic inversion: false -> ON
-            } else {
-              // Fallback string parse
-              newIsActive =
-                  rawVal.toString() == '0' || rawVal.toString() == 'false';
-            }
-          } else {
-            // retain previous state if missing in this packet (or defaulting to off)
-            // If device exists, keep its state. If new, default off.
-            if (currentDeviceMap.containsKey(id)) {
-              newIsActive = currentDeviceMap[id]!.isActive;
-            }
-          }
-
-          bool isPending = false;
-
-          // JITTER PROTECTION logic (Same as before)
-          if (_pendingSwitches.containsKey(id)) {
-            final pendingTime = _pendingSwitches[id]!;
-            if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
-              final existing = currentDeviceMap[id];
-              if (existing != null && newIsActive != existing.isActive) {
-                newIsActive = existing.isActive; // Ignore telemetry, keep local
-                isPending = true;
-              } else {
-                _pendingSwitches.remove(id); // Telemetry matches!
-                isPending = false;
-              }
-            } else {
-              _pendingSwitches.remove(id); // Timeout
-            }
-          }
-
-          if (currentDeviceMap.containsKey(id)) {
-            // UPDATE EXISTING
-            return currentDeviceMap[id]!.copyWith(
-              isActive: newIsActive,
-              isPending: isPending,
-              isConnected: isConnected,
-              voltage: voltage,
-              nickname: currentNicknames[id] ?? currentDeviceMap[id]!.nickname,
-            );
-          } else {
-            // CREATE NEW (Dynamic)
-            return SwitchDevice(
-              id: id,
-              name: 'Switch ${id.replaceAll("relay", "")}',
-              isActive: newIsActive,
-              icon: 'power',
-              gpioPin: 0,
-              mqttTopic: '',
-              isConnected: isConnected,
-              nickname: currentNicknames[id], // Might be null
-            );
-          }
-        }).toList();
+      // Listener 2: Commands (For discovery of manually added switches)
+      _commandsSubscription = firebaseService.listenToCommands().listen((
+        commands,
+      ) {
+        _lastCommands = commands;
+        _mergeAndEmit();
       });
     } catch (e) {
       print('Error initializing telemetry sync: $e');
     }
+  }
+
+  void _mergeAndEmit() {
+    // 1. Telemetry Data
+    final telemetry = _lastTelemetry;
+
+    // Parse voltage from telemetry
+    double voltage = 0.0;
+    if (telemetry.containsKey('voltage_ac')) {
+      voltage = (telemetry['voltage_ac'] is num)
+          ? (telemetry['voltage_ac'] as num).toDouble()
+          : 0.0;
+    } else if (telemetry.containsKey('voltage')) {
+      voltage = (telemetry['voltage'] is num)
+          ? (telemetry['voltage'] as num).toDouble()
+          : 0.0;
+    }
+
+    // 2. Discover Keys from BOTH sources
+    final Set<String> allKeys = {};
+
+    // Add keys from telemetry
+    allKeys.addAll(
+      telemetry.keys
+          .where((key) => key.toString().startsWith('relay'))
+          .map((key) => key.toString()),
+    );
+
+    // Add keys from commands (Fix for dynamic creation)
+    allKeys.addAll(
+      _lastCommands.keys
+          .where((key) => key.toString().startsWith('relay'))
+          .map((key) => key.toString()),
+    );
+
+    // Merge with existing IDs
+    final currentIds = state.map((d) => d.id).toSet();
+    final allRelayIds = {...currentIds, ...allKeys}.toList();
+
+    // Natural Sort
+    allRelayIds.sort((a, b) {
+      int? nA = int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), ''));
+      int? nB = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), ''));
+      if (nA != null && nB != null) return nA.compareTo(nB);
+      return a.compareTo(b);
+    });
+
+    final currentDeviceMap = {for (var d in state) d.id: d};
+    final currentNicknames = {for (var d in state) d.id: d.nickname};
+
+    state = allRelayIds.map((id) {
+      // State Priority: Telemetry > Command > Existing > Default OFF
+      // If telemetry has value, use it.
+      // If not, check commands (maybe we just created it and set it to 0).
+      // If not, keep existing state.
+
+      bool newIsActive = false;
+      // Telemetry has highest truth
+      if (telemetry.containsKey(id)) {
+        final rawVal = telemetry[id];
+        if (rawVal != null) {
+          if (rawVal is int)
+            newIsActive = (rawVal == 0);
+          else if (rawVal is bool)
+            newIsActive = !rawVal;
+          else
+            newIsActive =
+                rawVal.toString() == '0' || rawVal.toString() == 'false';
+        }
+      }
+      // Fallback to command value if telemetry missing (e.g. new switch)
+      else if (_lastCommands.containsKey(id)) {
+        final rawVal = _lastCommands[id];
+        if (rawVal != null) {
+          if (rawVal is int)
+            newIsActive =
+                (rawVal == 1); // Commands are positive logic usually? Wait.
+          // Code says: active=true -> send 0. So 0 is ON?
+          // "sendCommand(id, newState ? 0 : 1)" -> True (Active) sends 0.
+          // So in commands, 0 means ON.
+          if (rawVal is int)
+            newIsActive = (rawVal == 0);
+          else
+            newIsActive = rawVal.toString() == '0';
+        }
+      } else if (currentDeviceMap.containsKey(id)) {
+        newIsActive = currentDeviceMap[id]!.isActive;
+      }
+
+      bool isPending = false;
+      bool isConnected = _isDeviceConnected(telemetry['lastSeen']);
+
+      // JITTER PROTECTION
+      if (_pendingSwitches.containsKey(id)) {
+        final pendingTime = _pendingSwitches[id]!;
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
+          final existing = currentDeviceMap[id];
+          if (existing != null && newIsActive != existing.isActive) {
+            newIsActive = existing.isActive;
+            isPending = true;
+          } else {
+            _pendingSwitches.remove(id);
+            isPending = false;
+          }
+        } else {
+          _pendingSwitches.remove(id);
+        }
+      }
+
+      if (currentDeviceMap.containsKey(id)) {
+        return currentDeviceMap[id]!.copyWith(
+          isActive: newIsActive,
+          isPending: isPending,
+          isConnected: isConnected,
+          voltage: voltage,
+          nickname: currentNicknames[id] ?? currentDeviceMap[id]!.nickname,
+        );
+      } else {
+        return SwitchDevice(
+          id: id,
+          name: 'Switch ${id.replaceAll("relay", "")}',
+          isActive: newIsActive,
+          icon: 'power',
+          gpioPin: 0,
+          mqttTopic: '',
+          isConnected: isConnected,
+          nickname: currentNicknames[id],
+        );
+      }
+    }).toList();
   }
 
   bool _isDeviceConnected(dynamic lastSeen) {
@@ -331,6 +373,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   @override
   void dispose() {
     _telemetrySubscription?.cancel();
+    _commandsSubscription?.cancel();
     super.dispose();
   }
 }

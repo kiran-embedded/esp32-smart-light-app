@@ -17,11 +17,13 @@ import '../login/login_screen.dart';
 import '../../services/haptic_service.dart';
 import '../../services/voice_service.dart';
 import '../../providers/immersive_provider.dart';
-import '../../core/ui/ui_composition_engine.dart';
+
 import '../../providers/switch_style_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/animation_provider.dart';
 import '../../services/update_service.dart';
+import '../../providers/sound_settings_provider.dart'; // Added
+import 'package:package_info_plus/package_info_plus.dart'; // Added
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -100,23 +102,123 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         _buildAnimationSettings(context, ref),
         const Divider(),
         // Voice Toggle
+        _buildSectionHeader(context, 'Voice & Sound'),
         _buildSettingTile(
-              context,
-              title: 'Voice Feedback',
-              subtitle: 'Enable AI voice responses',
-              trailing: Switch(
-                value: voiceEnabled,
-                onChanged: (value) async {
-                  ref
-                      .read(voiceEnabledProvider.notifier)
-                      .setVoiceEnabled(value);
-                },
+          context,
+          title: 'Voice Feedback',
+          subtitle: 'Enable AI voice responses',
+          trailing: Switch(
+            value: voiceEnabled,
+            onChanged: (value) async {
+              ref.read(voiceEnabledProvider.notifier).setVoiceEnabled(value);
+            },
+          ),
+        ),
+
+        // Sound Settings
+        _buildSettingTile(
+          context,
+          title: 'Master Sound',
+          subtitle: 'Enable all app sounds',
+          trailing: Switch(
+            value: ref.watch(soundSettingsProvider).masterSound,
+            onChanged: (val) =>
+                ref.read(soundSettingsProvider.notifier).setMasterSound(val),
+          ),
+        ),
+
+        if (ref.watch(soundSettingsProvider).masterSound) ...[
+          // Master Volume Slider
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Master Volume: ${(ref.watch(soundSettingsProvider).masterVolume * 100).toInt()}%',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                Slider(
+                  value: ref.watch(soundSettingsProvider).masterVolume,
+                  onChanged: (val) => ref
+                      .read(soundSettingsProvider.notifier)
+                      .setMasterVolume(val),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(),
+
+          // Switch Sound Settings
+          _buildSettingTile(
+            context,
+            title: 'Switch Sounds',
+            subtitle: 'Click sound when toggling',
+            trailing: Switch(
+              value: ref.watch(soundSettingsProvider).switchSound,
+              onChanged: (val) =>
+                  ref.read(soundSettingsProvider.notifier).setSwitchSound(val),
+            ),
+          ),
+          if (ref.watch(soundSettingsProvider).switchSound)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Switch Volume: ${(ref.watch(soundSettingsProvider).switchVolume * 100).toInt()}%',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Slider(
+                    value: ref.watch(soundSettingsProvider).switchVolume,
+                    onChanged: (val) => ref
+                        .read(soundSettingsProvider.notifier)
+                        .setSwitchVolume(val),
+                  ),
+                ],
               ),
-            )
-            .animate()
-            .fadeIn(duration: 400.ms, delay: 150.ms)
-            .slideX(begin: -0.1, end: 0, curve: Curves.easeOutCubic),
-        // Pitch & Rate Sliders
+            ),
+
+          // App Opening Sound Settings
+          _buildSettingTile(
+            context,
+            title: 'Startup Sound',
+            subtitle: 'Play sound on app launch',
+            trailing: Switch(
+              value: ref.watch(soundSettingsProvider).appOpeningSound,
+              onChanged: (val) => ref
+                  .read(soundSettingsProvider.notifier)
+                  .setAppOpeningSound(val),
+            ),
+          ),
+          if (ref.watch(soundSettingsProvider).appOpeningSound)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Startup Volume: ${(ref.watch(soundSettingsProvider).appOpeningVolume * 100).toInt()}%',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Slider(
+                    value: ref.watch(soundSettingsProvider).appOpeningVolume,
+                    onChanged: (val) => ref
+                        .read(soundSettingsProvider.notifier)
+                        .setAppOpeningVolume(val),
+                  ),
+                ],
+              ),
+            ),
+        ],
+
+        // Voice Pitch & Rate Sliders
         if (voiceEnabled) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -277,40 +379,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             onSelected: (style) {
               ref.read(switchStyleProvider.notifier).setStyle(style);
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: SwitchStyleType.modern,
-                child: Text('Modern (Minimal)'),
-              ),
-              const PopupMenuItem(
-                value: SwitchStyleType.fluid,
-                child: Text('Fluid (Liquid Anim)'),
-              ),
-              const PopupMenuItem(
-                value: SwitchStyleType.realistic,
-                child: Text('Realistic (Physical)'),
-              ),
-              const PopupMenuItem(
-                value: SwitchStyleType.different,
-                child: Text('Cyberpunk (Glitch)'),
-              ),
-              const PopupMenuItem(
-                value: SwitchStyleType.smooth,
-                child: Text('Smooth (Neumorphic)'),
-              ),
-              const PopupMenuItem(
-                value: SwitchStyleType.neonGlass,
-                child: Text('Neon Glass (Premium)'),
-              ),
-              const PopupMenuItem(
-                value: SwitchStyleType.industrialMetallic,
-                child: Text('Industrial (Metal)'),
-              ),
-              const PopupMenuItem(
-                value: SwitchStyleType.gamingRGB,
-                child: Text('Gaming RGB (Animated)'),
-              ),
-            ],
+            itemBuilder: (context) => SwitchStyleType.values.map((style) {
+              return PopupMenuItem(
+                value: style,
+                child: Text(_getSwitchStyleName(style)),
+              );
+            }).toList(),
           ),
         ),
         const Divider(),
@@ -324,60 +398,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             onSelected: (mode) {
               ref.read(themeProvider.notifier).setTheme(mode);
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: AppThemeMode.darkNeon,
-                child: Text('Dark Neon'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.softDark,
-                child: Text('Soft Dark'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.light,
-                child: Text('Light'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.cyberNeon,
-                child: Text('Cyber Neon'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.liquidGlass,
-                child: Text('Liquid Glass'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.raindrop,
-                child: Text('Raindrop'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.amoledCyberpunk,
-                child: Text('AMOLED Cyberpunk'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.darkSpace,
-                child: Text('Dark Space (Dashboard)'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.kaliLinux,
-                child: Text('Kali Linux'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.nothingDot,
-                child: Text('Nothing'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.appleGlass,
-                child: Text('Apple Glass'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.crimsonVampire,
-                child: Text('Crimson Vampire'),
-              ),
-              const PopupMenuItem(
-                value: AppThemeMode.neonTokyo,
-                child: Text('Neon Tokyo'),
-              ),
-            ],
+            itemBuilder: (context) => AppThemeMode.values.map((mode) {
+              return PopupMenuItem(
+                value: mode,
+                child: Text(_getThemeName(mode)),
+              );
+            }).toList(),
           ),
         ),
         const Divider(),
@@ -465,29 +491,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         const SizedBox(height: 20),
         const Divider(),
         // App Info
-        _buildSettingTile(
-          context,
-          title: 'Version',
-          subtitle: '1.1.0+4', // TODO: Get from package_info
-          trailing: const Icon(Icons.system_update),
-          onTap: () => _checkForUpdates(context, ref),
-        ),
-        _buildSettingTile(
-          context,
-          title: 'GitHub Repository',
-          subtitle: 'View source code & releases',
-          trailing: const Icon(Icons.open_in_new),
-          onTap: () async {
-            final uri = Uri.parse(
-              'https://github.com/kirancybergrid/nebula_core_restore/releases/latest',
+        // App Info
+        FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snapshot) {
+            final version = snapshot.hasData
+                ? '${snapshot.data!.version}+${snapshot.data!.buildNumber}'
+                : 'Loading...';
+            return _buildSettingTile(
+              context,
+              title: 'Version',
+              subtitle: version,
+              trailing: const Icon(Icons.system_update),
+              onTap: () => _checkForUpdates(context, ref),
             );
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
+          },
+        ),
+        // GitHub
+        _buildSettingTile(
+          context,
+          title: 'View Source Code',
+          subtitle: 'github.com/kiran-embedded',
+          trailing: const Icon(Icons.code),
+          onTap: () {
+            launchUrl(
+              Uri.parse(
+                'https://github.com/kiran-embedded/esp32-smart-light-app',
+              ),
+              mode: LaunchMode.externalApplication,
+            );
           },
         ),
         const SizedBox(height: 20),
-        const CopyrightFooter(),
+        const SizedBox(height: 20),
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 20.0),
+            child: Text(
+              "2025 Kiran Embedded Github",
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -551,6 +596,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         return 'Crimson Vampire';
       case AppThemeMode.neonTokyo:
         return 'Neon Tokyo';
+      case AppThemeMode.sunsetRetro:
+        return 'Sunset Retro';
+      case AppThemeMode.mindfulNature:
+        return 'Mindful Nature';
+      case AppThemeMode.deepOcean:
+        return 'Deep Ocean';
+      case AppThemeMode.dracula:
+        return 'Dracula';
+      case AppThemeMode.monokai:
+        return 'Monokai';
+      case AppThemeMode.synthwave:
+        return 'Synthwave';
     }
   }
 
@@ -583,6 +640,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         return 'Industrial (Metal)';
       case SwitchStyleType.gamingRGB:
         return 'Gaming RGB (Animated)';
+      case SwitchStyleType.holographic:
+        return 'Holographic (Pro)';
+      case SwitchStyleType.liquidMetal:
+        return 'Liquid Metal';
+      case SwitchStyleType.quantumDot:
+        return 'Quantum Dot';
+      case SwitchStyleType.cosmicPulse:
+        return 'Cosmic Pulse (Galaxy)';
+      case SwitchStyleType.retroVapor:
+        return 'Retro Vapor (80s)';
+      case SwitchStyleType.bioOrganic:
+        return 'Bio Organic (Living)';
+      case SwitchStyleType.crystalPrism:
+        return 'Crystal Prism (Glass)';
+      case SwitchStyleType.voidAbyss:
+        return 'Void Abyss (Deep)';
     }
   }
 

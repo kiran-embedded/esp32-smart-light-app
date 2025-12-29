@@ -3,7 +3,10 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_refresh_rate_control/flutter_refresh_rate_control.dart'; // High Refresh Rate
+import 'package:flutter_displaymode/flutter_displaymode.dart'; // High Refresh Rate
+import 'package:shared_preferences/shared_preferences.dart'; // Added
+import 'package:flutter_soloud/flutter_soloud.dart'; // Added
+// import 'firebase_options.dart'; // DefaultFirebaseOptions (Missing in workspace)
 import 'core/theme/app_theme.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login/login_screen.dart';
@@ -12,19 +15,73 @@ import 'screens/setup/firebase_setup_screen.dart';
 import 'providers/auth_provider.dart';
 import 'screens/main/main_screen.dart';
 import 'services/persistence_service.dart';
-import 'services/firebase_switch_service.dart';
-import 'services/sound_service.dart'; // Added
-import 'services/haptic_service.dart'; // Added
+
+import 'services/sound_service.dart';
+import 'services/haptic_service.dart';
 import 'providers/switch_provider.dart';
 import 'providers/immersive_provider.dart';
 import 'providers/animation_provider.dart';
+import 'providers/sound_settings_provider.dart'; // Fixed
+import 'providers/voice_provider.dart';
+import 'widgets/common/restart_widget.dart'; // Added
+import 'services/performance_service.dart'; // Added
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Unlock High Refresh Rate (120Hz/240Hz)
+  // Preload critical settings for instant startup response
+  final prefs = await SharedPreferences.getInstance();
+  final voiceEnabled = prefs.getBool('voice_enabled') ?? true;
+
+  final soundSettings = SoundSettings(
+    masterSound: prefs.getBool('master_sound') ?? true,
+    appOpeningSound: prefs.getBool('app_opening_sound') ?? true,
+    switchSound: prefs.getBool('switch_sound') ?? true,
+  );
+
+  // Auto-Tune Performance based on Device Capabilities
+  await PerformanceService.optimizeSettings();
+
+  // Initialize Audio
   try {
-    await FlutterRefreshRateControl().requestHighRefreshRate();
+    await SoLoud.instance.init();
+  } catch (e) {
+    debugPrint("Audio Init Error: $e");
+  }
+
+  // Initialize Firebase
+  try {
+    // Check if default options are available (commented out due to missing file)
+    /*
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    */
+    // Fallback: If no options, try init without options (sometimes works on Android if google-services.json is present)
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Firebase Init Error (Default): $e");
+  }
+
+  // Unlock Maximum High Refresh Rate (Aggressive)
+  try {
+    await FlutterDisplayMode.setHighRefreshRate(); // Try standard first
+
+    // Aggressive override to find absolute max (e.g., 144Hz vs 120Hz)
+    final modes = await FlutterDisplayMode.supported;
+    final current = await FlutterDisplayMode.active;
+
+    // Convert to set to remove duplicates, then list to sort
+    final sortedModes = modes.toSet().toList()
+      ..sort((a, b) => b.refreshRate.compareTo(a.refreshRate));
+
+    if (sortedModes.isNotEmpty) {
+      final maxMode = sortedModes.first;
+      if (maxMode.refreshRate > current.refreshRate) {
+        await FlutterDisplayMode.setPreferredMode(maxMode);
+        debugPrint("Forced Max FPS: ${maxMode.refreshRate}Hz");
+      }
+    }
   } catch (e) {
     debugPrint("Error setting high refresh rate: $e");
   }
@@ -79,8 +136,16 @@ void main() async {
             initialUi: initialUi,
           ),
         ),
+        // Fix for startup voice bug: Seed with preloaded value
+        voiceEnabledProvider.overrideWith((ref) => VoiceNotifier(voiceEnabled)),
+        // Fix for startup sound config
+        soundSettingsProvider.overrideWith((ref) {
+          final notifier = SoundSettingsNotifier();
+          notifier.seed(soundSettings);
+          return notifier;
+        }),
       ],
-      child: const NebulaCoreApp(),
+      child: const RestartWidget(child: NebulaCoreApp()),
     ),
   );
 }
@@ -168,7 +233,9 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
                   },
                 )
               : KeyedSubtree(
-                  key: const ValueKey('destination'),
+                  key: ValueKey(
+                    authState,
+                  ), // Key by logic state to ensure proper switching
                   child: destination,
                 ),
         ),
@@ -190,6 +257,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
           },
         );
       case UiTransitionAnimation.butterZoom:
+        // True Zoom transition
         return const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: ZoomPageTransitionsBuilder(),
@@ -197,6 +265,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
           },
         );
       case UiTransitionAnimation.fluidFade:
+        // Pure Fade transition for "Fluid" feel
         return const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
@@ -204,10 +273,11 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
           },
         );
       case UiTransitionAnimation.zeroLatency:
+        // Instant cut
         return const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-            TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.android: _NoTransitionBuilder(),
+            TargetPlatform.iOS: _NoTransitionBuilder(),
           },
         );
       default:
@@ -364,5 +434,20 @@ class SpringCurve extends Curve {
   double transformInternal(double t) {
     // Simple spring approximation
     return (1 - (1 - t) * (1 - t)).toDouble();
+  }
+}
+
+class _NoTransitionBuilder extends PageTransitionsBuilder {
+  const _NoTransitionBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
   }
 }

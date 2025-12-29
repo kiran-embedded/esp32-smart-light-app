@@ -15,6 +15,7 @@ import '../../widgets/common/google_assistant_dialog.dart';
 import '../../widgets/common/frosted_glass.dart';
 import '../../widgets/common/pixel_led_border.dart';
 import '../settings/settings_screen.dart';
+import '../../widgets/navigation/animated_nav_icon.dart'; // Added
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
 
@@ -117,37 +118,43 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ),
                 elevation: 0,
                 type: BottomNavigationBarType.fixed,
-                items: const [
+                items: [
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.dashboard_rounded, size: 22),
-                    activeIcon: Icon(
-                      Icons.dashboard_rounded,
-                      size: 22,
-                      shadows: [
-                        BoxShadow(color: Colors.greenAccent, blurRadius: 15),
-                      ],
+                    icon: const AnimatedNavIcon(
+                      icon: Icons.dashboard_rounded,
+                      isSelected: false,
+                      label: 'DASHBOARD',
+                    ),
+                    activeIcon: const AnimatedNavIcon(
+                      icon: Icons.dashboard_rounded,
+                      isSelected: true,
+                      label: 'DASHBOARD',
                     ),
                     label: 'DASHBOARD',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.grid_view_rounded, size: 22),
-                    activeIcon: Icon(
-                      Icons.grid_view_rounded,
-                      size: 22,
-                      shadows: [
-                        BoxShadow(color: Colors.greenAccent, blurRadius: 15),
-                      ],
+                    icon: const AnimatedNavIcon(
+                      icon: Icons.grid_view_rounded,
+                      isSelected: false,
+                      label: 'SWITCHES',
+                    ),
+                    activeIcon: const AnimatedNavIcon(
+                      icon: Icons.grid_view_rounded,
+                      isSelected: true,
+                      label: 'SWITCHES',
                     ),
                     label: 'SWITCHES',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.settings_suggest_rounded, size: 22),
-                    activeIcon: Icon(
-                      Icons.settings_suggest_rounded,
-                      size: 22,
-                      shadows: [
-                        BoxShadow(color: Colors.greenAccent, blurRadius: 15),
-                      ],
+                    icon: const AnimatedNavIcon(
+                      icon: Icons.settings_suggest_rounded,
+                      isSelected: false,
+                      label: 'SETTINGS',
+                    ),
+                    activeIcon: const AnimatedNavIcon(
+                      icon: Icons.settings_suggest_rounded,
+                      isSelected: true,
+                      label: 'SETTINGS',
                     ),
                     label: 'SETTINGS',
                   ),
