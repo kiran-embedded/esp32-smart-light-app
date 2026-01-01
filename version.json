@@ -1,5 +1,5 @@
 {
-  "version": "v1.2.0",
+  "version": "v1.2.0+13",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/app-release.apk",
   "release_notes": "• Lights 3.0: 10 New Matching Themes\n• Expanded Switch & Background Styles (20+ Total)\n• AI Auto-Tune (Design Advisor)\n• Dynamic Nav Icon Animations\n• Dashboard UI Perfection",
   "ota_version": "1.2.0",
