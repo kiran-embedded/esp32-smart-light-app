@@ -1,19 +1,22 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../providers/animation_provider.dart';
 
-class CinematicSplashScreen extends StatefulWidget {
+class CinematicSplashScreen extends ConsumerStatefulWidget {
   final VoidCallback onFinished;
 
   const CinematicSplashScreen({super.key, required this.onFinished});
 
   @override
-  State<CinematicSplashScreen> createState() => _CinematicSplashScreenState();
+  ConsumerState<CinematicSplashScreen> createState() =>
+      _CinematicSplashScreenState();
 }
 
-class _CinematicSplashScreenState extends State<CinematicSplashScreen>
+class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _mainController;
 
@@ -29,9 +32,23 @@ class _CinematicSplashScreenState extends State<CinematicSplashScreen>
   @override
   void initState() {
     super.initState();
+    // Default duration, will be overridden in build/didChangeDependencies if needed,
+    // but better to initialize with a safe default.
     _mainController = AnimationController(vsync: this, duration: 4500.ms);
 
-    // Timing Setup
+    // We need to defer the provider reading to post-frame or build,
+    // but we can initialize controller config typically.
+    // However, to make it clean, we'll configure phases in a separate method called from initState & build.
+    _setupAnimations();
+
+    // Start animation is moved to AFTER build to respect provider settings
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _applySettingsAndStart();
+    });
+  }
+
+  void _setupAnimations() {
+    // Timing Setup - Base config
     _nebulaOpacity = CurvedAnimation(
       parent: _mainController,
       curve: const Interval(0.0, 0.15, curve: Curves.easeIn),
@@ -66,28 +83,68 @@ class _CinematicSplashScreenState extends State<CinematicSplashScreen>
       parent: _mainController,
       curve: const Interval(0.85, 1.0, curve: Curves.fastOutSlowIn),
     );
+  }
+
+  void _applySettingsAndStart() {
+    final settings = ref.read(animationSettingsProvider);
+
+    // Map the extensive list of animations to behavior buckets for the splash screen
+    // Ideally, each would have unique visuals, but for now we adjust timing/feel.
+    Duration duration;
+
+    switch (settings.launchType) {
+      // Fast / Instant types
+      case AppLaunchAnimation.cyberGlitch:
+      case AppLaunchAnimation.centerBurst:
+      case AppLaunchAnimation.pixelReveal:
+      case AppLaunchAnimation.elasticPop:
+      case AppLaunchAnimation.bladeRunner:
+        duration = 2000.ms;
+        break;
+
+      // Zero latency check (though this is technically UI transition,
+      // some might expect fast boot if they chose fast UI)
+
+      // Standard / Elegant types
+      case AppLaunchAnimation.iPhoneBlend:
+      case AppLaunchAnimation.bottomSpring:
+      case AppLaunchAnimation.glassDrop:
+      case AppLaunchAnimation.fluidWave:
+      case AppLaunchAnimation.ghostFade:
+      case AppLaunchAnimation.hologramRise:
+        duration = 3500.ms;
+        break;
+
+      // Cinematic / Long types
+      case AppLaunchAnimation.cinematicFade:
+      case AppLaunchAnimation.liquidReveal:
+      case AppLaunchAnimation.galaxySpiral:
+      case AppLaunchAnimation.neonPulse:
+      case AppLaunchAnimation.quantumTunnel:
+      default:
+        duration = 4500.ms;
+        break;
+    }
 
     final reducedMotion = MediaQuery.of(context).disableAnimations;
     if (reducedMotion) {
-      _mainController.duration = 1.seconds;
+      duration = 500.ms;
     }
+
+    _mainController.duration = duration;
     _mainController.forward().then((_) {
       if (mounted) widget.onFinished();
     });
 
-    // Suble haptic at boot pulse
-    Future.delayed(1200.ms, () {
+    // Suble haptic at boot pulse - scale time based on duration
+    Future.delayed(duration * 0.25, () {
       if (mounted) HapticFeedback.mediumImpact();
     });
 
     // OPENING SOUND EFFECT
-    // Trigger a distinct sound/haptic right before the splash ends
-    Future.delayed(_mainController.duration! - 500.ms, () {
+    Future.delayed(duration - 500.ms, () {
       if (mounted) {
-        // Heavy impact to simulate "Lock Unlock" click or "Engine Start"
         HapticFeedback.heavyImpact();
-        // If we had assets, we'd play 'assets/sounds/unlock.mp3' here via AudioPlayer
-        // For now, simulate closest system sound
         SystemSound.play(SystemSoundType.click);
       }
     });
@@ -112,20 +169,27 @@ class _CinematicSplashScreenState extends State<CinematicSplashScreen>
               // Scene 1: Nebula & Stars
               Opacity(
                 opacity: _nebulaOpacity.value * (1.0 - _transitionOut.value),
-                child: CustomPaint(
-                  painter: _NebulaPainter(
-                    time: _mainController.value,
-                    energyAmount: _energyCoreOpacity.value,
+                child: Transform.scale(
+                  scale: 1.0 + (0.5 * _transitionOut.value), // Zoom out effect
+                  child: CustomPaint(
+                    painter: _NebulaPainter(
+                      time: _mainController.value,
+                      energyAmount: _energyCoreOpacity.value,
+                    ),
                   ),
                 ),
               ),
 
-              // Scene 2: Energy Core
               Center(
                 child: Opacity(
-                  opacity: _energyCoreOpacity.value * (1.0 - _logoReveal.value),
+                  opacity:
+                      _energyCoreOpacity.value *
+                      (1.0 - _logoReveal.value) *
+                      (1.0 - _transitionOut.value),
                   child: Transform.scale(
-                    scale: 0.5 + (_energyCoreScale.value * 1.5),
+                    scale:
+                        (0.5 + (_energyCoreScale.value * 1.5)) *
+                        (1.0 + _transitionOut.value),
                     child: Container(
                       width: 300,
                       height: 300,

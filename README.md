@@ -11,6 +11,9 @@
 
 *A stunning Flutter application for controlling ESP32-based smart power grids with real-time Firebase synchronization, dynamic configuration, and AI-powered voice control.*
 
+### 🚀 Lights Release 3.0 is here!
+*10 New Matching Themes • AI Auto-Tune • Dynamic Nav Animations • 20+ Switch Styles*
+
 </div>
 
 ---
@@ -21,7 +24,9 @@
 - **🔌 Smart Relay Control** - Control up to 4 relays per ESP32 device with instant response
 - **🔥 Firebase Realtime Database** - 100% Firebase-based command/telemetry architecture
 - **⚡ Real-time Synchronization** - Bidirectional state updates with optimistic UI
-- **🎨 Premium UI/UX** - 8 Unique Switch Styles (Neon, Industrial, RGB, etc.) with 60fps animations
+- **🎨 Premium UI/UX** - 20+ Unique Switch Styles (Neon, Industrial, RGB, Holographic, Liquid Metal, etc.) with 60fps animations
+- **🌈 Dynamic Backgrounds** - 20+ Custom Painter backgrounds that react to switch states and themes
+- **🤖 AI Auto-Tune** - Design Advisor service for one-tap aesthetic optimization
 - **🔊 Zero-Latency Audio** - Instant sound effects for startup, tab switching, and toggles
 - **🤖 AI Voice Assistant** - Text-to-speech and speech recognition for hands-free control
 - **📊 Live Telemetry** - Real-time voltage, current, and power monitoring

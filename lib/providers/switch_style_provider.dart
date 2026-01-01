@@ -18,6 +18,16 @@ enum SwitchStyleType {
   bioOrganic, // 14
   crystalPrism, // 15
   voidAbyss, // 16
+  solarFlare,
+  electricTundra,
+  nanoCatalyst,
+  phantomVelvet,
+  prismFractal,
+  magmaCore,
+  cyberBloom,
+  voidRift,
+  starlightEcho,
+  aeroStream,
 }
 
 final switchStyleProvider =

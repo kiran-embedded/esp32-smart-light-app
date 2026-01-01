@@ -22,7 +22,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
   String? _errorMessage;
-  final TextEditingController _ipController = TextEditingController();
+
   String _sha1 = 'Loading...';
   String _sha256 = 'Loading...';
   String _packageName = 'Loading...';
@@ -55,7 +55,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
-    _ipController.dispose();
     super.dispose();
   }
 
@@ -106,28 +105,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception:', '').trim();
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _handleLocalSignIn() async {
-    final ip = _ipController.text.trim();
-    if (ip.isEmpty) {
-      setState(() => _errorMessage = 'Please enter an ESP32 IP address');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await ref.read(authProvider.notifier).signInLocally(ip);
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
         _isLoading = false;
       });
     }
@@ -186,7 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 24),
                           _buildGoogleSignInButton(context, theme),
                           const SizedBox(height: 16),
-                          _buildLocalModeInput(theme),
+
                           const SizedBox(height: 16),
                           Row(
                             children: [
@@ -334,7 +311,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 32),
                     _buildFingerprintInfo(theme),
                     const SizedBox(height: 16),
-                    _buildConnectionModeSelector(context, theme),
                   ],
                 ),
               ),
@@ -342,51 +318,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildLocalModeInput(ThemeData theme) {
-    return Column(
-      children: [
-        TextField(
-          controller: _ipController,
-          style: TextStyle(color: theme.colorScheme.onSurface),
-          decoration: InputDecoration(
-            hintText: 'ESP32 IP Address (e.g. 192.168.1.10)',
-            hintStyle: TextStyle(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
-            ),
-            prefixIcon: Icon(
-              Icons.wifi_tethering,
-              color: theme.colorScheme.onSurface,
-            ),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: theme.colorScheme.primary.withOpacity(0.3),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _handleLocalSignIn,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.secondary,
-              foregroundColor: theme.colorScheme.onSecondary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Connect Locally'),
-          ),
-        ),
-      ],
     );
   }
 
@@ -414,39 +345,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildConnectionModeSelector(BuildContext context, ThemeData theme) {
-    final mode = ref.watch(connectionModeProvider);
-
-    return FrostedGlass(
-      padding: const EdgeInsets.all(16),
-      radius: BorderRadius.circular(20),
-      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Connection Mode', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 12),
-          SegmentedButton<ConnectionMode>(
-            segments: const [
-              ButtonSegment(value: ConnectionMode.local, label: Text('Local')),
-              ButtonSegment(value: ConnectionMode.cloud, label: Text('Cloud')),
-              ButtonSegment(
-                value: ConnectionMode.hybrid,
-                label: Text('Hybrid'),
-              ),
-            ],
-            selected: {mode},
-            onSelectionChanged: (Set<ConnectionMode> newSelection) {
-              ref
-                  .read(connectionModeProvider.notifier)
-                  .setMode(newSelection.first);
-            },
-          ),
-        ],
       ),
     );
   }

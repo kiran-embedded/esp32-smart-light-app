@@ -2,22 +2,39 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/services.dart';
+
+import '../../services/haptic_service.dart';
 import '../../services/sound_service.dart';
+import '../../services/google_assistant_service.dart';
+import '../../services/user_activity_service.dart';
+
+import 'dart:async';
+import '../../services/firebase_switch_service.dart';
+import '../../providers/switch_provider.dart';
+
+import '../../providers/switch_schedule_provider.dart';
+import '../../providers/animation_provider.dart';
+import '../../providers/google_home_provider.dart';
+import '../../providers/live_info_provider.dart';
+
 import '../../widgets/robo/robo_assistant.dart';
 import '../../widgets/robo/robo_assistant.dart' as robo;
 import '../../widgets/live_info/time_date_widget.dart';
 import '../../widgets/live_info/status_card.dart';
 import '../../widgets/switch_grid/switch_grid.dart';
-import '../../services/google_assistant_service.dart';
-import '../../providers/google_home_provider.dart';
-import '../../providers/live_info_provider.dart';
-import '../../widgets/common/google_assistant_dialog.dart';
+import '../../widgets/voice/voice_assistant_overlay.dart';
 import '../../widgets/common/frosted_glass.dart';
 import '../../widgets/common/pixel_led_border.dart';
+import '../../widgets/common/switch_tab_background.dart';
+import '../../widgets/common/no_internet_widget.dart';
+import '../../widgets/navigation/animated_nav_icon.dart';
+import '../../widgets/scheduling/scheduling_sheet.dart';
+import '../../widgets/common/premium_app_bar.dart';
+
 import '../settings/settings_screen.dart';
-import '../../widgets/navigation/animated_nav_icon.dart'; // Added
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter/services.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -26,20 +43,98 @@ class MainScreen extends ConsumerStatefulWidget {
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends ConsumerState<MainScreen> {
+class _MainScreenState extends ConsumerState<MainScreen>
+    with WidgetsBindingObserver {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  bool _ignoreOffline = false;
+
+  Timer? _schedulerTimer;
+  final Map<String, DateTime> _lastFiredSchedules = {};
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    ref.read(userActivityServiceProvider);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       robo.triggerRoboReaction(ref, robo.RoboReaction.wakeUp);
-      // Delayed check to ensure audio engine is ready and user interaction context is set
       Future.delayed(const Duration(milliseconds: 500), () {
         ref.read(soundServiceProvider).playStartup();
       });
     });
+
+    // Foreground Scheduler (Fallback "AI" Logic)
+    _schedulerTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _checkSchedules();
+    });
+  }
+
+  void _checkSchedules() {
+    final now = DateTime.now();
+    final schedules = ref.read(switchScheduleProvider);
+    final switchService = ref.read(firebaseSwitchServiceProvider);
+
+    for (final schedule in schedules) {
+      if (!schedule.isEnabled) continue;
+
+      // Check Time Match (Hour & Minute)
+      if (schedule.hour == now.hour && schedule.minute == now.minute) {
+        // Check Day Match (if specific days selected)
+        if (schedule.days.isNotEmpty && !schedule.days.contains(now.weekday)) {
+          continue;
+        }
+
+        // Check if already fired strictly within this minute
+        final lastFired = _lastFiredSchedules[schedule.id];
+        if (lastFired != null &&
+            lastFired.year == now.year &&
+            lastFired.month == now.month &&
+            lastFired.day == now.day &&
+            lastFired.hour == now.hour &&
+            lastFired.minute == now.minute) {
+          continue; // Already fired this minute
+        }
+
+        // FIRE COMMAND: 0=ON, 1=OFF (Active Low)
+        final commandValue = schedule.targetState ? 0 : 1;
+        switchService.sendCommand(schedule.relayId, commandValue);
+
+        // Mark as fired
+        _lastFiredSchedules[schedule.id] = now;
+
+        print(
+          'Foreground Scheduler: Executed ${schedule.relayId} -> ${schedule.targetState}',
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pageController.dispose();
+    _schedulerTimer?.cancel();
+    super.dispose();
+  }
+
+  // ... (rest of class)
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {
+        _ignoreOffline = true;
+      });
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            _ignoreOffline = false;
+          });
+        }
+      });
+    }
   }
 
   void _onPageChanged(int index) {
@@ -49,126 +144,177 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   void _onBottomNavTapped(int index) {
-    if (_currentPage != index) {
-      ref.read(soundServiceProvider).playTabSwitch();
+    if (_currentPage == index) return;
+
+    HapticService.selection();
+    ref.read(soundServiceProvider).playTabSwitch();
+
+    // Trigger Look/Blink
+    robo.triggerRoboReaction(ref, robo.RoboReaction.blink);
+
+    setState(() => _currentPage = index);
+
+    // Apply User's Fluidity Setting
+    final animSettings = ref.read(animationSettingsProvider);
+
+    if (animSettings.uiType == UiTransitionAnimation.zeroLatency) {
+      // Instant snap
+      _pageController.jumpToPage(index);
+    } else {
+      // Dynamic curves based on selection
+      Curve curve = Curves.easeOut;
+      Duration duration = const Duration(milliseconds: 300);
+
+      switch (animSettings.uiType) {
+        case UiTransitionAnimation.iOSSlide:
+        case UiTransitionAnimation.iosExactSlide:
+          curve = Curves.fastLinearToSlowEaseIn; // classic iOS push feel
+          duration = const Duration(milliseconds: 400);
+          break;
+        case UiTransitionAnimation.butterZoom:
+          curve = Curves.easeInOutCubic;
+          duration = const Duration(milliseconds: 350);
+          break;
+        case UiTransitionAnimation.elasticSnap:
+          curve = Curves.elasticOut;
+          duration = const Duration(milliseconds: 600);
+          break;
+        case UiTransitionAnimation.fluidFade:
+          curve = Curves.easeOutQuad;
+          break;
+        default:
+          curve = Curves.fastOutSlowIn;
+      }
+
+      _pageController.animateToPage(index, duration: duration, curve: curve);
     }
-    setState(() {
-      _currentPage = index;
-    });
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.fastLinearToSlowEaseIn, // iOS-like friction/spring feel
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBody: true,
-      bottomNavigationBar: _buildBottomNav(theme)
-          .animate()
-          .fadeIn(delay: 400.ms, duration: 400.ms)
-          .slideY(begin: 0.5, end: 0, curve: Curves.easeOutCubic),
-      body: SafeArea(
-        bottom: false,
-        child: PageView(
-          controller: _pageController,
-          onPageChanged: _onPageChanged,
-          physics: const BouncingScrollPhysics(),
-          children: const [DashboardView(), ControlView(), SettingsScreen()],
-        ),
-      ),
+    return StreamBuilder<DatabaseEvent>(
+      stream: FirebaseDatabase.instance.ref('.info/connected').onValue,
+      builder: (context, snapshot) {
+        final isConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
+
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBody: true,
+          bottomNavigationBar: _buildBottomNav(theme),
+          body: Stack(
+            children: [
+              // Base Layer (Solid Black Void)
+              Positioned.fill(child: ColoredBox(color: Colors.black)),
+
+              // Background Layer - Restored below header
+              Positioned.fill(
+                top:
+                    85 +
+                    MediaQuery.of(
+                      context,
+                    ).padding.top, // Start strictly at grid level
+                child: ClipRect(
+                  // Force clip to prevent particle bleeding
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                    opacity: _currentPage == 1 ? 1.0 : 0.0,
+                    child: const SwitchTabBackground(child: SizedBox.expand()),
+                  ),
+                ),
+              ),
+
+              // Content Layer
+              SafeArea(
+                bottom: false,
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: _onPageChanged,
+                  physics: const BouncingScrollPhysics(),
+                  children: const [
+                    DashboardView(),
+                    ControlView(),
+                    SettingsScreen(),
+                  ],
+                ),
+              ),
+
+              // No Internet Overlay
+              if (!isConnected && !_ignoreOffline)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.8),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: NoInternetWidget(
+                        onRetry: () => HapticService.selection(),
+                      ),
+                    ),
+                  ).animate().fadeIn(duration: 300.ms),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildBottomNav(ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.8),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.1), width: 0.5),
+          top: BorderSide(
+            color: theme.colorScheme.primary.withOpacity(0.2),
+            width: 1.5,
+          ),
         ),
       ),
-      child: ClipRect(
-        child: RepaintBoundary(
-          // Cache the blur
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 45, sigmaY: 45), // Unified blur
-            child: Container(
-              color: Colors.black.withOpacity(0.8),
-              child: BottomNavigationBar(
-                currentIndex: _currentPage,
-                onTap: _onBottomNavTapped,
-                backgroundColor: Colors.transparent,
-                selectedItemColor: theme.colorScheme.primary,
-                unselectedItemColor: Colors.white.withOpacity(0.3),
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
-                selectedLabelStyle: GoogleFonts.outfit(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-                unselectedLabelStyle: GoogleFonts.outfit(
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                ),
-                elevation: 0,
-                type: BottomNavigationBarType.fixed,
-                items: [
-                  BottomNavigationBarItem(
-                    icon: const AnimatedNavIcon(
-                      icon: Icons.dashboard_rounded,
-                      isSelected: false,
-                      label: 'DASHBOARD',
-                    ),
-                    activeIcon: const AnimatedNavIcon(
-                      icon: Icons.dashboard_rounded,
-                      isSelected: true,
-                      label: 'DASHBOARD',
-                    ),
-                    label: 'DASHBOARD',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const AnimatedNavIcon(
-                      icon: Icons.grid_view_rounded,
-                      isSelected: false,
-                      label: 'SWITCHES',
-                    ),
-                    activeIcon: const AnimatedNavIcon(
-                      icon: Icons.grid_view_rounded,
-                      isSelected: true,
-                      label: 'SWITCHES',
-                    ),
-                    label: 'SWITCHES',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const AnimatedNavIcon(
-                      icon: Icons.settings_suggest_rounded,
-                      isSelected: false,
-                      label: 'SETTINGS',
-                    ),
-                    activeIcon: const AnimatedNavIcon(
-                      icon: Icons.settings_suggest_rounded,
-                      isSelected: true,
-                      label: 'SETTINGS',
-                    ),
-                    label: 'SETTINGS',
-                  ),
-                ],
-              ),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          height: 65,
+          child: BottomNavigationBar(
+            currentIndex: _currentPage,
+            onTap: _onBottomNavTapped,
+            backgroundColor: Colors.transparent,
+            selectedItemColor: theme.colorScheme.primary,
+            unselectedItemColor: Colors.white.withOpacity(0.3),
+            showSelectedLabels: true,
+            showUnselectedLabels: false,
+            selectedLabelStyle: GoogleFonts.outfit(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
             ),
+            elevation: 0,
+            type: BottomNavigationBarType.fixed,
+            items: [
+              _buildNavItem(Icons.dashboard_rounded, 'CORE', 0),
+              _buildNavItem(Icons.grid_view_rounded, 'GRID', 1),
+              _buildNavItem(Icons.settings_suggest_rounded, 'SETUP', 2),
+            ],
           ),
         ),
       ),
     );
   }
-}
 
-// ---- EXTRACTED WIDGETS TO PREVENT LAG ----
+  BottomNavigationBarItem _buildNavItem(
+    IconData icon,
+    String label,
+    int index,
+  ) {
+    return BottomNavigationBarItem(
+      icon: AnimatedNavIcon(icon: icon, isSelected: false, label: label),
+      activeIcon: AnimatedNavIcon(icon: icon, isSelected: true, label: label),
+      label: label,
+    );
+  }
+}
 
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
@@ -178,131 +324,143 @@ class DashboardView extends ConsumerWidget {
     final theme = Theme.of(context);
     final liveInfo = ref.watch(liveInfoProvider);
     final systemState = liveInfo.acVoltage > 0
-        ? "Power Active\nProtection On"
-        : "System Standby\nWaiting for Power";
+        ? "GRID SYNC ACTIVE\nNebula Protection Enabled"
+        : "GRID OFFLINE\nMonitoring Power State";
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 120.0, top: 20),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                        children: [
-                          Text(
-                            'NEBULA',
-                            style: GoogleFonts.outfit(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 2,
-                              color: theme.colorScheme.primary.withOpacity(0.8),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Icon(
-                                Icons.wifi_rounded,
-                                size: 18,
-                                color: theme.colorScheme.primary.withOpacity(
-                                  0.6,
-                                ),
-                              )
-                              .animate(
-                                onPlay: (controller) =>
-                                    controller.repeat(reverse: true),
-                              )
-                              .fadeOut(
-                                duration: 1000.ms,
-                                begin: 1.0,
-                                curve: Curves.easeInOut,
-                              )
-                              .scale(
-                                begin: const Offset(0.9, 0.9),
-                                end: const Offset(1.1, 1.1),
-                              ),
-                        ],
-                      )
-                      .animate()
-                      .fadeIn(delay: 200.ms, duration: 400.ms)
-                      .slideX(begin: -0.2, end: 0),
-                  _EnvironmentInfo(
-                        // Extracted locally
-                        theme: theme,
-                        temp: liveInfo.temperature,
-                        iconName: liveInfo.weatherIcon,
-                      )
-                      .animate()
-                      .fadeIn(delay: 300.ms, duration: 400.ms)
-                      .slideX(begin: 0.2, end: 0),
+    return Stack(
+      children: [
+        // Content with dynamic spacing
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                const SizedBox(height: 65), // Account for App Bar
+                const Spacer(flex: 1), // Top breathing room
+                const RoboAssistant(eyesOnly: true, autoTuneEnabled: false),
+                const Spacer(flex: 1),
+                const TimeDateWidget(),
+                const Spacer(flex: 1),
+                StatusCard(
+                  voltage: liveInfo.acVoltage,
+                  systemState: systemState,
+                ),
+                const Spacer(flex: 2), // LARGER gap to push buttons lower
+                const _ActionButtons(),
+                const Spacer(flex: 1), // Bottom breathing room
+              ],
+            ),
+          ),
+        ),
+
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: PremiumAppBar(
+            title: Text(
+              'NEBULA CORE',
+              style: GoogleFonts.outfit(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+                color: theme.colorScheme.primary,
+                shadows: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 0),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            const Center(child: RoboAssistant(eyesOnly: true))
-                .animate()
-                .fadeIn(delay: 400.ms, duration: 600.ms)
-                .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1)),
-            const SizedBox(height: 30),
-            const TimeDateWidget()
-                .animate()
-                .fadeIn(delay: 150.ms, duration: 600.ms)
-                .slideY(begin: 0.2, end: 0),
-            const SizedBox(height: 40),
-            StatusCard(voltage: liveInfo.acVoltage, systemState: systemState)
-                .animate()
-                .fadeIn(delay: 500.ms, duration: 500.ms)
-                .shimmer(
-                  duration: 800.ms,
-                  color: Colors.white.withOpacity(0.1),
-                ),
-            const SizedBox(height: 30),
-            const _ActionButtons() // Extracted
-                .animate()
-                .fadeIn(delay: 600.ms, duration: 500.ms)
-                .slideY(begin: 0.1, end: 0),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ControlView extends StatelessWidget {
-  const ControlView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Row(
-            children: [
-              Text(
-                'Smart Control',
-                style: GoogleFonts.outfit(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
+            trailing: _EnvironmentInfo(
+              theme: theme,
+              temp: liveInfo.temperature,
+              iconName: liveInfo.weatherIcon,
+            ),
           ),
         ),
-        const SizedBox(height: 10),
-        Expanded(child: const SwitchGrid().animate().fadeIn(duration: 400.ms)),
       ],
     );
   }
 }
 
+class ControlView extends ConsumerStatefulWidget {
+  const ControlView({super.key});
+
+  @override
+  ConsumerState<ControlView> createState() => _ControlViewState();
+}
+
+class _ControlViewState extends ConsumerState<ControlView> {
+  bool _isInitComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // No artificial delay for instant switch accessibility
+    _isInitComplete = true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Consistent spacing strategy
+    final topPadding = MediaQuery.of(context).padding.top;
+    final contentTopPadding = topPadding + 65 + 20;
+
+    return Stack(
+      children: [
+        if (!_isInitComplete)
+          Center(
+            child: Container(
+              width: double.infinity,
+              height: 300,
+              margin: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          )
+        else
+          Padding(
+            padding: EdgeInsets.only(
+              top: contentTopPadding, // Aligned with Dashboard
+            ),
+            child: ClipRect(child: SwitchGrid()),
+          ),
+
+        // PREMIUM APP BAR
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: PremiumAppBar(
+            title: Text(
+              'SMART SWITCHES',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+                color: const Color(0xFF00E5FF), // Neon Cyan
+                shadows: [
+                  BoxShadow(
+                    color: const Color(0xFF00E5FF).withOpacity(0.4),
+                    blurRadius: 10,
+                    offset: const Offset(0, 0),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Fixed spacing for Environment Info to look premium
 class _EnvironmentInfo extends StatelessWidget {
   final ThemeData theme;
   final double temp;
@@ -316,29 +474,40 @@ class _EnvironmentInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    IconData icon;
-    if (iconName.contains('Sun'))
-      icon = Icons.wb_sunny_rounded;
-    else if (iconName.contains('Cloud'))
-      icon = Icons.cloud;
-    else if (iconName.contains('Moon'))
-      icon = Icons.nights_stay_rounded;
-    else
-      icon = Icons.wb_sunny_rounded;
+    IconData icon = iconName.contains('Sun')
+        ? Icons.wb_sunny_rounded
+        : iconName.contains('Cloud')
+        ? Icons.cloud
+        : iconName.contains('Moon')
+        ? Icons.nights_stay_rounded
+        : Icons.wb_sunny_rounded;
 
-    return Row(
-      children: [
-        Icon(icon, color: theme.colorScheme.secondary, size: 20),
-        const SizedBox(width: 8),
-        Text(
-          '${temp.toStringAsFixed(1)}°C',
-          style: GoogleFonts.roboto(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: theme.colorScheme.onSurface.withOpacity(0.8),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: theme.colorScheme.secondary,
+            size: 16,
+          ), // Smaller icon
+          const SizedBox(width: 8),
+          Text(
+            '${temp.toStringAsFixed(1)}°C',
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withOpacity(0.9),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -376,9 +545,12 @@ class _ActionButtons extends ConsumerWidget {
               theme: theme,
               activeColor: Colors.orangeAccent,
               onTap: () async {
-                await showDialog(
+                await showModalBottomSheet(
                   context: context,
-                  builder: (context) => const GoogleAssistantDialog(),
+                  backgroundColor: Colors.transparent,
+                  barrierColor: Colors.transparent, // Removed blur barrier
+                  isScrollControlled: true,
+                  builder: (context) => const VoiceAssistantOverlay(),
                 );
               },
             ),
@@ -477,14 +649,9 @@ class _GlassButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: PixelLedBorder(
-        colors: isActive
-            ? [
-                activeColor,
-                Colors.white,
-                activeColor.withOpacity(0.5),
-                Colors.white,
-              ]
-            : [Colors.white24, Colors.white10, Colors.white24, Colors.white10],
+        enableInfiniteRainbow: true,
+        duration: const Duration(seconds: 4),
+        colors: const [],
         child: FrostedGlass(
           padding: const EdgeInsets.symmetric(vertical: 16),
           radius: BorderRadius.circular(20),

@@ -8,7 +8,6 @@ import '../../widgets/robo/robo_assistant.dart' as robo;
 import '../../models/switch_device.dart';
 import '../../core/constants/app_constants.dart';
 import 'switch_tile.dart';
-import '../../core/theme/app_theme.dart';
 
 class SwitchGrid extends ConsumerWidget {
   const SwitchGrid({super.key});
@@ -87,21 +86,28 @@ class SwitchGrid extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _AdvancedBottomSheet(device: device, ref: ref),
+      builder: (context) => _AdvancedBottomSheet(deviceIdOnly: device),
     );
   }
 }
 
-class _AdvancedBottomSheet extends StatelessWidget {
-  final SwitchDevice device;
-  final WidgetRef ref;
+class _AdvancedBottomSheet extends ConsumerWidget {
+  final SwitchDevice deviceIdOnly; // We only hold ID/Basic info, look up rest
+  // Actually, better to look up the fresh device from provider using ID
 
-  const _AdvancedBottomSheet({required this.device, required this.ref});
+  const _AdvancedBottomSheet({required this.deviceIdOnly});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Look up the LATEST device state
+    final devices = ref.watch(switchDevicesProvider);
+    final device = devices.firstWhere(
+      (d) => d.id == deviceIdOnly.id,
+      orElse: () => deviceIdOnly,
+    );
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: MediaQuery.of(context).size.height * 0.45,
       decoration: const BoxDecoration(
         color: Color(0xFF121212),
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -140,7 +146,6 @@ class _AdvancedBottomSheet extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
             onTap: () {
-              Navigator.pop(context);
               _showRename(
                 context,
                 'Rename Nickname',
@@ -175,7 +180,6 @@ class _AdvancedBottomSheet extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
             onTap: () {
-              Navigator.pop(context);
               _showRename(context, 'Rename Hardware', device.name, (val) async {
                 try {
                   await ref
@@ -196,6 +200,7 @@ class _AdvancedBottomSheet extends StatelessWidget {
               });
             },
           ),
+
           const Divider(color: Colors.white24),
           ListTile(
             leading: const Icon(

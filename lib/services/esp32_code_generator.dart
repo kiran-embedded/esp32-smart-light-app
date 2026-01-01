@@ -160,175 +160,474 @@ class Esp32CodeGenerator {
     final buffer = StringBuffer();
     final totalRelays = devices.length;
 
-    buffer.writeln('/*');
-    buffer.writeln(
-      ' * NEBULA CORE – ESP32 $totalRelays-Relay (Firebase Control)',
-    );
-    buffer.writeln(' * --------------------------------------------');
-    buffer.writeln(' * App  → Firebase (commands)');
-    buffer.writeln(' * ESP32 → Firebase (telemetry)');
-    buffer.writeln(' * Auto-generated for $totalRelays switch(es)');
-    buffer.writeln(' */');
-    buffer.writeln('');
-    buffer.writeln('#include <WiFi.h>');
-    buffer.writeln('#include <Firebase_ESP_Client.h>');
-    buffer.writeln('#include <ArduinoJson.h>');
-    buffer.writeln('');
-    buffer.writeln('#include "addons/TokenHelper.h"');
-    buffer.writeln('#include "addons/RTDBHelper.h"');
-    buffer.writeln('');
-    buffer.writeln('// ================== WIFI ==================');
-    buffer.writeln('#define WIFI_SSID "$wifiSsid"');
-    buffer.writeln('#define WIFI_PASS "$wifiPassword"');
-    buffer.writeln('');
-    buffer.writeln('// ================== FIREBASE ==================');
-    buffer.writeln('#define API_KEY "$firebaseApiKey"');
-    buffer.writeln('#define DATABASE_URL "$firebaseDatabaseUrl"');
-    buffer.writeln('');
-    buffer.writeln('// ================== PINS ==================');
+    // Use user's preferred robust firmware template + WebServer additions
+    buffer.write('''
+/*
+ * NEBULA CORE – HYBRID SYSTEM (PRO LED + DIRECT HTTP)
+ * ---------------------------------------------------
+ * GREEN: Server Heartbeat (Brief blip every 2s) -> System OK
+ * RED:   Double-Flash Alert -> Error/No Internet
+ * BLUE:  Instant Flash -> Switch Activity
+ * WHITE/CYAN: Web Server Request
+ */
+
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
+
+/* ================= CONFIGURATION ================= */
+#define WIFI_SSID "$wifiSsid"
+#define WIFI_PASS "$wifiPassword"
+
+// OTA Credentials
+#define OTA_HOSTNAME "Nebula-Core-ESP32"
+#define OTA_PASSWORD "admin"
+
+// Firebase
+#define API_KEY      "$firebaseApiKey"
+#define DATABASE_URL "$firebaseDatabaseUrl"
+
+/* ================= PIN DEFINITIONS ================= */
+''');
+
     for (int i = 0; i < devices.length; i++) {
       buffer.writeln('#define RELAY${i + 1} ${devices[i].gpioPin}');
     }
-    buffer.writeln('#define VOLTAGE_SENSOR 34');
-    buffer.writeln('');
-    buffer.writeln('// ================== OBJECTS ==================');
-    buffer.writeln('FirebaseData fbdo;');
-    buffer.writeln('FirebaseData fbStream;');
-    buffer.writeln('FirebaseAuth auth;');
-    buffer.writeln('FirebaseConfig config;');
-    buffer.writeln('');
-    buffer.writeln('String deviceId;');
-    buffer.writeln(
-      'bool relayState[$totalRelays] = {${List.filled(totalRelays, '0').join(', ')}};',
-    );
-    buffer.writeln('');
-    buffer.writeln('unsigned long lastTelemetry = 0;');
-    buffer.writeln('const unsigned long telemetryInterval = 5000;');
-    buffer.writeln('');
-    buffer.writeln('// ================== WIFI ==================');
-    buffer.writeln('void connectWiFi() {');
-    buffer.writeln('  if (WiFi.status() == WL_CONNECTED) return;');
-    buffer.writeln('  WiFi.begin(WIFI_SSID, WIFI_PASS);');
-    buffer.writeln('  while (WiFi.status() != WL_CONNECTED) delay(300);');
-    buffer.writeln('}');
-    buffer.writeln('');
-    buffer.writeln(
-      '// ================== VOLTAGE (OPTIONAL) ==================',
-    );
-    buffer.writeln('float readACVoltage() {');
-    buffer.writeln('  int minV = 4095, maxV = 0;');
-    buffer.writeln('  for (int i = 0; i < 600; i++) {');
-    buffer.writeln('    int v = analogRead(VOLTAGE_SENSOR);');
-    buffer.writeln('    minV = min(minV, v);');
-    buffer.writeln('    maxV = max(maxV, v);');
-    buffer.writeln('    delayMicroseconds(120);');
-    buffer.writeln('  }');
-    buffer.writeln('  float ptp = (maxV - minV) * (3.3 / 4095.0);');
-    buffer.writeln('  float rms = (ptp / 2.0) * 0.707 * 100.0;');
-    buffer.writeln('  if (rms < 10) rms = 0;');
-    buffer.writeln('  return rms;');
-    buffer.writeln('}');
-    buffer.writeln('');
-    buffer.writeln('// ================== FIREBASE STREAM ==================');
-    buffer.writeln('void startFirebaseStream() {');
-    buffer.writeln('  String path = "/devices/" + deviceId + "/commands";');
-    buffer.writeln('  Firebase.RTDB.beginStream(&fbStream, path.c_str());');
-    buffer.writeln('  Serial.println("Firebase command stream started");');
-    buffer.writeln('}');
-    buffer.writeln('');
-    buffer.writeln('// ================== HANDLE COMMANDS ==================');
-    buffer.writeln('void handleFirebaseCommands() {');
-    buffer.writeln('  if (!Firebase.RTDB.readStream(&fbStream)) return;');
-    buffer.writeln('  if (!fbStream.streamAvailable()) return;');
-    buffer.writeln('');
-    buffer.writeln('  String path = fbStream.dataPath();');
-    buffer.writeln('  Serial.print("CMD ");');
-    buffer.writeln('  Serial.print(path);');
-    buffer.writeln('  Serial.print(" -> ");');
-    buffer.writeln('');
-    buffer.writeln('  // FULL SYNC');
-    buffer.writeln('  if (path == "/") {');
-    buffer.writeln('    FirebaseJson &json = fbStream.jsonObject();');
-    buffer.writeln('    FirebaseJsonData d;');
-    for (int i = 0; i < totalRelays; i++) {
-      buffer.writeln(
-        '    if (json.get(d, "relay${devices[i].id}")) relayState[$i] = d.intValue;',
-      );
+
+    buffer.write('''
+#define VOLTAGE_SENSOR 34
+
+// RGB Status LED (Common Cathode)
+#define LED_PIN_RED   19
+#define LED_PIN_GREEN 16
+#define LED_PIN_BLUE  17
+
+/* ================= AC CALIBRATION ================= */
+#define ADC_MAX 4095.0
+#define VREF 3.3
+float calibrationFactor = 313.3; 
+
+/* ================= RMS & SMOOTHING ================= */
+#define P2P_THRESHOLD 60
+#define RMS_THRESHOLD 0.020
+#define SMOOTHING_ALPHA 0.1 
+
+/* ================= TELEMETRY SETTINGS ================= */
+#define REPORT_INTERVAL 10000     // 10 Seconds normal interval
+#define VOLTAGE_DELTA 3.0         // 3 Volts change
+
+/* ================= LED TIMING CONFIG ================= */
+#define BLINK_FAST    200
+#define BLINK_MEDIUM  400
+#define BLINK_SLOW    700
+#define FLASH_DUR     100
+
+/* ================= OBJECTS & GLOBALS ================= */
+FirebaseData fbTele;
+FirebaseData fbStream;
+FirebaseAuth auth;
+FirebaseConfig config;
+WebServer server(80); // Direct HTTP Server
+
+String deviceId;
+bool relayState[$totalRelays] = {${List.filled(totalRelays, '0').join(', ')}};
+bool updateRelays = false;    // Trigger hardware update
+bool forceTelemetry = false;  // Trigger immediate upload
+
+volatile float sharedVoltage = 0.0;
+
+unsigned long lastTelemetryTime = 0;
+float lastReportedVoltage = 0;
+unsigned long lastStreamKeepAlive = 0;
+
+// LED State Variables
+enum SystemState {
+  STATE_IDLE,
+  STATE_WIFI_CONNECTING,
+  STATE_WIFI_CONNECTED,
+  STATE_FIREBASE_CONNECTING,
+  STATE_FIREBASE_CONNECTED,
+  STATE_FIREBASE_DISCONNECTED,
+  STATE_OTA_UPDATING 
+};
+
+SystemState currentLedState = STATE_IDLE;
+unsigned long lastBlinkTime = 0;
+bool blinkState = false; 
+bool isFlashing = false;
+bool isOTAActive = false; 
+unsigned long flashStartTime = 0;
+
+/* ================= LED SYSTEM FUNCTIONS ================= */
+
+// Helper: Set RGB Color (One at a time)
+void setRGB(bool r, bool g, bool b) {
+  digitalWrite(LED_PIN_RED, r);
+  digitalWrite(LED_PIN_GREEN, g);
+  digitalWrite(LED_PIN_BLUE, b);
+}
+
+// Trigger: Call this on user interaction
+void triggerActivityLED() {
+  if (isOTAActive) return; 
+  isFlashing = true;
+  flashStartTime = millis();
+  // INSTANT BLUE FLASH
+  setRGB(LOW, LOW, HIGH); 
+}
+
+// Logic: Determine current system status
+void updateSystemState() {
+  if (isOTAActive) {
+    currentLedState = STATE_OTA_UPDATING;
+    return;
+  }
+  
+  if (WiFi.status() != WL_CONNECTED) {
+    currentLedState = STATE_WIFI_CONNECTING;
+  }
+  else if (Firebase.ready()) {
+    currentLedState = STATE_FIREBASE_CONNECTED;
+  } 
+  else if (auth.token.uid == "") {
+     currentLedState = STATE_FIREBASE_CONNECTING;
+  }
+  else {
+    currentLedState = STATE_FIREBASE_DISCONNECTED;
+  }
+}
+
+// Logic: Drive the LED based on status
+void loopLED() {
+  unsigned long currentMillis = millis();
+  updateSystemState();
+
+  // 1. OTA Override -> FAST RED STROBE (Warning: Updating)
+  if (currentLedState == STATE_OTA_UPDATING) {
+    if ((currentMillis % 100) < 50) setRGB(HIGH, LOW, LOW);
+    else setRGB(LOW, LOW, LOW);
+    return;
+  }
+
+  // 2. Activity Flash Override -> SOLID BLUE
+  if (isFlashing) {
+    if (currentMillis - flashStartTime >= FLASH_DUR) {
+      isFlashing = false; 
+    } else {
+      setRGB(LOW, LOW, HIGH); 
+      return; 
     }
-    buffer.writeln('    Serial.println("FULL SYNC");');
-    buffer.writeln('  }');
-    buffer.writeln('  // SINGLE RELAY');
-    buffer.writeln('  else {');
-    buffer.writeln('    int v = fbStream.intData();');
-    buffer.writeln('    Serial.println(v);');
-    for (int i = 0; i < totalRelays; i++) {
-      buffer.writeln(
-        '    if (path == "/relay${devices[i].id}") relayState[$i] = v;',
-      );
+  }
+
+  // 3. Base State Animation
+  switch (currentLedState) {
+    case STATE_WIFI_CONNECTING: // Blue Fast Blink
+      if (currentMillis - lastBlinkTime >= BLINK_FAST) {
+        lastBlinkTime = currentMillis;
+        blinkState = !blinkState;
+        setRGB(LOW, LOW, blinkState ? HIGH : LOW);
+      }
+      break;
+
+    case STATE_FIREBASE_CONNECTING: // Blue Medium Blink
+      if (currentMillis - lastBlinkTime >= BLINK_MEDIUM) {
+        lastBlinkTime = currentMillis;
+        blinkState = !blinkState;
+        setRGB(LOW, LOW, blinkState ? HIGH : LOW);
+      }
+      break;
+
+    case STATE_FIREBASE_CONNECTED: // GREEN HEARTBEAT
+      // Blips Green ON for 100ms every 2000ms (System OK)
+      if ((currentMillis % 2000) < 100) {
+        setRGB(LOW, HIGH, LOW); 
+      } else {
+        setRGB(LOW, LOW, LOW);  
+      }
+      break;
+
+    case STATE_FIREBASE_DISCONNECTED: // RED DOUBLE-FLASH ALERT
+      // Pattern: Blip (100ms) - Off (100ms) - Blip (100ms) - Off (700ms)
+      // Cycle = 1000ms
+      {
+        unsigned long mod = currentMillis % 1000;
+        if (mod < 100 || (mod > 200 && mod < 300)) {
+          setRGB(HIGH, LOW, LOW); // Red ON
+        } else {
+          setRGB(LOW, LOW, LOW);  // Red OFF
+        }
+      }
+      break;
+
+    default: 
+      setRGB(LOW, LOW, LOW); // Off
+      break;
+  }
+}
+
+/* ================= HARDWARE CONTROL ================= */
+void applyRelays() {
+  digitalWrite(RELAY1, relayState[0] ? LOW : HIGH);
+  digitalWrite(RELAY2, relayState[1] ? LOW : HIGH);
+  digitalWrite(RELAY3, relayState[2] ? LOW : HIGH);
+  digitalWrite(RELAY4, relayState[3] ? LOW : HIGH);
+}
+
+/* ================= WEB SERVER HANDLERS ================= */
+void handleRoot() {
+  server.send(200, "text/plain", "NEBULA CORE CONTROLLER ONLINE");
+}
+
+void handleSet() {
+  if (server.hasArg("relay") && server.hasArg("state")) {
+    int r = server.arg("relay").toInt();
+    int s = server.arg("state").toInt();
+    
+    if (r >= 1 && r <= 4) {
+      relayState[r-1] = (s == 1); // 1 = ON
+      updateRelays = true;
+      
+      // Update Firebase too if possible
+      forceTelemetry = true;
+      triggerActivityLED();
+      
+      server.send(200, "text/plain", "OK");
+    } else {
+      server.send(400, "text/plain", "Invalid Relay");
     }
-    buffer.writeln('  }');
-    buffer.writeln('');
-    for (int i = 0; i < totalRelays; i++) {
-      buffer.writeln('  digitalWrite(RELAY${i + 1}, relayState[$i]);');
+  } else {
+    server.send(400, "text/plain", "Missing args");
+  }
+}
+
+/* ================= STREAM CALLBACK ================= */
+void streamCallback(FirebaseStream data) {
+  lastStreamKeepAlive = millis(); 
+  String path = data.dataPath();
+  Serial.printf("⚡ CMD: %s\\n", path.c_str());
+
+  if (path == "/") {
+    FirebaseJson *json = data.jsonObjectPtr();
+    FirebaseJsonData d;
+    if (json->get(d, "relay1")) relayState[0] = d.intValue;
+    if (json->get(d, "relay2")) relayState[1] = d.intValue;
+    if (json->get(d, "relay3")) relayState[2] = d.intValue;
+    if (json->get(d, "relay4")) relayState[3] = d.intValue;
+  } 
+  else {
+    int intVal = data.intData();
+    if (path == "/relay1") relayState[0] = intVal;
+    if (path == "/relay2") relayState[1] = intVal;
+    if (path == "/relay3") relayState[2] = intVal;
+    if (path == "/relay4") relayState[3] = intVal;
+  }
+
+  updateRelays = true;
+  forceTelemetry = true; 
+  triggerActivityLED();
+}
+
+void streamTimeoutCallback(bool timeout) {
+  if (timeout) Serial.println("⚠️ Stream Timeout");
+}
+
+/* ================= CORE 0: BURST VOLTAGE TASK ================= */
+void voltageTask(void * pvParameters) {
+  float adcOffset = 0;
+  long sum = 0;
+  
+  // Calibration
+  for (int i = 0; i < 500; i++) sum += analogRead(VOLTAGE_SENSOR);
+  adcOffset = sum / 500.0;
+
+  float localVoltage = 0;
+
+  for (;;) {
+    double rmsSum = 0;
+    int rmsCount = 0;
+    int rmsMin = 4095;
+    int rmsMax = 0;
+    
+    // Read 40ms Burst
+    unsigned long burstStart = millis();
+    while (millis() - burstStart < 40) {
+      int raw = analogRead(VOLTAGE_SENSOR);
+      if (raw < rmsMin) rmsMin = raw;
+      if (raw > rmsMax) rmsMax = raw;
+      
+      float v = (raw - adcOffset) * (VREF / ADC_MAX);
+      rmsSum += v * v;
+      rmsCount++;
     }
-    buffer.writeln('');
-    buffer.writeln('  FirebaseJson out;');
-    for (int i = 0; i < totalRelays; i++) {
-      buffer.writeln('  out.set("relay${devices[i].id}", relayState[$i]);');
+
+    // Math
+    if (rmsCount > 0) {
+      int p2p = rmsMax - rmsMin;
+      float rms = sqrt(rmsSum / rmsCount);
+      float instVoltage = 0.0;
+
+      if (p2p >= P2P_THRESHOLD && rms >= RMS_THRESHOLD) {
+        instVoltage = rms * calibrationFactor;
+      }
+      
+      if (localVoltage == 0) localVoltage = instVoltage;
+      else localVoltage = (instVoltage * SMOOTHING_ALPHA) + (localVoltage * (1.0 - SMOOTHING_ALPHA));
+
+      if (localVoltage < 5.0) localVoltage = 0.0;
+      sharedVoltage = localVoltage;
     }
-    buffer.writeln('');
-    buffer.writeln('  String tPath = "/devices/" + deviceId + "/telemetry";');
-    buffer.writeln('  Firebase.RTDB.updateNode(&fbdo, tPath.c_str(), &out);');
-    buffer.writeln('}');
-    buffer.writeln('');
-    buffer.writeln('// ================== SETUP ==================');
-    buffer.writeln('void setup() {');
-    buffer.writeln('  Serial.begin(115200);');
-    buffer.writeln('  deviceId = String((uint32_t)ESP.getEfuseMac(), HEX);');
-    buffer.writeln('');
-    for (int i = 0; i < totalRelays; i++) {
-      buffer.writeln('  pinMode(RELAY${i + 1}, OUTPUT);');
-      buffer.writeln('  digitalWrite(RELAY${i + 1}, LOW);');
+
+    // Sleep 100ms
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
+}
+
+/* ================= SETUP ================= */
+void setup() {
+  Serial.begin(115200);
+  
+  // Init Power Pins
+  pinMode(RELAY1, OUTPUT);
+  pinMode(RELAY2, OUTPUT);
+  pinMode(RELAY3, OUTPUT);
+  pinMode(RELAY4, OUTPUT);
+  
+  digitalWrite(RELAY1, HIGH);
+  digitalWrite(RELAY2, HIGH);
+  digitalWrite(RELAY3, HIGH);
+  digitalWrite(RELAY4, HIGH);
+
+  // Init LED Pins
+  pinMode(LED_PIN_RED, OUTPUT);
+  pinMode(LED_PIN_GREEN, OUTPUT);
+  pinMode(LED_PIN_BLUE, OUTPUT);
+
+  // LED Test
+  setRGB(HIGH, LOW, LOW); delay(200); // R
+  setRGB(LOW, HIGH, LOW); delay(200); // G
+  setRGB(LOW, LOW, HIGH); delay(200); // B
+  setRGB(LOW, LOW, LOW);
+
+  analogReadResolution(12);
+  analogSetAttenuation(ADC_11db);
+
+  // --- WIFI CONFIG (AUTO-HEAL) ---
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false); 
+  WiFi.setAutoReconnect(true); 
+  WiFi.persistent(true);       
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  
+  Serial.print("Connecting");
+  while (WiFi.status() != WL_CONNECTED) {
+    loopLED(); 
+    delay(100); 
+    Serial.print(".");
+  }
+  Serial.println("\\n✅ WiFi Connected");
+
+  deviceId = String((uint32_t)ESP.getEfuseMac(), HEX);
+
+  // --- HTTP SERVER ---
+  server.on("/", handleRoot);
+  server.on("/set", handleSet);
+  server.begin();
+  Serial.println("HTTP Server Started");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  // --- OTA SETUP ---
+  ArduinoOTA.setHostname(OTA_HOSTNAME);
+  ArduinoOTA.setPassword(OTA_PASSWORD);
+  ArduinoOTA.onStart([]() { isOTAActive = true; setRGB(HIGH, LOW, LOW); }); 
+  ArduinoOTA.onEnd([]() { isOTAActive = false; setRGB(LOW, HIGH, LOW); }); 
+  ArduinoOTA.begin();
+
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  config.token_status_callback = tokenStatusCallback;
+  
+  fbStream.setResponseSize(1024); 
+
+  Firebase.signUp(&config, &auth, "", "");
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
+  if (!Firebase.RTDB.beginStream(&fbStream, ("/devices/" + deviceId + "/commands").c_str())) {
+    Serial.printf("❌ Stream Start Failed: %s\\n", fbStream.errorReason().c_str());
+  } else {
+    Serial.println("✅ Stream Listening...");
+  }
+  
+  Firebase.RTDB.setStreamCallback(&fbStream, streamCallback, streamTimeoutCallback);
+
+  xTaskCreatePinnedToCore(voltageTask, "VoltageTask", 10000, NULL, 1, NULL, 0);
+  
+  lastStreamKeepAlive = millis();
+}
+
+/* ================= LOOP (CORE 1) ================= */
+void loop() {
+  ArduinoOTA.handle();
+  server.handleClient(); // Handle HTTP
+  loopLED();
+
+  if (updateRelays) {
+    applyRelays();
+    updateRelays = false;
+  }
+
+  // WATCHDOG & AUTO-HEALING
+  static unsigned long lastCheck = 0;
+  if (millis() - lastCheck > 20000) { 
+    lastCheck = millis();
+
+    // 1. Efficient WiFi Reconnection
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("⚠️ WiFi Lost. Initiating fresh connection...");
+      WiFi.disconnect();
+      WiFi.begin(WIFI_SSID, WIFI_PASS); 
     }
-    buffer.writeln('');
-    buffer.writeln('  analogReadResolution(12);');
-    buffer.writeln('  connectWiFi();');
-    buffer.writeln('');
-    buffer.writeln('  config.api_key = API_KEY;');
-    buffer.writeln('  config.database_url = DATABASE_URL;');
-    buffer.writeln('  config.token_status_callback = tokenStatusCallback;');
-    buffer.writeln('');
-    buffer.writeln('  Firebase.signUp(&config, &auth, "", "");');
-    buffer.writeln('  Firebase.begin(&config, &auth);');
-    buffer.writeln('  Firebase.reconnectWiFi(true);');
-    buffer.writeln('');
-    buffer.writeln('  startFirebaseStream();');
-    buffer.writeln(
-      '  Serial.println("NEBULA CORE $totalRelays-RELAY (Firebase) READY 🚀");',
-    );
-    buffer.writeln('}');
-    buffer.writeln('');
-    buffer.writeln('// ================== LOOP ==================');
-    buffer.writeln('void loop() {');
-    buffer.writeln('  if (WiFi.status() != WL_CONNECTED) connectWiFi();');
-    buffer.writeln('');
-    buffer.writeln('  if (Firebase.ready()) {');
-    buffer.writeln('    handleFirebaseCommands();');
-    buffer.writeln('');
-    buffer.writeln('    if (millis() - lastTelemetry > telemetryInterval) {');
-    buffer.writeln('      lastTelemetry = millis();');
-    buffer.writeln('');
-    buffer.writeln('      FirebaseJson j;');
-    for (int i = 0; i < totalRelays; i++) {
-      buffer.writeln('      j.set("relay${devices[i].id}", relayState[$i]);');
+  }
+
+  // TELEMETRY
+  static unsigned long lastTeleCheck = 0;
+  if (millis() - lastTeleCheck > 100) {
+    lastTeleCheck = millis();
+
+    float currentV = sharedVoltage;
+    bool timeExpired = (millis() - lastTelemetryTime > REPORT_INTERVAL);
+    bool significantChange = (abs(currentV - lastReportedVoltage) > VOLTAGE_DELTA);
+
+    if (forceTelemetry || timeExpired || significantChange) {
+      if (Firebase.ready()) {
+        FirebaseJson j;
+        j.set("relay1", relayState[0]);
+        j.set("relay2", relayState[1]);
+        j.set("relay3", relayState[2]);
+        j.set("relay4", relayState[3]);
+        j.set("voltage", currentV);
+        
+        forceTelemetry = false;
+
+        if (Firebase.RTDB.updateNode(&fbTele, ("/devices/" + deviceId + "/telemetry").c_str(), &j)) {
+          Serial.printf("📤 Telemetry Sent (V: %.1f)\\n", currentV);
+          lastTelemetryTime = millis();
+          lastReportedVoltage = currentV;
+        }
+      }
     }
-    buffer.writeln('      j.set("voltage_ac", readACVoltage());');
-    buffer.writeln('');
-    buffer.writeln('      String p = "/devices/" + deviceId + "/telemetry";');
-    buffer.writeln('      Firebase.RTDB.updateNode(&fbdo, p.c_str(), &j);');
-    buffer.writeln('    }');
-    buffer.writeln('  }');
-    buffer.writeln('}');
+  }
+  
+  delay(5);
+}
+''');
 
     return buffer.toString();
   }

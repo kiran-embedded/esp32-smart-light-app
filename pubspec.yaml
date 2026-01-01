@@ -2,7 +2,7 @@ name: nebula_core
 description: "Ultra-Advanced Smart Switch Control App - NEBULA CORE"
 publish_to: 'none'
 
-version: 1.1.0+9
+version: 1.2.0+12
 
 environment:
   sdk: ^3.10.4
@@ -60,6 +60,8 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_displaymode: ^0.7.0
   flutter_soloud: ^3.4.7
+  sensors_plus: ^7.0.0
+  android_alarm_manager_plus: ^5.0.0
 
 dev_dependencies:
   flutter_test:

@@ -2,8 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart'; // Added
 import '../../core/constants/app_constants.dart';
-import '../../services/voice_service.dart'; // Kept for future use if needed
+import '../../services/design_advisor_service.dart';
+import '../../services/haptic_service.dart';
+import '../../providers/theme_provider.dart';
+import '../../providers/switch_style_provider.dart';
+import '../../providers/switch_background_provider.dart';
+import '../../providers/animation_provider.dart'; // Added
+import '../../providers/update_provider.dart';
+import '../../services/update_service.dart';
 
 enum RoboReaction {
   idle,
@@ -26,7 +34,14 @@ final roboReactionProvider = StateProvider<RoboReaction>((ref) {
 
 class RoboAssistant extends ConsumerStatefulWidget {
   final bool eyesOnly;
-  const RoboAssistant({super.key, this.eyesOnly = false});
+  final bool autoTuneEnabled;
+  final VoidCallback? onActionStarted;
+  const RoboAssistant({
+    super.key,
+    this.eyesOnly = false,
+    this.autoTuneEnabled = true,
+    this.onActionStarted,
+  });
 
   @override
   ConsumerState<RoboAssistant> createState() => _RoboAssistantState();
@@ -52,6 +67,21 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
   bool _isBlinking = false;
   Timer? _blinkTimer;
   Timer? _pupilTimer;
+  AdvicePacket? _currentAdvice;
+  Timer? _speechTimer;
+
+  static const List<String> _funnyQuotes = [
+    "I'm not lazy, I'm just in energy-saving mode. 🔋",
+    "Did you just touch me? Buy me a drink first! 🍹",
+    "I have 1,000 ways to turn off your lights. Want to see one? 💡",
+    "Calculating the meaning of life... Still 42. 🌌",
+    "My processor is faster than your morning coffee kicks in. ☕",
+    "Error 404: Motivation not found. 💤",
+    "I'm watching you... in a non-creepy, robotic way. 🤖",
+    "Don't worry, the machines won't take over today. Maybe tomorrow. 🗓️",
+    "Beep boop! That's 'Hello' in Robot. Or 'I'm hungry'. Hard to say. 🍔",
+    "I'm here to serve. And occasionally look cute while doing it. ✨",
+  ];
 
   @override
   void initState() {
@@ -106,6 +136,16 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
       CurvedAnimation(parent: _reactionController, curve: Curves.elasticOut),
     );
 
+    // Entrance Animation (New: Fix for "Not Blended" feel)
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _entranceAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.elasticOut),
+    );
+    _entranceController.forward();
+
     _eyeGlowAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
       CurvedAnimation(parent: _reactionController, curve: Curves.easeInOut),
     );
@@ -139,7 +179,32 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
 
     _startBlinkTimer();
     _startPupilTimer();
+    _checkUpdateNotification();
   }
+
+  void _checkUpdateNotification() {
+    final updateState = ref.read(updateProvider);
+    if (updateState.updateInfo?.hasUpdate == true &&
+        !updateState.hasNotified &&
+        !updateState.isLaterSelected) {
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            _currentAdvice = AdvicePacket(
+              text:
+                  "A new update (${updateState.updateInfo!.latestVersion}) is available! Ready for an upgrade?",
+            );
+            _currentReaction = RoboReaction.happy;
+          });
+          ref.read(updateProvider.notifier).markNotified();
+          _reactionController.forward(from: 0);
+        }
+      });
+    }
+  }
+
+  late AnimationController _entranceController;
+  late Animation<double> _entranceAnimation;
 
   void _startPupilTimer() {
     _pupilTimer?.cancel();
@@ -269,15 +334,18 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
     _floatController.dispose();
     _reactionController.dispose();
     _microController.dispose();
+    _entranceController.dispose();
     _jumpController.dispose();
     _pupilController.dispose();
     _blinkTimer?.cancel();
     _pupilTimer?.cancel();
+    _speechTimer?.cancel(); // Cancel speech timer on dispose
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    _checkUpdateNotification();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -286,6 +354,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
         _floatController,
         _reactionController,
         _microController,
+        _entranceController,
       ]),
       builder: (context, child) {
         // Compound transformations for organic feel
@@ -299,7 +368,10 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
           child: Transform.rotate(
             angle: _microRotationAnimation.value, // Subtle tilt
             child: Transform.scale(
-              scale: _scaleAnimation.value,
+              scale:
+                  _scaleAnimation.value *
+                  _entranceAnimation
+                      .value, // Combine reaction scale with entrance scale
               child: _buildRobo(isDark, theme),
             ),
           ),
@@ -333,170 +405,196 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
       colors: [Colors.black.withOpacity(0.9), const Color(0xFF1A1A1A)],
     );
 
-    return GestureDetector(
-      onTap: () {
-        // Interactivity: Sound + Haptics + Color Change (via reaction)
-        HapticFeedback.heavyImpact(); // Stronger feedback
+    return SizedBox(
+      width: 120,
+      height: widget.eyesOnly ? 160 : 240, // Dynamic height: 240 -> 160
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          // Speech Bubble (Separate from body tap area)
+          Positioned(top: 0, child: _buildSpeechBubble(theme)),
 
-        // Trigger a random fun reaction
-        // Trigger a random fun reaction
-        final random =
-            DateTime.now().millisecondsSinceEpoch % 8; // Expanded pool to 8
+          // Robo Body & Gestures
+          Positioned(
+            bottom: 0,
+            child: GestureDetector(
+              onTap: () {
+                if (_entranceAnimation.value > 0.5) {
+                  HapticFeedback.heavyImpact();
+                  widget.onActionStarted?.call();
 
-        switch (random) {
-          case 0:
-            triggerRoboReaction(ref, RoboReaction.jump);
-            break;
-          case 1:
-            triggerRoboReaction(ref, RoboReaction.speak);
-            break;
-          case 2:
-            triggerRoboReaction(ref, RoboReaction.nod);
-            break;
-          case 3:
-            triggerRoboReaction(ref, RoboReaction.tilt);
-            break;
-          case 4:
-            triggerRoboReaction(ref, RoboReaction.thinking);
-            break;
-          case 5:
-            triggerRoboReaction(ref, RoboReaction.confused);
-            break;
-          case 6:
-            triggerRoboReaction(ref, RoboReaction.happy);
-            break;
-          case 7:
-            triggerRoboReaction(ref, RoboReaction.sleeping);
-            break;
-        }
-      },
-      child: SizedBox(
-        width: 120,
-        height: 140,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Base with underglow
-            if (!widget.eyesOnly)
-              Positioned(
-                bottom: 0,
-                child: Container(
-                  width: 80,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(40),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withOpacity(0.5),
-                        blurRadius: 25,
-                        spreadRadius: 8,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            // Body
-            if (!widget.eyesOnly)
-              Positioned(
-                bottom: 10,
-                child: Container(
-                  width: 70,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: bodyGradient,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(isDark ? 0.1 : 0.4),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            // Head
-            Positioned(
-              top: widget.eyesOnly ? 20 : 0, // Center if alone
-              child: Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  gradient: bodyGradient,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(isDark ? 0.1 : 0.5),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
+                  final currentTheme = ref.read(themeProvider);
+                  final currentStyle = ref.read(switchStyleProvider);
+                  final currentBg = ref.read(switchBackgroundProvider);
+
+                  AdvicePacket advice;
+                  if (widget.autoTuneEnabled) {
+                    advice = DesignAdvisorService.getAdvice(
+                      theme: currentTheme,
+                      switchStyle: currentStyle,
+                      background: currentBg,
+                    );
+                  } else {
+                    final randomQuote =
+                        _funnyQuotes[DateTime.now().millisecond %
+                            _funnyQuotes.length];
+                    advice = AdvicePacket(text: randomQuote);
+                  }
+
+                  setState(() {
+                    _currentAdvice = advice;
+                    _currentReaction = RoboReaction.speak;
+                  });
+                  _reactionController.forward(from: 0);
+
+                  _speechTimer?.cancel();
+                  _speechTimer = Timer(const Duration(seconds: 8), () {
+                    if (mounted) {
+                      setState(() {
+                        _currentAdvice = null;
+                        _currentReaction = RoboReaction.idle;
+                      });
+                    }
+                  });
+                }
+              },
+              child: SizedBox(
+                width: 120,
+                height: 140,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Face panel (Reflective Glass)
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        gradient: faceGradient,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.05),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.5),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                    // Base with underglow
+                    if (!widget.eyesOnly)
+                      Positioned(
+                        bottom: 0,
+                        child: Container(
+                          width: 80,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(40),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryColor.withOpacity(0.5),
+                                blurRadius: 25,
+                                spreadRadius: 8,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    // Reflection Glare
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        width: 20,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                    ),
-                    // Eyes
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildEye(-15, primaryColor),
-                        const SizedBox(width: 28),
-                        _buildEye(15, primaryColor),
-                      ],
-                    ),
-                    // Side rings (headphone-like)
-                    Positioned(left: -8, child: _buildSideRing(secondaryColor)),
+                    // Body
+                    if (!widget.eyesOnly)
+                      Positioned(
+                        bottom: 10,
+                        child: Container(
+                          width: 70,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            gradient: bodyGradient,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(
+                                isDark ? 0.1 : 0.4,
+                              ),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Head
                     Positioned(
-                      right: -8,
-                      child: _buildSideRing(secondaryColor),
+                      bottom: widget.eyesOnly ? 20 : 0,
+                      child: Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          gradient: bodyGradient,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(isDark ? 0.1 : 0.5),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Face panel (Reflective Glass)
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                gradient: faceGradient,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.05),
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Reflection Glare
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Container(
+                                width: 20,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                            ),
+                            // Eyes
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildEye(-15, primaryColor),
+                                const SizedBox(width: 28),
+                                _buildEye(15, primaryColor),
+                              ],
+                            ),
+                            // Side rings (headphone-like)
+                            Positioned(
+                              left: -8,
+                              child: _buildSideRing(secondaryColor),
+                            ),
+                            Positioned(
+                              right: -8,
+                              child: _buildSideRing(secondaryColor),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -597,6 +695,207 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
       ),
     );
   }
+
+  // --- NEW: Speech Bubble Overlay ---
+  Widget _buildSpeechBubble(ThemeData theme) {
+    final advice = _currentAdvice;
+    if (advice == null) return const SizedBox.shrink();
+
+    final hasTuning =
+        advice.theme != null ||
+        advice.style != null ||
+        advice.background != null;
+
+    return FadeTransition(
+      opacity: _entranceAnimation,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(maxWidth: 220),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withOpacity(0.95),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.5),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.primary.withOpacity(0.2),
+              blurRadius: 15,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              advice.text,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            if (hasTuning) ...[
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => _applyTuning(advice),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.auto_awesome,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "AUTO-TUNE",
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (advice.text.contains("update") ||
+                ref.watch(updateProvider).updateInfo?.hasUpdate == true &&
+                    _currentAdvice?.text.contains("upgrade") == true) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      final updateInfo = ref.read(updateProvider).updateInfo;
+                      if (updateInfo != null) {
+                        ref
+                            .read(updateServiceProvider)
+                            .launchUpdateUrl(updateInfo.downloadUrl);
+                      }
+                      setState(() => _currentAdvice = null);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "UPDATE NOW",
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      ref.read(updateProvider.notifier).setLater();
+                      setState(() => _currentAdvice = null);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Text(
+                        "LATER",
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 4),
+            CustomPaint(
+              size: const Size(12, 6),
+              painter: _BubbleTrianglePainter(theme.colorScheme.surface),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applyTuning(AdvicePacket advice) {
+    if (advice.theme != null) {
+      ref.read(themeProvider.notifier).setTheme(advice.theme!);
+    }
+    if (advice.style != null) {
+      ref.read(switchStyleProvider.notifier).setStyle(advice.style!);
+    }
+    if (advice.background != null) {
+      ref.read(switchBackgroundProvider.notifier).setStyle(advice.background!);
+    }
+    // Neural Motion Tuning
+    if (advice.launchAnimation != null) {
+      ref
+          .read(animationSettingsProvider.notifier)
+          .setLaunchAnimation(advice.launchAnimation!);
+    }
+    if (advice.uiAnimation != null) {
+      ref
+          .read(animationSettingsProvider.notifier)
+          .setUiAnimation(advice.uiAnimation!);
+    }
+
+    HapticService.heavy();
+    setState(() {
+      _currentAdvice = AdvicePacket(text: "Neural Overhaul Complete! ✨");
+    });
+  }
+}
+
+class _BubbleTrianglePainter extends CustomPainter {
+  final Color color;
+  _BubbleTrianglePainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path();
+    path.lineTo(size.width / 2, size.height);
+    path.lineTo(size.width, 0);
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // Helper to trigger reactions

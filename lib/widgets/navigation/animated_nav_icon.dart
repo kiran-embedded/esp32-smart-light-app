@@ -362,6 +362,51 @@ class AnimatedNavIcon extends ConsumerWidget {
                 );
               },
             );
+
+      case AppThemeMode.solarFlare:
+      case AppThemeMode.magmaCore:
+        return iconWidget
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .scale(
+              begin: const Offset(1, 1),
+              end: const Offset(1.2, 1.2),
+              duration: 1000.ms,
+            )
+            .tint(color: Colors.orange, duration: 1000.ms);
+
+      case AppThemeMode.electricTundra:
+      case AppThemeMode.voidRift:
+      case AppThemeMode.starlightEcho:
+        return iconWidget
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .moveY(begin: -5, end: 5, duration: 2500.ms)
+            .shimmer(
+              duration: 2000.ms,
+              color: Colors.blueAccent.withValues(alpha: 0.3),
+            );
+
+      case AppThemeMode.nanoCatalyst:
+      case AppThemeMode.cyberBloom:
+        return iconWidget
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .blur(
+              begin: const Offset(0, 0),
+              end: const Offset(2, 2),
+              duration: 1500.ms,
+            )
+            .scale(
+              begin: const Offset(1, 1),
+              end: const Offset(1.05, 1.05),
+              duration: 1500.ms,
+            );
+
+      case AppThemeMode.phantomVelvet:
+      case AppThemeMode.prismFractal:
+      case AppThemeMode.aeroStream:
+        return iconWidget
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .scaleXY(begin: 0.9, end: 1.1, duration: 2000.ms)
+            .moveX(begin: -2, end: 2, duration: 3000.ms);
     }
   }
 }

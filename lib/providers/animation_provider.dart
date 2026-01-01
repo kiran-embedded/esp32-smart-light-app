@@ -10,6 +10,16 @@ enum AppLaunchAnimation {
   bottomSpring,
   centerBurst,
   liquidReveal,
+  glassDrop,
+  galaxySpiral,
+  pixelReveal,
+  neonPulse,
+  fluidWave,
+  elasticPop,
+  ghostFade,
+  hologramRise,
+  bladeRunner,
+  quantumTunnel,
 }
 
 enum UiTransitionAnimation {
@@ -19,6 +29,15 @@ enum UiTransitionAnimation {
   elasticSnap,
   gamingRGB,
   zeroLatency,
+  iosExactSlide,
+  magneticPull,
+  gravityDrop,
+  softAura,
+  matrixRain,
+  prismShatter,
+  cosmicEcho,
+  liquidMorph,
+  deepScan,
 }
 
 // State class

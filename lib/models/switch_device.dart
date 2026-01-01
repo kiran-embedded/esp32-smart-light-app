@@ -4,7 +4,7 @@ class SwitchDevice {
   final String? nickname;
   final bool isActive;
   final double voltage;
-  final bool isPending; // Tracks if command is in flight
+  final bool isPending;
   final double current;
   final bool isConnected;
   final String icon;

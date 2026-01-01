@@ -75,4 +75,59 @@ class PersistenceService {
       'ui': prefs.getInt(_animUiKey) ?? 0, // Default 0 (iOSSlide)
     };
   }
+
+  // Connection Settings key
+  static const String _connectionModeKey = 'connection_mode';
+  static const String _lowDataKey = 'low_data_mode';
+  static const String _perfModeKey = 'perf_mode';
+
+  static Future<void> saveConnectionSettings({
+    required String mode,
+    required bool isLowData,
+    required bool isPerformance,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_connectionModeKey, mode);
+    await prefs.setBool(_lowDataKey, isLowData);
+    await prefs.setBool(_perfModeKey, isPerformance);
+  }
+
+  static Future<Map<String, dynamic>> getConnectionSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'mode': prefs.getString(_connectionModeKey) ?? 'cloud',
+      'isLowData': prefs.getBool(_lowDataKey) ?? false,
+      'isPerformance': prefs.getBool(_perfModeKey) ?? false,
+      'isLowLatency':
+          prefs.getBool('is_low_latency') ?? true, // Default true for speed
+    };
+  }
+
+  static Future<void> saveLowLatency(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_low_latency', enabled);
+  }
+
+  // Schedule Persistence
+  static const String _schedulesKey = 'switch_schedules';
+
+  static Future<void> saveSchedules(
+    List<Map<String, dynamic>> schedules,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_schedulesKey, jsonEncode(schedules));
+  }
+
+  static Future<List<Map<String, dynamic>>> getSchedules() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_schedulesKey);
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "version": "v1.1.0+9",
+  "version": "v1.2.0+12",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/app-release.apk",
-  "release_notes": "• Hyper-Login (Auto-Restart)\n• Intelligent Performance Engine\n• Robo 2.0 (New Emotions)\n• 16 Switch Styles\n• Max FPS Lock"
+  "release_notes": "• Lights 3.0: 10 New Matching Themes\n• Expanded Switch & Background Styles (20+ Total)\n• AI Auto-Tune (Design Advisor)\n• Dynamic Nav Icon Animations\n• Dashboard UI Perfection"
 }

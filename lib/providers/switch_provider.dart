@@ -37,7 +37,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       for (final device in state)
         device.copyWith(nickname: nicknames[device.id] ?? device.nickname),
     ];
-    print('DEBUG: Initialized with nicknames: $nicknames');
   }
 
   Future<void> _saveNicknames() async {
@@ -48,7 +47,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           nicknames[device.id] = device.nickname!;
         }
       }
-      print('DEBUG: Saving nicknames: $nicknames');
       await PersistenceService.saveNicknames(nicknames);
     } catch (e) {
       print('Error saving nicknames: $e');
@@ -58,12 +56,9 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Future<String> forceRefreshHardwareNames() async {
     try {
       final firebaseService = _ref.read(firebaseSwitchServiceProvider);
-
-      // Perform normal fetch
       final hardwareNames = await firebaseService.getHardwareNames();
 
       if (hardwareNames.isNotEmpty) {
-        // 1. Update names for EXISTING devices
         final Map<String, SwitchDevice> updatedDevices = {
           for (var device in state)
             device.id: device.copyWith(
@@ -71,7 +66,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
             ),
         };
 
-        // 2. Create NEW devices for keys found in Firebase but not in state
         for (final key in hardwareNames.keys) {
           if (!updatedDevices.containsKey(key) && key.startsWith("relay")) {
             updatedDevices[key] = SwitchDevice(
@@ -81,39 +75,26 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
               isActive: false,
               icon: 'power',
               gpioPin: 0,
-              mqttTopic: '',
-              isConnected: false,
-              nickname: null, // New devices have no local nickname yet
+              mqttTopic: 'generic/switch/$key',
             );
           }
         }
 
-        // 3. Convert to list and SORT naturally (relay1, relay2, ..., relay10)
         final List<SwitchDevice> newList = updatedDevices.values.toList();
         newList.sort((a, b) {
-          // Extract numbers for natural sort
           int? nA = int.tryParse(a.id.replaceAll(RegExp(r'[^0-9]'), ''));
           int? nB = int.tryParse(b.id.replaceAll(RegExp(r'[^0-9]'), ''));
           if (nA != null && nB != null) return nA.compareTo(nB);
           return a.id.compareTo(b.id);
         });
 
-        // 4. Update state
         state = newList;
-
-        final msg =
-            'Synced & Discovered: ${hardwareNames.length} devices found.';
-        print('DEBUG: $msg');
-        return msg;
+        return 'Synced: ${hardwareNames.length} devices found.';
       } else {
-        const msg = 'No names found in Firebase path.';
-        print('DEBUG: $msg');
-        return msg;
+        return 'No names found in Firebase.';
       }
     } catch (e) {
-      final msg = 'Error: $e';
-      print(msg);
-      return msg;
+      return 'Error: $e';
     }
   }
 
@@ -137,7 +118,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     try {
       final firebaseService = _ref.read(firebaseSwitchServiceProvider);
 
-      // Listener 1: Telemetry
       _telemetrySubscription = firebaseService.listenToTelemetry().listen((
         telemetry,
       ) {
@@ -145,7 +125,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         _mergeAndEmit();
       });
 
-      // Listener 2: Commands (For discovery of manually added switches)
       _commandsSubscription = firebaseService.listenToCommands().listen((
         commands,
       ) {
@@ -158,43 +137,29 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   }
 
   void _mergeAndEmit() {
-    // 1. Telemetry Data
     final telemetry = _lastTelemetry;
-
-    // Parse voltage from telemetry
     double voltage = 0.0;
-    if (telemetry.containsKey('voltage_ac')) {
-      voltage = (telemetry['voltage_ac'] is num)
-          ? (telemetry['voltage_ac'] as num).toDouble()
-          : 0.0;
-    } else if (telemetry.containsKey('voltage')) {
+    if (telemetry.containsKey('voltage')) {
       voltage = (telemetry['voltage'] is num)
           ? (telemetry['voltage'] as num).toDouble()
           : 0.0;
     }
 
-    // 2. Discover Keys from BOTH sources
     final Set<String> allKeys = {};
-
-    // Add keys from telemetry
     allKeys.addAll(
       telemetry.keys
           .where((key) => key.toString().startsWith('relay'))
           .map((key) => key.toString()),
     );
-
-    // Add keys from commands (Fix for dynamic creation)
     allKeys.addAll(
       _lastCommands.keys
           .where((key) => key.toString().startsWith('relay'))
           .map((key) => key.toString()),
     );
 
-    // Merge with existing IDs
     final currentIds = state.map((d) => d.id).toSet();
     final allRelayIds = {...currentIds, ...allKeys}.toList();
 
-    // Natural Sort
     allRelayIds.sort((a, b) {
       int? nA = int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), ''));
       int? nB = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), ''));
@@ -203,42 +168,28 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     });
 
     final currentDeviceMap = {for (var d in state) d.id: d};
-    final currentNicknames = {for (var d in state) d.id: d.nickname};
 
     state = allRelayIds.map((id) {
-      // State Priority: Telemetry > Command > Existing > Default OFF
-      // If telemetry has value, use it.
-      // If not, check commands (maybe we just created it and set it to 0).
-      // If not, keep existing state.
-
       bool newIsActive = false;
-      // Telemetry has highest truth
       if (telemetry.containsKey(id)) {
         final rawVal = telemetry[id];
         if (rawVal != null) {
           if (rawVal is int)
-            newIsActive = (rawVal == 0);
+            newIsActive = (rawVal == 0); // 0 = Active, 1 = Inactive (Inverted)
           else if (rawVal is bool)
             newIsActive = !rawVal;
           else
             newIsActive =
-                rawVal.toString() == '0' || rawVal.toString() == 'false';
+                (rawVal.toString() == '0' || rawVal.toString() == 'false');
         }
-      }
-      // Fallback to command value if telemetry missing (e.g. new switch)
-      else if (_lastCommands.containsKey(id)) {
+      } else if (_lastCommands.containsKey(id)) {
         final rawVal = _lastCommands[id];
         if (rawVal != null) {
           if (rawVal is int)
-            newIsActive =
-                (rawVal == 1); // Commands are positive logic usually? Wait.
-          // Code says: active=true -> send 0. So 0 is ON?
-          // "sendCommand(id, newState ? 0 : 1)" -> True (Active) sends 0.
-          // So in commands, 0 means ON.
-          if (rawVal is int)
             newIsActive = (rawVal == 0);
           else
-            newIsActive = rawVal.toString() == '0';
+            newIsActive =
+                (rawVal.toString() == '0' || rawVal.toString() == 'false');
         }
       } else if (currentDeviceMap.containsKey(id)) {
         newIsActive = currentDeviceMap[id]!.isActive;
@@ -247,7 +198,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       bool isPending = false;
       bool isConnected = _isDeviceConnected(telemetry['lastSeen']);
 
-      // JITTER PROTECTION
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
         if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
@@ -257,7 +207,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
             isPending = true;
           } else {
             _pendingSwitches.remove(id);
-            isPending = false;
           }
         } else {
           _pendingSwitches.remove(id);
@@ -270,19 +219,12 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           isPending: isPending,
           isConnected: isConnected,
           voltage: voltage,
-          nickname: currentNicknames[id] ?? currentDeviceMap[id]!.nickname,
         );
       } else {
-        return SwitchDevice(
-          id: id,
-          name: 'Switch ${id.replaceAll("relay", "")}',
-          isActive: newIsActive,
-          icon: 'power',
-          gpioPin: 0,
-          mqttTopic: '',
-          isConnected: isConnected,
-          nickname: currentNicknames[id],
-        );
+        return _createDefaultDevice(
+          id,
+          'Switch ${id.replaceAll("relay", "")}',
+        ).copyWith(isActive: newIsActive, isConnected: isConnected);
       }
     }).toList();
   }
@@ -294,7 +236,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           ? lastSeen
           : int.parse(lastSeen.toString());
       final now = DateTime.now().millisecondsSinceEpoch;
-      // Consider offline if no update for 10 seconds
       return (now - timestamp) < 10000;
     } catch (e) {
       return false;
@@ -309,46 +250,25 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     final bool previousState = device.isActive;
     final bool newState = !previousState;
 
-    // 1. OPTIMISTIC UI: Update instantly
     _pendingSwitches[id] = DateTime.now();
     state = [
       for (final d in state)
         if (d.id == id) d.copyWith(isActive: newState, isPending: true) else d,
     ];
 
-    try {
-      // 2. SEND COMMAND: Strict 0 (OFF) | 1 (ON) contract
-      // Logic: Active UI (newState=true) -> Send 0 (OFF)
-      //        Inactive UI (newState=false) -> Send 1 (ON)
-      await _ref
-          .read(firebaseSwitchServiceProvider)
-          .sendCommand(id, newState ? 0 : 1);
-
-      // 3. WAIT FOR TELEMETRY: Handled by listener
-    } catch (e) {
-      // 4. ROLLBACK: Revert UI if command fails
-      _pendingSwitches.remove(id);
-      state = [
-        for (final d in state)
-          if (d.id == id) d.copyWith(isActive: previousState) else d,
-      ];
-      print('Command failed, rolling back: $e');
-    }
+    // Non-blocking fire and forget
+    _ref.read(firebaseSwitchServiceProvider).sendCommand(id, newState ? 0 : 1);
   }
 
-  /// Update local-only nickname
   Future<void> updateNickname(String id, String newName) async {
     state = [
       for (final d in state)
         if (d.id == id) d.copyWith(nickname: newName) else d,
     ];
     await _saveNicknames();
-    print('DEBUG: Nickname updated and saved for $id -> $newName');
   }
 
-  /// Update hardware name in Firebase
   Future<void> updateHardwareName(String id, String newName) async {
-    // 1. Optimistic Update (UI)
     final previousList = state;
     state = [
       for (final d in state)
@@ -356,15 +276,11 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     ];
 
     try {
-      // 2. Firebase Sync
       await _ref
           .read(firebaseSwitchServiceProvider)
           .updateHardwareName(id, newName);
-
-      // Also save nickname locally if it was changed
       _saveNicknames();
     } catch (e) {
-      // 3. Rollback on failure
       state = previousList;
       rethrow;
     }

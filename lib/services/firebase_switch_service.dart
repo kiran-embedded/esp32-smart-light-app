@@ -14,6 +14,11 @@ class FirebaseSwitchService {
     final id = deviceId ?? AppConstants.defaultDeviceId;
     final path = '${AppConstants.firebaseDevicesPath}/$id/telemetry';
 
+    // OPTIMIZATION: Keep this specific path synced for instant updates
+    try {
+      _database.child(path).keepSynced(true);
+    } catch (_) {}
+
     return _database.child(path).onValue.map((event) {
       final data = event.snapshot.value;
       if (data == null || data is! Map) return {};
@@ -24,6 +29,10 @@ class FirebaseSwitchService {
   Stream<Map<String, dynamic>> listenToCommands({String? deviceId}) {
     final id = deviceId ?? AppConstants.defaultDeviceId;
     final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
+
+    try {
+      _database.child(path).keepSynced(true);
+    } catch (_) {}
 
     return _database.child(path).onValue.map((event) {
       final data = event.snapshot.value;
@@ -75,15 +84,22 @@ class FirebaseSwitchService {
   /// Includes throttling to prevent spam.
   DateTime? _lastWarmUp;
 
-  Future<void> preWarmConnection() async {
+  Future<void> preWarmConnection({bool force = false}) async {
     final now = DateTime.now();
-    // Throttle: only allow once every 15 seconds
-    if (_lastWarmUp != null && now.difference(_lastWarmUp!).inSeconds < 15) {
+    // Throttle: only allow once every 15 seconds UNLESS forced (e.g. by user activity)
+    if (!force &&
+        _lastWarmUp != null &&
+        now.difference(_lastWarmUp!).inSeconds < 15) {
       return;
     }
 
     _lastWarmUp = now;
+    if (force) {
+      print("FirebaseSwitchService: Force Pre-Warming Connection...");
+    }
+
     try {
+      // Just checks connection status, low bandwidth cost
       _database.child('.info/connected').get();
     } catch (_) {
       // Ignore errors
@@ -104,27 +120,55 @@ class FirebaseSwitchService {
 
   /// Write a command strictly to /devices/{deviceId}/commands/{relayKey}
   /// value: 0 = OFF, 1 = ON
-  /// Uses update() to avoid overwriting other keys.
-  /// Includes 2s TIMEOUT to prevent app freeze.
-  Future<void> sendCommand(
-    String relayKey,
-    int value, {
-    String? deviceId,
-  }) async {
+  /// NON-BLOCKING: This method returns immediately while the command sends in the background.
+  /// Includes internal retry logic and connection reset.
+  void sendCommand(String relayKey, int value, {String? deviceId}) {
     final id = deviceId ?? AppConstants.defaultDeviceId;
     final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
 
+    // Fire and forget
+    _executeCommandWithRetry(path, relayKey, value);
+  }
+
+  Future<void> _executeCommandWithRetry(
+    String path,
+    String key,
+    int value, {
+    int retryCount = 0,
+  }) async {
     try {
-      // Per strict contract: update ONLY the specific relay key
       await _database
           .child(path)
-          .update({relayKey: value})
-          .timeout(const Duration(seconds: 2));
+          .update({key: value})
+          .timeout(const Duration(seconds: 3));
     } catch (e) {
-      print('Command timed out or failed. Resetting connection. Error: $e');
-      // If write hangs/fails, reset connection for next time
-      resetConnection();
-      rethrow; // Propagate error to UI so it can rollback
+      print('Background command failed (Attempt ${retryCount + 1}): $e');
+      if (retryCount < 2) {
+        // Retry logic: Wait 1s and try again once more after a connection reset
+        if (retryCount == 0) await resetConnection();
+        await Future.delayed(Duration(seconds: 1 * (retryCount + 1)));
+        return _executeCommandWithRetry(
+          path,
+          key,
+          value,
+          retryCount: retryCount + 1,
+        );
+      }
+    }
+  }
+
+  /// OPTIMIZATION: Enable offline persistence and faster syncing
+  Future<void> optimizeConnection(bool enabled) async {
+    try {
+      FirebaseDatabase.instance.setPersistenceEnabled(enabled);
+      FirebaseDatabase.instance.setPersistenceCacheSizeBytes(
+        10000000,
+      ); // 10MB cache
+      print(
+        'Firebase Optimization: Persistence ${enabled ? 'ENABLED' : 'DISABLED'}',
+      );
+    } catch (e) {
+      print('Failed to set persistence (might be already set): $e');
     }
   }
 }

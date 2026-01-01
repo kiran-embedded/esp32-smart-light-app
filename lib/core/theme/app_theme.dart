@@ -26,6 +26,16 @@ enum AppThemeMode {
   dracula,
   monokai,
   synthwave,
+  solarFlare,
+  electricTundra,
+  nanoCatalyst,
+  phantomVelvet,
+  prismFractal,
+  magmaCore,
+  cyberBloom,
+  voidRift,
+  starlightEcho,
+  aeroStream,
 }
 
 class AppTheme {
@@ -69,6 +79,26 @@ class AppTheme {
         return _monokaiTheme;
       case AppThemeMode.synthwave:
         return _synthwaveTheme;
+      case AppThemeMode.solarFlare:
+        return _solarFlareTheme;
+      case AppThemeMode.electricTundra:
+        return _electricTundraTheme;
+      case AppThemeMode.nanoCatalyst:
+        return _nanoCatalystTheme;
+      case AppThemeMode.phantomVelvet:
+        return _phantomVelvetTheme;
+      case AppThemeMode.prismFractal:
+        return _prismFractalTheme;
+      case AppThemeMode.magmaCore:
+        return _magmaCoreTheme;
+      case AppThemeMode.cyberBloom:
+        return _cyberBloomTheme;
+      case AppThemeMode.voidRift:
+        return _voidRiftTheme;
+      case AppThemeMode.starlightEcho:
+        return _starlightEchoTheme;
+      case AppThemeMode.aeroStream:
+        return _aeroStreamTheme;
     }
   }
 
@@ -638,6 +668,280 @@ class AppTheme {
       textTheme: GoogleFonts.pressStart2pTextTheme(
         _baseTextTheme,
       ).apply(bodyColor: Colors.white, displayColor: secondary),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _solarFlareTheme {
+    const primary = Color(0xFFFF5722); // Solar Orange
+    const secondary = Color(0xFFFFC107); // Amber
+    const bg = Color(0xFF1A0A00); // Very Deep Orange Black
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF2D1400),
+        onPrimary: Colors.white,
+        onSurface: const Color(0xFFFFE0B2),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF2D1400).withOpacity(0.9),
+        elevation: 12,
+        shadowColor: primary.withOpacity(0.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+      textTheme: GoogleFonts.outfitTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _electricTundraTheme {
+    const primary = Color(0xFF00E5FF); // Cyan
+    const secondary = Color(0xFF2979FF); // Blue
+    const bg = Color(0xFF001219); // Ice Deep Blue
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF001B24),
+        onPrimary: Colors.black,
+        onSurface: const Color(0xFFE0F7FA),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF001B24).withOpacity(0.9),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: primary.withOpacity(0.3)),
+        ),
+      ),
+      textTheme: GoogleFonts.rajdhaniTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _nanoCatalystTheme {
+    const primary = Color(0xFFE0E0E0); // Platinum
+    const secondary = Color(0xFF00FF9D); // Hex Green
+    const bg = Color(0xFF0A0A0A);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF141414),
+        onPrimary: Colors.black,
+        onSurface: Colors.white70,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF141414),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: primary.withOpacity(0.2)),
+        ),
+      ),
+      textTheme: GoogleFonts.shareTechMonoTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _phantomVelvetTheme {
+    const primary = Color(0xFF9C27B0); // Purple
+    const secondary = Color(0xFFE91E63); // Pink
+    const bg = Color(0xFF0D0014); // Darkest Purple
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF1A0027),
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1A0027).withOpacity(0.9),
+        elevation: 20,
+        shadowColor: primary.withOpacity(0.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      textTheme: GoogleFonts.quicksandTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _prismFractalTheme {
+    const primary = Colors.white;
+    const secondary = Color(0xFF757575);
+    const bg = Color(0xFF050505);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF111111),
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF111111),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.white10),
+        ),
+      ),
+      textTheme: GoogleFonts.mavenProTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _magmaCoreTheme {
+    const primary = Color(0xFFFF3D00); // Deep Orange
+    const secondary = Color(0xFFD50000); // Red
+    const bg = Color(0xFF0E0000);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF1F0000),
+        onPrimary: Colors.white,
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1F0000).withOpacity(0.95),
+        elevation: 15,
+        shadowColor: primary.withOpacity(0.6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      textTheme: GoogleFonts.kanitTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _cyberBloomTheme {
+    const primary = Color(0xFF00FF88); // Bloom Green
+    const secondary = Color(0xFF88FF00); // Lime
+    const bg = Color(0xFF050F08);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF0A1F12),
+        onSurface: Colors.white70,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF0A1F12).withOpacity(0.8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(40),
+          side: BorderSide(color: primary.withOpacity(0.3)),
+        ),
+      ),
+      textTheme: GoogleFonts.firaSansTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _voidRiftTheme {
+    const primary = Colors.white;
+    const secondary = Color(0xFFE0E0E0);
+    const bg = Color(0xFF000000);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF0A0A0A),
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF0A0A0A),
+        elevation: 0,
+        shape: const CircleBorder(side: BorderSide(color: Colors.white12)),
+      ),
+      textTheme: GoogleFonts.outfitTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _starlightEchoTheme {
+    const primary = Color(0xFFB0BEC5); // Blue Grey
+    const secondary = Colors.white;
+    const bg = Color(0xFF070A0F);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF0E141B),
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF0E141B).withOpacity(0.9),
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      textTheme: GoogleFonts.montserratTextTheme(_baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
+
+  static ThemeData get _aeroStreamTheme {
+    const primary = Colors.white;
+    const secondary = Color(0xFFB3E5FC); // Light Blue
+    const bg = Color(0xFF000000);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        surface: const Color(0xFF121212),
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF121212).withOpacity(0.9),
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
+          ),
+        ),
+      ),
+      textTheme: GoogleFonts.josefinSansTextTheme(_baseTextTheme),
       appBarTheme: _baseAppBarTheme,
     );
   }
