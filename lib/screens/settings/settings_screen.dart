@@ -334,7 +334,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             const SizedBox(height: 40),
             Center(
               child: Text(
-                "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.1.0+11'}",
+                "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+13'}",
                 style: GoogleFonts.outfit(
                   color: Colors.white.withOpacity(0.2),
                   fontSize: 12,
