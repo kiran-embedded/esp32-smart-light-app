@@ -46,8 +46,8 @@ class AnimationSettings {
   final UiTransitionAnimation uiType;
 
   const AnimationSettings({
-    this.launchType = AppLaunchAnimation.iPhoneBlend,
-    this.uiType = UiTransitionAnimation.iOSSlide,
+    this.launchType = AppLaunchAnimation.neonPulse,
+    this.uiType = UiTransitionAnimation.zeroLatency,
   });
 
   AnimationSettings copyWith({
@@ -64,8 +64,8 @@ class AnimationSettings {
 // Notifier
 class AnimationSettingsNotifier extends StateNotifier<AnimationSettings> {
   AnimationSettingsNotifier({
-    AppLaunchAnimation initialLaunch = AppLaunchAnimation.iPhoneBlend,
-    UiTransitionAnimation initialUi = UiTransitionAnimation.iOSSlide,
+    AppLaunchAnimation initialLaunch = AppLaunchAnimation.neonPulse,
+    UiTransitionAnimation initialUi = UiTransitionAnimation.zeroLatency,
   }) : super(AnimationSettings(launchType: initialLaunch, uiType: initialUi));
 
   // Async load is no longer needed inside the notifier as we inject it

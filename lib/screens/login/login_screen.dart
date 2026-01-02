@@ -140,178 +140,188 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const RoboAssistant(),
-                    const SizedBox(height: 40),
-                    FrostedGlass(
-                      padding: const EdgeInsets.all(32),
-                      radius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        width: 1.2,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Let's connect your home ✨",
-                            style: theme.textTheme.headlineMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          _buildGoogleSignInButton(context, theme),
-                          const SizedBox(height: 16),
-
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: theme.dividerColor.withOpacity(0.3),
+                child: RepaintBoundary(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const RoboAssistant(),
+                      const SizedBox(height: 40),
+                      FrostedGlass(
+                        blur: 0,
+                        disableBlur: true,
+                        padding: const EdgeInsets.all(32),
+                        radius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          width: 1.2,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Let's connect your home ✨",
+                              style: theme.textTheme.headlineMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildGoogleSignInButton(context, theme),
+                            const SizedBox(height: 16),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: theme.dividerColor.withOpacity(0.3),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Text(
+                                    'OR',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
                                 ),
-                                child: Text(
-                                  'OR',
-                                  style: theme.textTheme.bodySmall,
+                                Expanded(
+                                  child: Divider(
+                                    color: theme.dividerColor.withOpacity(0.3),
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: theme.dividerColor.withOpacity(0.3),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          OutlinedButton.icon(
-                            onPressed: () async {
-                              setState(() {
-                                _isLoading = true;
-                                _errorMessage = null;
-                              });
-
-                              try {
-                                final jsonService = JsonImportService();
-                                final json = await jsonService.pickJsonFile();
-
-                                if (json != null &&
-                                    jsonService.validateGoogleServicesJson(
-                                      json,
-                                    )) {
-                                  await ref
-                                      .read(authProvider.notifier)
-                                      .signInWithJson(json);
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'JSON imported successfully!',
-                                        ),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  }
-                                } else if (json != null) {
-                                  setState(() {
-                                    _errorMessage =
-                                        'Invalid google-services.json format';
-                                    _isLoading = false;
-                                  });
-                                } else {
-                                  setState(() => _isLoading = false);
-                                }
-                              } catch (e) {
-                                setState(() {
-                                  _errorMessage = e.toString();
-                                  _isLoading = false;
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.upload_file),
-                            label: const Text('Import Settings JSON'),
-                          ),
-                          const SizedBox(height: 12),
-                          TextButton(
-                            onPressed: () async {
-                              final json = await showDialog(
-                                context: context,
-                                builder: (context) => const JsonPasteDialog(),
-                              );
-
-                              if (json != null && mounted) {
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: () async {
                                 setState(() {
                                   _isLoading = true;
                                   _errorMessage = null;
                                 });
 
                                 try {
-                                  await ref
-                                      .read(authProvider.notifier)
-                                      .signInWithJson(json);
+                                  final jsonService = JsonImportService();
+                                  final json = await jsonService.pickJsonFile();
+
+                                  if (json != null &&
+                                      jsonService.validateGoogleServicesJson(
+                                        json,
+                                      )) {
+                                    await ref
+                                        .read(authProvider.notifier)
+                                        .signInWithJson(json);
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'JSON imported successfully!',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } else if (json != null) {
+                                    setState(() {
+                                      _errorMessage =
+                                          'Invalid google-services.json format';
+                                      _isLoading = false;
+                                    });
+                                  } else {
+                                    setState(() => _isLoading = false);
+                                  }
                                 } catch (e) {
                                   setState(() {
                                     _errorMessage = e.toString();
                                     _isLoading = false;
                                   });
                                 }
-                              }
-                            },
-                            child: const Text('Paste JSON manually'),
-                          ),
-                          if (_errorMessage != null) ...[
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.error.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
+                              },
+                              icon: const Icon(Icons.upload_file),
+                              label: const Text('Import Settings JSON'),
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: () async {
+                                final json = await showDialog(
+                                  context: context,
+                                  builder: (context) => const JsonPasteDialog(),
+                                );
+
+                                if (json != null && mounted) {
+                                  setState(() {
+                                    _isLoading = true;
+                                    _errorMessage = null;
+                                  });
+
+                                  try {
+                                    await ref
+                                        .read(authProvider.notifier)
+                                        .signInWithJson(json);
+                                  } catch (e) {
+                                    setState(() {
+                                      _errorMessage = e.toString();
+                                      _isLoading = false;
+                                    });
+                                  }
+                                }
+                              },
+                              child: const Text('Paste JSON manually'),
+                            ),
+                            if (_errorMessage != null) ...[
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
                                   color: theme.colorScheme.error.withOpacity(
-                                    0.3,
+                                    0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: theme.colorScheme.error.withOpacity(
+                                      0.3,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    _errorMessage!,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.error,
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      _errorMessage!,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme.colorScheme.error,
+                                          ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextButton.icon(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) =>
-                                            const FirebaseStatusDialog(),
-                                      );
-                                    },
-                                    icon: const Icon(
-                                      Icons.info_outline,
-                                      size: 16,
+                                    const SizedBox(height: 8),
+                                    TextButton.icon(
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) =>
+                                              const FirebaseStatusDialog(),
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.info_outline,
+                                        size: 16,
+                                      ),
+                                      label: const Text(
+                                        'Check Firebase Status',
+                                      ),
                                     ),
-                                    label: const Text('Check Firebase Status'),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    _buildFingerprintInfo(theme),
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 32),
+                      _buildFingerprintInfo(theme),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ),

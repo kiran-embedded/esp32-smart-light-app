@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/animation_provider.dart';
+import '../../core/ui/responsive_layout.dart';
 
 class CinematicSplashScreen extends ConsumerStatefulWidget {
   final VoidCallback onFinished;
@@ -191,8 +192,8 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
                         (0.5 + (_energyCoreScale.value * 1.5)) *
                         (1.0 + _transitionOut.value),
                     child: Container(
-                      width: 300,
-                      height: 300,
+                      width: 300.r,
+                      height: 300.r,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
@@ -219,13 +220,13 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildLogoShards(),
-                        const SizedBox(height: 30),
+                        SizedBox(height: 30.h),
 
                         // Scene 4: Typography
                         Opacity(
                           opacity: _textReveal.value,
                           child: Transform.translate(
-                            offset: Offset(0, 20 * (1 - _textReveal.value)),
+                            offset: Offset(0, 20.h * (1 - _textReveal.value)),
                             child: Column(
                               children: [
                                 // Scene 4: Typography with RGB Infinity Sweep
@@ -263,10 +264,10 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
                                   child: Text(
                                     'NEBULA CORE',
                                     style: GoogleFonts.orbitron(
-                                      fontSize: 28,
+                                      fontSize: 28.sp,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.white,
-                                      letterSpacing: 12,
+                                      letterSpacing: 12.w,
                                     ),
                                   ),
                                 ),
@@ -328,15 +329,15 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
 
   Widget _buildLogoShards() {
     return SizedBox(
-      width: 150,
-      height: 150,
+      width: 150.r,
+      height: 150.r,
       child: Stack(
         alignment: Alignment.center,
         children: [
           // Scene 3: Shard Assembly
           if (_logoReveal.value < 0.9)
             CustomPaint(
-              size: const Size(150, 150),
+              size: Size(150.r, 150.r),
               painter: _ShardPainter(progress: _logoReveal.value),
             ),
 
@@ -346,8 +347,8 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
             child: Transform.scale(
               scale: 0.8 + (0.2 * _logoReveal.value),
               child: Container(
-                width: 110,
-                height: 110,
+                width: 110.r,
+                height: 110.r,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(24),
@@ -374,8 +375,8 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
                 child: Center(
                   child: Image.asset(
                     'assets/icon/app_icon.png',
-                    width: 80,
-                    height: 80,
+                    width: 80.r,
+                    height: 80.r,
                   ),
                 ),
               ),
@@ -406,7 +407,7 @@ class _ShardPainter extends CustomPainter {
       final random = math.Random(i);
       final angle = random.nextDouble() * 2 * math.pi;
       // Shards start far and move to center
-      final distance = 100 * (1 - progress) * (0.5 + random.nextDouble());
+      final distance = 100.r * (1 - progress) * (0.5 + random.nextDouble());
       final offset = Offset(
         center.dx + distance * math.cos(angle),
         center.dy + distance * math.sin(angle),
@@ -448,13 +449,13 @@ class _NebulaPainter extends CustomPainter {
         ..color = (i % 2 == 0 ? Colors.indigo : Colors.deepPurple).withOpacity(
           0.02 + (0.01 * math.sin(time * 2 + i)),
         )
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 80.r);
 
       final offset = Offset(
-        center.dx + 50 * math.cos(time * 0.5 + i),
-        center.dy + 50 * math.sin(time * 0.5 + i),
+        center.dx + 50.w * math.cos(time * 0.5 + i),
+        center.dy + 50.h * math.sin(time * 0.5 + i),
       );
-      canvas.drawCircle(offset, 150.0 + (20.0 * i), nebulaPaint);
+      canvas.drawCircle(offset, 150.0.r + (20.0.r * i), nebulaPaint);
     }
 
     // 3. star drift

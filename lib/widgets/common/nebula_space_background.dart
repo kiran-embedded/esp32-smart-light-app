@@ -1,18 +1,26 @@
 import 'dart:ui';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/performance_provider.dart';
+import '../../providers/switch_settings_provider.dart';
 
-class NebulaSpaceBackground extends StatefulWidget {
+class NebulaSpaceBackground extends ConsumerStatefulWidget {
   final Widget child;
   const NebulaSpaceBackground({super.key, required this.child});
 
   @override
-  State<NebulaSpaceBackground> createState() => _NebulaSpaceBackgroundState();
+  ConsumerState<NebulaSpaceBackground> createState() =>
+      _NebulaSpaceBackgroundState();
 }
 
-class _NebulaSpaceBackgroundState extends State<NebulaSpaceBackground> {
+class _NebulaSpaceBackgroundState extends ConsumerState<NebulaSpaceBackground> {
   @override
   Widget build(BuildContext context) {
+    final performanceMode = ref.watch(performanceProvider);
+    final blurEnabled = ref.watch(switchSettingsProvider).blurEffectsEnabled;
+    final bool simplifiedBackground = performanceMode || !blurEnabled;
+
     return Stack(
       children: [
         // 1. Deep Space Gradient Background
@@ -34,8 +42,9 @@ class _NebulaSpaceBackgroundState extends State<NebulaSpaceBackground> {
         // 2. Real Star Field (Procedural replacement for asset)
         const Positioned.fill(child: _ProceduralStarField()),
 
-        // 3. Infinite RGB comet scattering illusion
-        const Positioned.fill(child: _CometScattering()),
+        // 3. Infinite RGB comet scattering illusion - Only if not simplified
+        if (!simplifiedBackground)
+          const Positioned.fill(child: _CometScattering()),
 
         // 4. Content
         widget.child,
@@ -165,8 +174,7 @@ class _CometPainter extends CustomPainter {
         ],
       ).createShader(Rect.fromPoints(start, end))
       ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      ..style = PaintingStyle.stroke;
 
     canvas.drawLine(start, end, paint);
   }

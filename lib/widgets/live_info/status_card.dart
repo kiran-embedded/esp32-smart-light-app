@@ -9,6 +9,8 @@ import '../../providers/switch_provider.dart';
 import '../../providers/connection_settings_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../widgets/common/pixel_led_border.dart';
+import '../../providers/performance_provider.dart';
+import '../../core/ui/responsive_layout.dart';
 
 class StatusCard extends ConsumerStatefulWidget {
   final double voltage;
@@ -100,9 +102,8 @@ class _StatusCardState extends ConsumerState<StatusCard> {
               milliseconds: 450,
             ), // Slower, more fluid expansion
             curve: Curves.fastLinearToSlowEaseIn, // Liquid-like physics
-            width:
-                MediaQuery.of(context).size.width * 0.90, // Slightly narrower
-            height: _isExpanded ? 135 : 72, // Reduced height (was 150/75)
+            width: Responsive.screenWidth * 0.90, // Slightly narrower
+            height: _isExpanded ? 135.h : 72.h, // Reduced height (was 150/75)
             decoration: BoxDecoration(
               color: Colors.transparent, // Handled by inner container
               borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
@@ -139,27 +140,34 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                     children: [
                       // Background Subtle Glow (Very faint)
                       Positioned.fill(
-                        child: Animate(
-                          onPlay: (c) => c.repeat(reverse: true),
-                          effects: [
-                            ShimmerEffect(
-                              duration: 5.seconds,
-                              color: voltageColor.withOpacity(0.05),
-                              angle: 45,
-                            ),
-                          ],
-                          child: Container(color: Colors.transparent),
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            final perf = ref.watch(performanceProvider);
+                            if (perf) return const SizedBox.shrink();
+
+                            return Animate(
+                              onPlay: (c) => c.repeat(reverse: true),
+                              effects: [
+                                ShimmerEffect(
+                                  duration: 5.seconds,
+                                  color: voltageColor.withOpacity(0.05),
+                                  angle: 45,
+                                ),
+                              ],
+                              child: Container(color: Colors.transparent),
+                            );
+                          },
                         ),
                       ),
 
                       // Content Crossfade
                       AnimatedCrossFade(
                         firstChild: SizedBox(
-                          height: 72,
+                          height: 72.h,
                           child: _buildDefaultView(theme, voltageColor),
                         ),
                         secondChild: SizedBox(
-                          height: 135,
+                          height: 135.h,
                           child: _buildExpandedView(
                             theme,
                             activeCount,
@@ -189,7 +197,7 @@ class _StatusCardState extends ConsumerState<StatusCard> {
 
   Widget _buildDefaultView(ThemeData theme, Color voltageColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -200,13 +208,25 @@ class _StatusCardState extends ConsumerState<StatusCard> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.bolt_rounded, color: voltageColor, size: 18)
-                      .animate(onPlay: (c) => c.repeat())
-                      .scale(
-                        begin: const Offset(1, 1),
-                        end: const Offset(1.2, 1.2),
-                        duration: 1.5.seconds,
-                      ), // Replaced pulse with scale
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final perf = ref.watch(performanceProvider);
+                      final icon = Icon(
+                        Icons.bolt_rounded,
+                        color: voltageColor,
+                        size: 18,
+                      );
+                      if (perf) return icon;
+
+                      return icon
+                          .animate(onPlay: (c) => c.repeat())
+                          .scale(
+                            begin: const Offset(1, 1),
+                            end: const Offset(1.2, 1.2),
+                            duration: 1.5.seconds,
+                          );
+                    },
+                  ), // Replaced pulse with scale
                   const SizedBox(width: 8),
                   Text(
                     'AC MAIN',
@@ -226,7 +246,7 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                   Text(
                     widget.voltage.toStringAsFixed(1),
                     style: GoogleFonts.outfit(
-                      fontSize: 28,
+                      fontSize: 28.sp,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -237,7 +257,7 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                     child: Text(
                       'V',
                       style: GoogleFonts.outfit(
-                        fontSize: 14,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
                         color: voltageColor,
                       ),
@@ -377,16 +397,16 @@ class _StatusCardState extends ConsumerState<StatusCard> {
               Text(
                 label,
                 style: GoogleFonts.outfit(
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
+                  letterSpacing: 1.0.w,
                   color: Colors.white,
                 ),
               ),
               Text(
                 subLabel,
                 style: GoogleFonts.outfit(
-                  fontSize: 12,
+                  fontSize: 12.sp,
                   color: Colors.white.withOpacity(0.5),
                 ),
               ),

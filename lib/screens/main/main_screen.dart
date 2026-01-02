@@ -12,7 +12,6 @@ import '../../services/google_assistant_service.dart';
 import '../../services/user_activity_service.dart';
 
 import 'dart:async';
-import '../../services/firebase_switch_service.dart';
 import '../../providers/switch_provider.dart';
 
 import '../../providers/switch_schedule_provider.dart';
@@ -31,8 +30,8 @@ import '../../widgets/common/pixel_led_border.dart';
 import '../../widgets/common/switch_tab_background.dart';
 import '../../widgets/common/no_internet_widget.dart';
 import '../../widgets/navigation/animated_nav_icon.dart';
-import '../../widgets/scheduling/scheduling_sheet.dart';
 import '../../widgets/common/premium_app_bar.dart';
+import '../../core/ui/responsive_layout.dart';
 
 import '../settings/settings_screen.dart';
 
@@ -211,10 +210,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
               // Background Layer - Restored below header
               Positioned.fill(
                 top:
-                    85 +
-                    MediaQuery.of(
-                      context,
-                    ).padding.top, // Start strictly at grid level
+                    85.h +
+                    Responsive.paddingTop, // Start strictly at grid level
                 child: ClipRect(
                   // Force clip to prevent particle bleeding
                   child: AnimatedOpacity(
@@ -265,7 +262,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     return Container(
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.8),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         border: Border(
           top: BorderSide(
             color: theme.colorScheme.primary.withOpacity(0.2),
@@ -276,7 +273,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       child: SafeArea(
         top: false,
         child: Container(
-          height: 65,
+          height: 65.h,
           child: BottomNavigationBar(
             currentIndex: _currentPage,
             onTap: _onBottomNavTapped,
@@ -286,9 +283,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
             showSelectedLabels: true,
             showUnselectedLabels: false,
             selectedLabelStyle: GoogleFonts.outfit(
-              fontSize: 10,
+              fontSize: 10.sp,
               fontWeight: FontWeight.w900,
-              letterSpacing: 1.2,
+              letterSpacing: 1.2.w,
             ),
             elevation: 0,
             type: BottomNavigationBarType.fixed,
@@ -332,21 +329,27 @@ class DashboardView extends ConsumerWidget {
         // Content with dynamic spacing
         SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(
+              horizontal: Responsive.horizontalPadding,
+            ),
             child: Column(
               children: [
-                const SizedBox(height: 65), // Account for App Bar
+                SizedBox(height: 65.h), // Account for App Bar
                 const Spacer(flex: 1), // Top breathing room
-                const RoboAssistant(eyesOnly: true, autoTuneEnabled: false),
+                const RepaintBoundary(
+                  child: RoboAssistant(eyesOnly: true, autoTuneEnabled: false),
+                ),
                 const Spacer(flex: 1),
-                const TimeDateWidget(),
+                const RepaintBoundary(child: TimeDateWidget()),
                 const Spacer(flex: 1),
-                StatusCard(
-                  voltage: liveInfo.acVoltage,
-                  systemState: systemState,
+                RepaintBoundary(
+                  child: StatusCard(
+                    voltage: liveInfo.acVoltage,
+                    systemState: systemState,
+                  ),
                 ),
                 const Spacer(flex: 2), // LARGER gap to push buttons lower
-                const _ActionButtons(),
+                const RepaintBoundary(child: _ActionButtons()),
                 const Spacer(flex: 1), // Bottom breathing room
               ],
             ),
@@ -361,9 +364,9 @@ class DashboardView extends ConsumerWidget {
             title: Text(
               'NEBULA CORE',
               style: GoogleFonts.outfit(
-                fontSize: 20,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+                letterSpacing: 2.w,
                 color: theme.colorScheme.primary,
                 shadows: [
                   BoxShadow(
@@ -407,7 +410,7 @@ class _ControlViewState extends ConsumerState<ControlView> {
   Widget build(BuildContext context) {
     // Consistent spacing strategy
     final topPadding = MediaQuery.of(context).padding.top;
-    final contentTopPadding = topPadding + 65 + 20;
+    final contentTopPadding = topPadding + 65.h + 20.h;
 
     return Stack(
       children: [
@@ -440,9 +443,9 @@ class _ControlViewState extends ConsumerState<ControlView> {
             title: Text(
               'SMART SWITCHES',
               style: GoogleFonts.outfit(
-                fontSize: 18,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
+                letterSpacing: 1.5.w,
                 color: const Color(0xFF00E5FF), // Neon Cyan
                 shadows: [
                   BoxShadow(
@@ -501,7 +504,7 @@ class _EnvironmentInfo extends StatelessWidget {
           Text(
             '${temp.toStringAsFixed(1)}°C',
             style: GoogleFonts.roboto(
-              fontSize: 14,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface.withOpacity(0.9),
             ),
@@ -522,7 +525,7 @@ class _ActionButtons extends ConsumerWidget {
     final assistantService = ref.watch(googleAssistantServiceProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: Responsive.horizontalPadding),
       child: Row(
         children: [
           Expanded(
@@ -582,8 +585,13 @@ class _ActionButtons extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Google Home', style: theme.textTheme.headlineMedium),
-                  const SizedBox(height: 16),
+                  Text(
+                    'Google Home',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontSize: 24.sp,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
                   Text(
                     googleHomeLinked
                         ? 'Google Home is linked. Your devices are synced to the cloud.'
@@ -653,8 +661,8 @@ class _GlassButton extends StatelessWidget {
         duration: const Duration(seconds: 4),
         colors: const [],
         child: FrostedGlass(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          radius: BorderRadius.circular(20),
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          radius: BorderRadius.circular(20.r),
           child: Column(
             children: [
               Icon(
@@ -662,13 +670,13 @@ class _GlassButton extends StatelessWidget {
                 color: isActive
                     ? activeColor
                     : theme.colorScheme.onSurface.withOpacity(0.6),
-                size: 24,
+                size: 24.r,
               ),
               const SizedBox(height: 8),
               Text(
                 label,
                 style: GoogleFonts.roboto(
-                  fontSize: 14,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   color: theme.colorScheme.onSurface.withOpacity(0.8),
                 ),

@@ -3,7 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/switch_background_provider.dart';
-import '../../providers/switch_provider.dart'; // Added
+import '../../providers/switch_provider.dart';
+import '../../providers/performance_provider.dart';
 
 class SwitchTabBackground extends ConsumerWidget {
   final Widget child;
@@ -14,6 +15,12 @@ class SwitchTabBackground extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final style = ref.watch(switchBackgroundProvider);
     final devices = ref.watch(switchDevicesProvider);
+    final performanceMode = ref.watch(performanceProvider);
+
+    // High Performance optimization: Disable animated backgrounds
+    if (performanceMode) {
+      return const ColoredBox(color: Colors.black);
+    }
 
     // Dynamic Color Extraction
     Color primaryColor = Colors.cyanAccent;
@@ -418,8 +425,8 @@ class _NeonBorderPainter extends CustomPainter {
           20 // Thicker for softer glow
       ..maskFilter = const MaskFilter.blur(
         BlurStyle.normal,
-        25,
-      ); // Increased blur
+        4,
+      ); // Reduced from 10
 
     final colors = [
       primary.withOpacity(0.6), // Reduced opacity
@@ -511,7 +518,10 @@ class _CosmicNebulaPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.drawColor(const Color(0xFF050010), BlendMode.src);
     final paint = Paint()
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60);
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        15,
+      ); // Reduced from 30
     final points = [
       Offset(size.width * 0.2, size.height * 0.3),
       Offset(size.width * 0.8, size.height * 0.7),
@@ -587,10 +597,11 @@ class _LiquidPlasmaPainter extends CustomPainter {
     final paint = Paint()
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
     final t = animation.value * 2 * pi;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 8; i++) {
+      // Reduced from 20
       final x = size.width / 2 + sin(t * (i + 1) * 0.1) * size.width * 0.4;
       final y = size.height / 2 + cos(t * (i + 1) * 0.13) * size.height * 0.4;
-      paint.color = Color.lerp(primary, secondary, i / 20)!.withOpacity(0.5);
+      paint.color = Color.lerp(primary, secondary, i / 8)!.withOpacity(0.5);
       canvas.drawCircle(Offset(x, y), 60 + sin(t) * 20, paint);
     }
   }
@@ -742,7 +753,10 @@ class _AuroraPainter extends CustomPainter {
     canvas.drawColor(Colors.black, BlendMode.src);
     final paint = Paint()
       ..strokeWidth = 20
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 30);
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        15,
+      ); // Reduced from 30
     final t = animation.value * 2 * pi;
 
     for (int i = 0; i < 3; i++) {

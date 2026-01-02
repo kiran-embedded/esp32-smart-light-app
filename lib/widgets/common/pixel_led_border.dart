@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/performance_provider.dart';
 import 'dart:math' as math;
 
-class PixelLedBorder extends StatefulWidget {
+class PixelLedBorder extends ConsumerStatefulWidget {
   final Widget child;
   final double borderRadius;
   final double strokeWidth;
@@ -27,10 +29,10 @@ class PixelLedBorder extends StatefulWidget {
   });
 
   @override
-  State<PixelLedBorder> createState() => _PixelLedBorderState();
+  ConsumerState<PixelLedBorder> createState() => _PixelLedBorderState();
 }
 
-class _PixelLedBorderState extends State<PixelLedBorder>
+class _PixelLedBorderState extends ConsumerState<PixelLedBorder>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
@@ -38,21 +40,22 @@ class _PixelLedBorderState extends State<PixelLedBorder>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    if (!widget.isStatic) {
-      _controller.repeat();
+    _checkAnimation();
+  }
+
+  void _checkAnimation() {
+    final performanceMode = ref.read(performanceProvider);
+    if (!widget.isStatic && !performanceMode) {
+      if (!_controller.isAnimating) _controller.repeat();
+    } else {
+      _controller.stop();
     }
   }
 
   @override
   void didUpdateWidget(PixelLedBorder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isStatic != oldWidget.isStatic) {
-      if (widget.isStatic) {
-        _controller.stop();
-      } else {
-        _controller.repeat();
-      }
-    }
+    _checkAnimation();
   }
 
   @override
@@ -77,15 +80,17 @@ class _PixelLedBorderState extends State<PixelLedBorder>
           ]
         : widget.colors;
 
-    return CustomPaint(
-      painter: _PixelLedPainter(
-        animation: _controller,
-        borderRadius: widget.borderRadius,
-        strokeWidth: widget.strokeWidth,
-        colors: effectiveColors,
-        isRainbow: widget.enableInfiniteRainbow,
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _PixelLedPainter(
+          animation: _controller,
+          borderRadius: widget.borderRadius,
+          strokeWidth: widget.strokeWidth,
+          colors: effectiveColors,
+          isRainbow: widget.enableInfiniteRainbow,
+        ),
+        child: widget.child,
       ),
-      child: widget.child,
     );
   }
 }

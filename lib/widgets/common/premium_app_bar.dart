@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/haptic_service.dart';
+import '../../providers/performance_provider.dart';
+import '../../core/ui/responsive_layout.dart';
 
 class PremiumAppBar extends ConsumerWidget {
   final Widget title;
@@ -28,8 +30,8 @@ class PremiumAppBar extends ConsumerWidget {
       padding: EdgeInsets.only(top: topPadding),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(35), // Even smoother
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(35.r), // Even smoother
         ),
         border: Border(
           bottom: BorderSide(
@@ -37,21 +39,23 @@ class PremiumAppBar extends ConsumerWidget {
             width: 0.5, // Razor sharp
           ),
         ),
-        boxShadow: [
-          // Outer Glow/Shadow
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.2),
-            blurRadius: 35,
-            offset: const Offset(0, 10),
-            spreadRadius: -8,
-          ),
-          // Deep Base Shadow
-          BoxShadow(
-            color: Colors.black.withOpacity(0.9),
-            blurRadius: 25,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        boxShadow: ref.watch(performanceProvider)
+            ? []
+            : [
+                // Outer Glow/Shadow
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  blurRadius: 35.r,
+                  offset: Offset(0, 10.h),
+                  spreadRadius: -8.r,
+                ),
+                // Deep Base Shadow
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.9),
+                  blurRadius: 25,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: SizedBox(
         height: height,
@@ -60,13 +64,13 @@ class PremiumAppBar extends ConsumerWidget {
             // Content
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(child: title),
                     if (trailing != null) ...[
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       GestureDetector(
                         onTap: () {
                           if (onTrailingTap != null) {

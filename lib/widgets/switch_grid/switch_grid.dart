@@ -7,6 +7,7 @@ import '../../services/sound_service.dart';
 import '../../widgets/robo/robo_assistant.dart' as robo;
 import '../../models/switch_device.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/ui/responsive_layout.dart';
 import 'switch_tile.dart';
 
 class SwitchGrid extends ConsumerWidget {
@@ -27,8 +28,8 @@ class SwitchGrid extends ConsumerWidget {
               'Waiting for device to come online...',
               style: GoogleFonts.outfit(
                 color: Colors.grey,
-                fontSize: 14,
-                letterSpacing: 1.1,
+                fontSize: 14.sp,
+                letterSpacing: 1.1.w,
               ),
             ),
           ],
@@ -36,13 +37,18 @@ class SwitchGrid extends ConsumerWidget {
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+    Widget grid = GridView.builder(
+      padding: EdgeInsets.fromLTRB(
+        Responsive.horizontalPadding,
+        0,
+        Responsive.horizontalPadding,
+        100.h,
+      ),
       physics: const BouncingScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppConstants.gridColumns,
-        crossAxisSpacing: AppConstants.gridSpacing,
-        mainAxisSpacing: AppConstants.gridSpacing,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: Responsive.gridColumns,
+        crossAxisSpacing: AppConstants.gridSpacing.w,
+        mainAxisSpacing: AppConstants.gridSpacing.h,
         childAspectRatio: 1.0,
       ),
       itemCount: devices.length,
@@ -75,6 +81,8 @@ class SwitchGrid extends ConsumerWidget {
         );
       },
     );
+
+    return grid;
   }
 
   void _showAdvancedSheet(
@@ -124,14 +132,14 @@ class _AdvancedBottomSheet extends ConsumerWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20.r),
             child: Text(
               (device.nickname ?? device.name).toUpperCase(),
               style: GoogleFonts.outfit(
-                fontSize: 20,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: 1.5,
+                letterSpacing: 1.5.w,
               ),
             ),
           ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/google_assistant_service.dart';
 import '../../widgets/robo/robo_assistant.dart' as robo;
+import '../../core/ui/responsive_layout.dart';
 import 'nebula_orb.dart';
 import 'text_decoder.dart';
 
@@ -108,7 +109,7 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay> {
       decoration: const BoxDecoration(color: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -158,17 +159,17 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay> {
               Text(
                 _isSuccess ? 'Success' : _statusText,
                 style: GoogleFonts.outfit(
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w500,
                   color: _isSuccess ? Colors.greenAccent : Colors.cyanAccent,
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.2.w,
                 ),
               ),
               const SizedBox(height: 20),
 
               // Nebula Orb (Siri-like)
               SizedBox(
-                height: 150,
+                height: 150.h,
                 child: Center(
                   child: NebulaOrb(
                     isListening: _isListening,
@@ -182,19 +183,19 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay> {
 
               // Command Text (Decoding Effect)
               SizedBox(
-                height: 40,
+                height: 40.h,
                 child: _commandText.isEmpty
                     ? Text(
                         'Say "Turn on light"',
                         style: GoogleFonts.outfit(
-                          fontSize: 20,
+                          fontSize: 20.sp,
                           color: Colors.white54,
                         ),
                       )
                     : TextDecoder(
                         _commandText,
                         style: GoogleFonts.outfit(
-                          fontSize: 24,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -209,10 +210,10 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay> {
                 children: [
                   if (_isListening)
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.stop_circle_outlined,
                         color: Colors.redAccent,
-                        size: 40,
+                        size: 40.r,
                       ),
                       onPressed: _stopListening,
                     ),

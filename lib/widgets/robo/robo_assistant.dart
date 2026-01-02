@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart'; // Added
 import '../../core/constants/app_constants.dart';
+import '../../core/ui/responsive_layout.dart';
 import '../../services/design_advisor_service.dart';
 import '../../services/haptic_service.dart';
 import '../../providers/theme_provider.dart';
@@ -11,6 +12,7 @@ import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_background_provider.dart';
 import '../../providers/animation_provider.dart'; // Added
 import '../../providers/update_provider.dart';
+import '../../providers/performance_provider.dart';
 import '../../services/update_service.dart';
 
 enum RoboReaction {
@@ -348,6 +350,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
     _checkUpdateNotification();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final performanceMode = ref.watch(performanceProvider);
 
     return AnimatedBuilder(
       animation: Listenable.merge([
@@ -358,21 +361,28 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
       ]),
       builder: (context, child) {
         // Compound transformations for organic feel
+        // Optimization: In performance mode, disable compound translation/rotation
+        final offset = performanceMode
+            ? Offset(0, _floatAnimation.value + _jumpAnimation.value)
+            : Offset(
+                _swayAnimation.value + _microRotationAnimation.value * 5,
+                _floatAnimation.value + _jumpAnimation.value,
+              );
+
+        final double rotation = performanceMode
+            ? 0.0
+            : _microRotationAnimation.value;
+
         return Transform.translate(
-          offset: Offset(
-            _swayAnimation.value +
-                _microRotationAnimation.value *
-                    5, // Translate slightly with rotation
-            _floatAnimation.value + _jumpAnimation.value, // Float + Jump
-          ),
+          offset: offset,
           child: Transform.rotate(
-            angle: _microRotationAnimation.value, // Subtle tilt
+            angle: rotation, // Subtle tilt
             child: Transform.scale(
               scale:
                   _scaleAnimation.value *
                   _entranceAnimation
                       .value, // Combine reaction scale with entrance scale
-              child: _buildRobo(isDark, theme),
+              child: _buildRobo(isDark, theme, performanceMode),
             ),
           ),
         );
@@ -380,7 +390,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
     );
   }
 
-  Widget _buildRobo(bool isDark, ThemeData theme) {
+  Widget _buildRobo(bool isDark, ThemeData theme, bool performanceMode) {
     final primaryColor = theme.colorScheme.primary;
     final secondaryColor = theme.colorScheme.secondary;
 
@@ -406,8 +416,8 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
     );
 
     return SizedBox(
-      width: 120,
-      height: widget.eyesOnly ? 160 : 240, // Dynamic height: 240 -> 160
+      width: 120.w,
+      height: (widget.eyesOnly ? 160.h : 240.h), // Dynamic height
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.center,
@@ -460,13 +470,13 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
                 }
               },
               child: SizedBox(
-                width: 120,
-                height: 140,
+                width: 120.w,
+                height: 140.h,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     // Base with underglow
-                    if (!widget.eyesOnly)
+                    if (!widget.eyesOnly && !performanceMode)
                       Positioned(
                         bottom: 0,
                         child: Container(
@@ -500,13 +510,15 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
                               ),
                               width: 1,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.5),
-                                blurRadius: 15,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
+                            boxShadow: performanceMode
+                                ? []
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.5),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
                           ),
                         ),
                       ),
@@ -523,13 +535,15 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
                             color: Colors.white.withOpacity(isDark ? 0.1 : 0.5),
                             width: 1,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
+                          boxShadow: performanceMode
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.4),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
                         ),
                         child: Stack(
                           alignment: Alignment.center,
@@ -709,8 +723,8 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
     return FadeTransition(
       opacity: _entranceAnimation,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: const BoxConstraints(maxWidth: 220),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        constraints: BoxConstraints(maxWidth: 220.w),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface.withOpacity(0.95),
           borderRadius: BorderRadius.circular(20),
@@ -733,7 +747,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
               advice.text,
               textAlign: TextAlign.center,
               style: GoogleFonts.outfit(
-                fontSize: 13,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface,
               ),
@@ -763,7 +777,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
                       Text(
                         "AUTO-TUNE",
                         style: GoogleFonts.outfit(
-                          fontSize: 10,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),

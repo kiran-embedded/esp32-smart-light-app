@@ -1,7 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/performance_provider.dart';
+import '../../providers/switch_settings_provider.dart';
 
-class FrostedGlass extends StatelessWidget {
+class FrostedGlass extends ConsumerWidget {
   final Widget child;
   final double blur;
   final double opacity;
@@ -13,7 +16,7 @@ class FrostedGlass extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double? width;
   final double? height;
-  final bool disableBlur; // optimization for lists
+  final bool disableBlur; // manual override
 
   const FrostedGlass({
     super.key,
@@ -32,23 +35,29 @@ class FrostedGlass extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (blur == 0 || disableBlur) return _buildBody();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final performanceMode = ref.watch(performanceProvider);
+    final blurEnabled = ref.watch(switchSettingsProvider).blurEffectsEnabled;
+    final bool effectivelyDisabled =
+        disableBlur || performanceMode || !blurEnabled;
+
+    if (blur == 0 || effectivelyDisabled)
+      return _buildBody(effectivelyDisabled);
 
     return ClipRRect(
       borderRadius: radius,
       child: RepaintBoundary(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: _buildBody(),
+          child: _buildBody(effectivelyDisabled),
         ),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(bool effectivelyDisabled) {
     // If blur is disabled, increase opacity slightly to ensure legibility
-    final double effectiveOpacity = disableBlur
+    final double effectiveOpacity = effectivelyDisabled
         ? (opacity + 0.15).clamp(0.0, 0.95)
         : opacity;
 

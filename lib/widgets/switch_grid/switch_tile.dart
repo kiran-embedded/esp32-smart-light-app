@@ -9,6 +9,7 @@ import '../../core/ui/adaptive_text_engine.dart';
 import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/performance_provider.dart'; // Added
+import '../../core/ui/responsive_layout.dart';
 import 'dart:math' as math; // For Cyberpunk jitter
 import 'dart:ui'; // For blur effects
 
@@ -575,11 +576,11 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       : (isLight
                             ? Colors.black.withOpacity(0.6)
                             : Colors.white.withOpacity(0.5)),
-                  size: 40,
+                  size: 40.r,
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               name.toUpperCase(),
               style: GoogleFonts.inter(
@@ -587,7 +588,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                     ? contentColor
                     : (isLight ? Colors.black.withOpacity(0.8) : Colors.white),
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
+                fontSize: 12.sp,
               ),
             ),
           ],
@@ -599,15 +600,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -667,7 +660,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       isActive ? contentColor : color,
                       iconInfo,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                     Text(
                       name,
                       style: GoogleFonts.poppins(
@@ -675,6 +668,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                             ? contentColor
                             : Colors.white.withOpacity(0.8),
                         fontWeight: FontWeight.w600,
+                        fontSize: 14.sp,
                       ),
                     ),
                   ],
@@ -743,8 +737,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       child: Center(
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          width: 80,
-          height: 80,
+          width: 80.r,
+          height: 80.r,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: blendingEnabled
@@ -780,7 +774,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             child: Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? color : Colors.grey,
-              size: 30,
+              size: 30.r,
             ),
           ),
         ),
@@ -791,15 +785,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -911,15 +897,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1000,7 +978,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? contentColor : const Color(0xFFA3B1C6),
-              size: 36,
+              size: 36.r,
             ),
             const SizedBox(height: 8),
             Text(
@@ -1008,7 +986,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               style: GoogleFonts.nunito(
                 color: isActive ? contentColor : const Color(0xFFA3B1C6),
                 fontWeight: FontWeight.bold,
-                fontSize: 13,
+                fontSize: 13.sp,
               ),
             ),
           ],
@@ -1020,15 +998,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1057,13 +1027,11 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
         child: Stack(
           children: [
             // Frosted Blur Base
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                color: isActive
-                    ? color.withOpacity(bgOpacity)
-                    : Colors.white.withOpacity(bgOpacity),
-              ),
+            // Frosted Blur Base (Optimized: Removed Blur)
+            Container(
+              color: isActive
+                  ? color.withOpacity(bgOpacity)
+                  : Colors.white.withOpacity(bgOpacity),
             ),
 
             // Dynamic Border & Fill
@@ -1106,16 +1074,16 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       isActive ? Colors.white : Colors.white,
                       iconInfo,
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10.h),
                     Text(
                       name.toUpperCase(),
                       style: GoogleFonts.raleway(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                        letterSpacing: 1.2,
+                        fontSize: 12.sp,
+                        letterSpacing: 1.2.w,
                         shadows: isActive
-                            ? [BoxShadow(color: color, blurRadius: 10)]
+                            ? [BoxShadow(color: color, blurRadius: 10.r)]
                             : [],
                       ),
                     ),
@@ -1191,8 +1159,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               child: Padding(
                 padding: const EdgeInsets.all(4.0),
                 child: Container(
-                  width: 6,
-                  height: 6,
+                  width: 6.r,
+                  height: 6.r,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -1216,8 +1184,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             right: 8,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 100),
-              width: 8,
-              height: 8,
+              width: 8.r,
+              height: 8.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isActive ? color : const Color(0xFF330000),
@@ -1257,7 +1225,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                   child: Icon(
                     isActive ? iconInfo.iconOn : iconInfo.iconOff,
                     color: isActive ? color : Colors.white.withOpacity(0.2),
-                    size: 28,
+                    size: 28.r,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1266,7 +1234,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                   style: GoogleFonts.robotoMono(
                     color: Colors.white.withOpacity(0.7),
                     fontWeight: FontWeight.bold,
-                    fontSize: 10,
+                    fontSize: 10.sp,
                   ),
                 ),
               ],
@@ -1280,15 +1248,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1358,17 +1318,17 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       color: isActive
                           ? Colors.white
                           : Colors.white.withOpacity(0.3),
-                      size: 34,
+                      size: 34.r,
                       shadows: isActive
                           ? [
-                              const BoxShadow(
+                              BoxShadow(
                                 color: Colors.cyanAccent,
-                                blurRadius: 10,
+                                blurRadius: 10.r,
                               ),
                               BoxShadow(
                                 color: Colors.purpleAccent,
-                                blurRadius: 10,
-                                offset: Offset(2, 2),
+                                blurRadius: 10.r,
+                                offset: Offset(2.w, 2.h),
                               ),
                             ]
                           : [],
@@ -1378,7 +1338,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       name,
                       style: GoogleFonts.pressStart2p(
                         color: Colors.white,
-                        fontSize: 8,
+                        fontSize: 8.sp,
                       ),
                     ),
                   ],
@@ -1390,15 +1350,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
           if (blendingEnabled) {
             return ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                children: [
-                  BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(color: Colors.transparent),
-                  ),
-                  container,
-                ],
-              ),
+              child: Stack(children: [const SizedBox.shrink(), container]),
             );
           }
           return container;
@@ -1472,7 +1424,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                     ).createShader(bounds),
                     child: Icon(
                       isActive ? iconInfo.iconOn : iconInfo.iconOff,
-                      size: 38,
+                      size: 38.r,
                       color: Colors.white, // Mask handles color
                     ),
                   );
@@ -1488,8 +1440,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                             ? Colors.white.withOpacity(0.7)
                             : Colors.white54),
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  letterSpacing: 3,
+                  fontSize: 14.sp,
+                  letterSpacing: 3.w,
                 ),
               ),
             ],
@@ -1505,15 +1457,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             topLeft: Radius.circular(isActive ? 4 : 16),
             bottomRight: Radius.circular(isActive ? 4 : 16),
           ),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1576,10 +1520,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(30),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(color: color.withOpacity(0.1)),
-                ),
+                child: Container(color: color.withOpacity(0.1)),
               ),
             ),
           Column(
@@ -1604,7 +1545,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       ? (blendingEnabled ? Colors.white : Colors.black87)
                       : Colors.white38,
                   fontWeight: FontWeight.w700,
-                  fontSize: 11,
+                  fontSize: 11.sp,
                 ),
               ),
             ],
@@ -1617,15 +1558,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(30),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1664,8 +1597,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 60.r,
+                height: 60.r,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -1674,17 +1607,17 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                         : (blendingEnabled
                               ? Colors.white.withOpacity(0.2)
                               : Colors.white10),
-                    width: 2,
+                    width: 2.w,
                   ),
                   boxShadow: isActive
-                      ? [BoxShadow(color: color, blurRadius: 15)]
+                      ? [BoxShadow(color: color, blurRadius: 15.r)]
                       : [],
                 ),
                 child: Center(
                   child: Icon(
                     isActive ? iconInfo.iconOn : iconInfo.iconOff,
                     color: isActive ? Colors.white : Colors.white24,
-                    size: 28,
+                    size: 28.r,
                   ),
                 ),
               ),
@@ -1703,15 +1636,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16), // Approx radius
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1793,10 +1718,13 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 Colors.white,
                 iconInfo,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Text(
                 name,
-                style: GoogleFonts.audiowide(color: Colors.white, fontSize: 10),
+                style: GoogleFonts.audiowide(
+                  color: Colors.white,
+                  fontSize: 10.sp,
+                ),
               ),
             ],
           ),
@@ -1808,15 +1736,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1894,14 +1814,14 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 Icon(
                   isActive ? iconInfo.iconOn : iconInfo.iconOff,
                   color: Colors.cyanAccent,
-                  size: 30,
+                  size: 30.r,
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: 5.h),
                 Text(
                   name,
                   style: GoogleFonts.vt323(
                     color: Colors.yellowAccent,
-                    fontSize: 18,
+                    fontSize: 18.sp,
                   ),
                 ),
               ],
@@ -1915,15 +1835,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -1974,14 +1886,14 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               child: Icon(
                 isActive ? iconInfo.iconOn : iconInfo.iconOff,
                 color: isActive ? color : Colors.grey,
-                size: 34,
+                size: 34.r,
               ),
             ),
             Text(
               name,
               style: GoogleFonts.comfortaa(
                 color: isActive ? color : Colors.grey,
-                fontSize: 11,
+                fontSize: 11.sp,
               ),
             ),
           ],
@@ -1998,15 +1910,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             topRight: Radius.circular(isActive ? 40 : 10),
             bottomLeft: Radius.circular(isActive ? 40 : 10),
           ),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2035,38 +1939,37 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
         Center(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.3)),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (rect) => LinearGradient(
-                        colors: [Colors.blue, Colors.purple, Colors.pink],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ).createShader(rect),
-                      child: Icon(
-                        isActive ? iconInfo.iconOn : iconInfo.iconOff,
-                        color: Colors.white,
-                        size: 36,
-                      ),
+            child: Container(
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.3)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ShaderMask(
+                    shaderCallback: (rect) => LinearGradient(
+                      colors: [Colors.blue, Colors.purple, Colors.pink],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(rect),
+                    child: Icon(
+                      isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                      color: Colors.white,
+                      size: 36.r,
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      name,
-                      style: GoogleFonts.geo(color: Colors.white, fontSize: 14),
+                  ),
+                  SizedBox(height: 5.h),
+                  Text(
+                    name,
+                    style: GoogleFonts.geo(
+                      color: Colors.white,
+                      fontSize: 14.sp,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -2097,15 +2000,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2145,7 +2040,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? Colors.white : Colors.white24,
-              size: 30,
+              size: 30.r,
             ),
             if (isActive)
               Container(
@@ -2162,15 +2057,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     if (blendingEnabled) {
       return RepaintBoundary(
         child: ClipOval(
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2220,16 +2107,16 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? Colors.white : color.withOpacity(0.5),
-              size: 36,
+              size: 36.r,
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Text(
               name.toUpperCase(),
               style: GoogleFonts.outfit(
                 color: isActive ? Colors.white : color.withOpacity(0.8),
                 fontWeight: FontWeight.w900,
-                fontSize: 10,
-                letterSpacing: 1.5,
+                fontSize: 10.sp,
+                letterSpacing: 1.5.w,
               ),
             ),
           ],
@@ -2241,15 +2128,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(30),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2295,7 +2174,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 Icon(
                   isActive ? iconInfo.iconOn : iconInfo.iconOff,
                   color: isActive ? Colors.cyanAccent : Colors.white38,
-                  size: 32,
+                  size: 32.r,
                 ),
                 Text(
                   name,
@@ -2315,15 +2194,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2358,13 +2229,13 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? Colors.white : color.withOpacity(0.5),
-              size: 30,
+              size: 30.r,
             ),
             Text(
               "NANO::${isActive ? 'ON' : 'OFF'}",
               style: GoogleFonts.shareTechMono(
                 color: isActive ? Colors.white : color.withOpacity(0.4),
-                fontSize: 9,
+                fontSize: 9.sp,
               ),
             ),
           ],
@@ -2376,15 +2247,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2425,13 +2288,14 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               color: isActive
                   ? Colors.white
                   : Colors.purpleAccent.withOpacity(0.3),
-              size: 34,
+              size: 34.r,
             ),
             Text(
               name,
               style: GoogleFonts.quicksand(
                 color: isActive ? Colors.white : Colors.white38,
                 fontWeight: FontWeight.w500,
+                fontSize: 14.sp,
               ),
             ),
           ],
@@ -2443,15 +2307,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2492,14 +2348,14 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 Icon(
                   isActive ? iconInfo.iconOn : iconInfo.iconOff,
                   color: isActive ? color : Colors.white24,
-                  size: 32,
+                  size: 32.r,
                 ),
                 Text(
                   name.toUpperCase(),
                   style: GoogleFonts.mavenPro(
                     color: isActive ? Colors.white : Colors.white12,
-                    letterSpacing: 2,
-                    fontSize: 10,
+                    letterSpacing: 2.w,
+                    fontSize: 10.sp,
                   ),
                 ),
               ],
@@ -2513,15 +2369,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2565,13 +2413,14 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: Colors.white,
-              size: 34,
+              size: 34.r,
             ),
             Text(
               name,
               style: GoogleFonts.kanit(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                fontSize: 14.sp,
               ),
             ),
           ],
@@ -2583,15 +2432,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2629,13 +2470,14 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? color : color.withOpacity(0.3),
-              size: 38,
+              size: 38.r,
             ),
             Text(
               name,
               style: GoogleFonts.firaSans(
                 color: isActive ? Colors.white : Colors.white24,
                 fontStyle: FontStyle.italic,
+                fontSize: 12.sp,
               ),
             ),
           ],
@@ -2647,15 +2489,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(40)),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2693,13 +2527,13 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? Colors.white : Colors.white10,
-              size: 32,
+              size: 32.r,
             ),
             if (isActive)
-              const SizedBox(
-                width: 10,
-                height: 10,
-                child: CircularProgressIndicator(
+              SizedBox(
+                width: 10.r,
+                height: 10.r,
+                child: const CircularProgressIndicator(
                   strokeWidth: 1,
                   valueColor: AlwaysStoppedAnimation(Colors.white),
                 ),
@@ -2712,15 +2546,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     if (blendingEnabled) {
       return RepaintBoundary(
         child: ClipOval(
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2755,13 +2581,13 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             Icon(
               isActive ? iconInfo.iconOn : iconInfo.iconOff,
               color: isActive ? Colors.white : Colors.white24,
-              size: 30,
+              size: 30.r,
             ),
             Text(
               name,
               style: GoogleFonts.montserrat(
                 color: isActive ? Colors.white : Colors.white38,
-                fontSize: 10,
+                fontSize: 10.sp,
               ),
             ),
           ],
@@ -2773,15 +2599,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       return RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2820,7 +2638,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               color: isActive
                   ? (blendingEnabled ? Colors.white : Colors.black)
                   : Colors.white24,
-              size: 35,
+              size: 35.r,
             ),
             Text(
               name,
@@ -2829,6 +2647,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                     ? (blendingEnabled ? Colors.white : Colors.black)
                     : Colors.white24,
                 fontWeight: FontWeight.bold,
+                fontSize: 14.sp,
               ),
             ),
           ],
@@ -2843,15 +2662,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             topLeft: Radius.circular(30),
             bottomRight: Radius.circular(30),
           ),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.transparent),
-              ),
-              container,
-            ],
-          ),
+          child: Stack(children: [const SizedBox.shrink(), container]),
         ),
       );
     }
@@ -2874,7 +2685,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 : Colors.white.withOpacity(
                     0.4,
                   )), // Boosted OFF visibility to 0.4
-      size: 32,
+      size: 32.r,
     );
 
     if (!isActive) return icon;
@@ -2951,7 +2762,7 @@ class _HologramGridPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     // Draw grid
-    final step = 10.0;
+    final step = 10.0.w;
     for (double i = 0; i < size.width; i += step) {
       canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
     }

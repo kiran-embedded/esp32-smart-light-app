@@ -178,55 +178,51 @@ class _FirebaseSetupScreenState extends ConsumerState<FirebaseSetupScreen> {
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                const Text(
-                  'NEBULA CORE',
-                  style: TextStyle(
-                    color: Colors.cyanAccent,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
+            child: RepaintBoundary(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  const Text(
+                    'NEBULA CORE',
+                    style: TextStyle(
+                      color: Colors.cyanAccent,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 4,
+                    ),
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Production Setup',
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => const SetupGuideDialog(),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.help_outline,
-                        color: Colors.cyanAccent,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Production Setup',
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
                       ),
-                      tooltip: 'How to setup?',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-
-                _buildImportButton(),
-
-                const SizedBox(height: 20),
-
-                _buildRegistrationForm(),
-
-                const SizedBox(height: 40),
-
-                _buildSaveButton(),
-
-                const SizedBox(height: 20),
-              ],
+                      IconButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => const SetupGuideDialog(),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.help_outline,
+                          color: Colors.cyanAccent,
+                        ),
+                        tooltip: 'How to setup?',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  _buildImportButton(),
+                  const SizedBox(height: 20),
+                  _buildRegistrationForm(),
+                  const SizedBox(height: 40),
+                  _buildSaveButton(),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),
