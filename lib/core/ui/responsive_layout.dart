@@ -1,91 +1,29 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+export '../system/display_engine.dart';
+import '../system/display_engine.dart';
 
-/// NEBULA RESPONSIVE ENGINE
-/// Dynamically scales UI components based on screen dimensions and pixel density.
-/// Uses a base reference of 375x812 (standard iPhone/Android flagship).
+/// NEBULA RESPONSIVE ENGINE (v2.0 - Powered by NADE)
+/// Bridge class for backward compatibility with existing .w, .h, .sp extensions.
 class Responsive {
-  static late MediaQueryData _mediaQueryData;
-  static late double screenWidth;
-  static late double screenHeight;
-  static late double pixelRatio;
-  static late double textScaleFactor;
+  static void init(BuildContext context) => DisplayEngine.init(context);
 
-  static late double scaleWidth;
-  static late double scaleHeight;
-  static late double scaleText;
+  static double w(double width) => DisplayEngine.w(width);
+  static double h(double height) => DisplayEngine.h(height);
+  static double sp(double fontSize) => DisplayEngine.sp(fontSize);
+  static double r(double radius) => DisplayEngine.r(radius);
 
-  static void init(BuildContext context) {
-    _mediaQueryData = MediaQuery.of(context);
-    screenWidth = _mediaQueryData.size.width;
-    screenHeight = _mediaQueryData.size.height;
-    pixelRatio = _mediaQueryData.devicePixelRatio;
-    textScaleFactor = _mediaQueryData.textScaleFactor;
+  static double get paddingTop => DisplayEngine.statusBarH;
+  static double get paddingBottom => DisplayEngine.bottomBarH;
+  static double get screenWidth => DisplayEngine.screenW;
+  static double get screenHeight => DisplayEngine.screenH;
 
-    // Base dimensions for reference
-    const double baseWidth = 375.0;
-    const double baseHeight = 812.0;
-
-    scaleWidth = screenWidth / baseWidth;
-    scaleHeight = screenHeight / baseHeight;
-
-    // Scale text slightly less aggressively to avoid massive font on tablets
-    scaleText = math.min(scaleWidth, scaleHeight);
-    if (screenWidth > 600) {
-      // Tablet optimization: Don't let scale factor grow too large
-      scaleText = 1.0 + (scaleText - 1.0) * 0.5;
-    }
-
-    debugPrint(
-      'NEBULA_RESPONSIVE: Initialized with Screen Size: ${screenWidth}x${screenHeight}',
-    );
-    debugPrint(
-      'NEBULA_RESPONSIVE: Scaling Factors - Width: ${scaleWidth.toStringAsFixed(3)}, Height: ${scaleHeight.toStringAsFixed(3)}, Text: ${scaleText.toStringAsFixed(3)}',
-    );
-  }
-
-  /// Adaptive Width
-  static double w(double width) => width * scaleWidth;
-
-  /// Adaptive Height
-  static double h(double height) => height * scaleHeight;
-
-  /// Adaptive Font Size
-  static double sp(double fontSize) => fontSize * scaleText;
-
-  /// Adaptive Spacing/Radius (Square scaling)
-  static double r(double radius) => radius * scaleText;
-
-  /// Safe Area Padding Top
-  static double get paddingTop => _mediaQueryData.padding.top;
-
-  /// Safe Area Padding Bottom
-  static double get paddingBottom => _mediaQueryData.padding.bottom;
-
-  /// Current Grid Columns based on width
   static int get gridColumns {
-    if (screenWidth > 900) return 4; // Desktop/Large Tablet
-    if (screenWidth > 600) return 3; // Small Tablet
-    return 2; // Phone
+    if (DisplayEngine.screenW > 900) return 4;
+    if (DisplayEngine.screenW > 600) return 3;
+    return 2;
   }
 
-  /// Adaptive Horizontal Padding
-  static double get horizontalPadding {
-    if (screenWidth > 600) return w(32);
-    return w(20);
-  }
-
-  /// Check if device is a tablet
-  static bool get isTablet => screenWidth > 600;
-
-  /// Check if device has a notch
-  static bool get hasNotch => _mediaQueryData.padding.top > 20;
-}
-
-/// Extension for easy access: 16.w, 10.sp, 20.r
-extension ResponsiveExtension on num {
-  double get w => Responsive.w(this.toDouble());
-  double get h => Responsive.h(this.toDouble());
-  double get sp => Responsive.sp(this.toDouble());
-  double get r => Responsive.r(this.toDouble());
+  static double get horizontalPadding => DisplayEngine.isTablet ? 32.w : 20.w;
+  static bool get isTablet => DisplayEngine.isTablet;
+  static bool get hasNotch => DisplayEngine.statusBarH > 20;
 }

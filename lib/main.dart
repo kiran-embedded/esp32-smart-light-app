@@ -25,10 +25,10 @@ import 'providers/sound_settings_provider.dart';
 import 'providers/voice_provider.dart';
 import 'widgets/common/restart_widget.dart';
 import 'services/performance_service.dart';
-import 'core/ui/responsive_layout.dart';
+import 'services/performance_monitor_service.dart';
+import 'core/ui/display_engine_wrapper.dart';
 import 'widgets/debug/global_fps_meter.dart';
 import 'widgets/debug/developer_test_overlay.dart';
-import 'services/performance_monitor_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -204,19 +204,20 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
         pageTransitionsTheme: _buildPageTransitions(animSettings.uiType),
       ),
       builder: (context, child) {
-        Responsive.init(context);
-        return Consumer(
-          builder: (context, ref, _) {
-            final stats = ref.watch(performanceStatsProvider);
-            debugPrint('ROOT_LOG: Console Visible: ${stats.consoleVisible}');
-            return Stack(
-              children: [
-                if (child != null) child,
-                const GlobalFpsMeter(),
-                if (stats.consoleVisible) const DeveloperTestOverlay(),
-              ],
-            );
-          },
+        return DisplayEngineWrapper(
+          child: Consumer(
+            builder: (context, ref, _) {
+              final stats = ref.watch(performanceStatsProvider);
+              debugPrint('ROOT_LOG: Console Visible: ${stats.consoleVisible}');
+              return Stack(
+                children: [
+                  if (child != null) child,
+                  const GlobalFpsMeter(),
+                  if (stats.consoleVisible) const DeveloperTestOverlay(),
+                ],
+              );
+            },
+          ),
         );
       },
       home: Listener(

@@ -8,6 +8,7 @@ import '../../providers/live_info_provider.dart';
 import '../../providers/connection_settings_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../services/user_activity_service.dart';
+import '../../core/ui/responsive_layout.dart';
 
 class DynamicIslandPill extends ConsumerStatefulWidget {
   const DynamicIslandPill({super.key});
@@ -68,24 +69,26 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 600),
         curve: const Cubic(0.2, 0.9, 0.4, 1.0),
-        width: _isExpanded ? 260 : 100, // Compact 100px for iPhone pill look
-        height: _isExpanded ? 48 : 32, // Sleek 32px height
+        width: _isExpanded
+            ? (DisplayEngine.screenW * 0.9).clamp(280.0, 420.0)
+            : 125.w, // Dynamic Width based on screen
+        height: _isExpanded ? 52.h : 36.h, // Slightly taller for better touch
         decoration: BoxDecoration(
           color: Colors.black,
           borderRadius: BorderRadius.circular(
-            _isExpanded ? 24 : 50,
+            _isExpanded ? 24.r : 50.r,
           ), // Perfect stadium border
           border: Border.all(
             color: theme.colorScheme.primary.withOpacity(
               _isExpanded ? 0.5 : 0.3,
             ),
-            width: 1.5,
+            width: 1.5.w,
           ),
           boxShadow: [
             BoxShadow(
               color: theme.colorScheme.primary.withOpacity(0.2),
-              blurRadius: _isExpanded ? 15 : 10,
-              spreadRadius: 1,
+              blurRadius: (_isExpanded ? 15 : 10).r,
+              spreadRadius: 1.r,
             ),
           ],
         ),
@@ -113,8 +116,8 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
             // Subtle Shimmer removed for static look
             if (sensorState.isMonitoring)
               Positioned(
-                right: _isExpanded ? 16 : 12, // Adjusted for balance
-                top: _isExpanded ? 18 : 15,
+                right: (_isExpanded ? 16 : 12).w, // Adjusted for balance
+                top: (_isExpanded ? 18 : 15).h,
                 child: _buildSensorIndicator(sensorState.isMoving),
               ),
           ],
@@ -125,16 +128,16 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
 
   Widget _buildSensorIndicator(bool isMoving) {
     return Container(
-      width: 5,
-      height: 5,
+      width: 5.r,
+      height: 5.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFFFD0054).withOpacity(isMoving ? 0.8 : 0.4),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFD0054).withOpacity(isMoving ? 0.6 : 0.2),
-            blurRadius: isMoving ? 6 : 3,
-            spreadRadius: isMoving ? 1 : 0,
+            blurRadius: (isMoving ? 6 : 3).r,
+            spreadRadius: isMoving ? 1.r : 0,
           ),
         ],
       ),
@@ -143,17 +146,17 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
 
   Widget _buildCollapsedContent(int activeCount) {
     return Container(
-      width: 120,
-      height: 36,
+      width: 125.w,
+      height: 36.h,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildConnectivityIcon(), // Connected/Offline Pill
           if (activeCount > 0) ...[
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Container(
-              width: 4,
-              height: 4,
+              width: 4.r,
+              height: 4.r,
               decoration: const BoxDecoration(
                 color: Colors.greenAccent,
                 shape: BoxShape.circle,
@@ -171,22 +174,22 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
       builder: (context, snapshot) {
         final isConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
           decoration: BoxDecoration(
             color: (isConnected ? Colors.green : Colors.red).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: (isConnected ? Colors.green : Colors.red).withOpacity(0.5),
-              width: 1,
+              width: 1.w,
             ),
           ),
           child: Text(
             isConnected ? "CONNECTED" : "OFFLINE",
             style: GoogleFonts.outfit(
-              fontSize: 9,
+              fontSize: 9.sp,
               fontWeight: FontWeight.bold,
               color: isConnected ? Colors.greenAccent : Colors.redAccent,
-              letterSpacing: 0.5,
+              letterSpacing: 0.5.w,
             ),
           ),
         );
@@ -240,27 +243,27 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
     }
 
     return Container(
-      width: 260, // Increased to 260 for full text visibility
-      height: 48,
-      padding: const EdgeInsets.only(
-        left: 12,
-        right: 20,
+      width: (DisplayEngine.screenW * 0.9).clamp(280.0, 420.0),
+      height: 52.h,
+      padding: EdgeInsets.only(
+        left: 12.w,
+        right: 20.w,
       ), // Optimized padding for text fit
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 10),
+          Icon(icon, size: 16.r, color: color),
+          SizedBox(width: 10.w),
           Flexible(
             child: Text(
               label.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.outfit(
-                fontSize: 11,
+                fontSize: 11.sp,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: 1.2,
+                letterSpacing: 1.2.w,
               ),
             ),
           ),
@@ -274,8 +277,8 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
   Widget _buildActivityPulse(bool active) {
     return RepaintBoundary(
       child: Container(
-        width: 8,
-        height: 8,
+        width: 8.r,
+        height: 8.r,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: active ? Colors.greenAccent : Colors.white10,
@@ -283,8 +286,8 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
               ? [
                   BoxShadow(
                     color: Colors.greenAccent.withOpacity(0.5),
-                    blurRadius: 4,
-                    spreadRadius: 1,
+                    blurRadius: 4.r,
+                    spreadRadius: 1.r,
                   ),
                 ]
               : [],

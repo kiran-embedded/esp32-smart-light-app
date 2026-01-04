@@ -664,6 +664,7 @@ class _GlassButton extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 16.h),
           radius: BorderRadius.circular(20.r),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
@@ -673,12 +674,17 @@ class _GlassButton extends StatelessWidget {
                 size: 24.r,
               ),
               const SizedBox(height: 8),
-              Text(
-                label,
-                style: GoogleFonts.roboto(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.roboto(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  ),
                 ),
               ),
             ],
