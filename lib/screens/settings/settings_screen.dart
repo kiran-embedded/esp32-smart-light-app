@@ -26,6 +26,7 @@ import '../../services/haptic_service.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
+import '../../providers/font_settings_provider.dart';
 import '../../services/esp32_code_generator.dart';
 import '../../services/file_service.dart';
 import '../../services/voice_service.dart';
@@ -229,6 +230,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 children: [
                   _buildIosSettingTile(
                     context,
+                    title: 'Font Scale',
+                    subtitle:
+                        '${(ref.watch(fontSettingsProvider) * 100).toInt()}%',
+                    onTap: () {}, // visual only
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 15),
+                    child: Slider(
+                      value: ref.watch(fontSettingsProvider),
+                      min: 0.8,
+                      max: 1.4,
+                      divisions: 6,
+                      activeColor: theme.colorScheme.primary,
+                      inactiveColor: Colors.white.withOpacity(0.1),
+                      onChanged: (val) {
+                        ref
+                            .read(fontSettingsProvider.notifier)
+                            .setFontScale(val);
+                      },
+                    ),
+                  ),
+                  _buildIosSettingTile(
+                    context,
                     title: 'Theme',
                     subtitle: _getThemeName(currentTheme),
                     onTap: () => _showThemePicker(context, ref, currentTheme),
@@ -363,7 +387,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               const SizedBox(height: 40),
               Center(
                 child: Text(
-                  "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+2025'}",
+                  "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+2030'}",
                   style: GoogleFonts.outfit(
                     color: Colors.white.withOpacity(0.2),
                     fontSize: 12.sp,

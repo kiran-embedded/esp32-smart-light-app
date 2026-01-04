@@ -211,9 +211,9 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
 
     switch (index) {
       case 1:
-        label = '${voltage.toInt()}V AC STABLE';
+        label = voltage < 160 ? 'MAINS CUT' : '${voltage.toInt()}V AC STABLE';
         icon = Icons.bolt_rounded;
-        color = voltage < 180 ? Colors.redAccent : Colors.greenAccent;
+        color = voltage < 160 ? Colors.redAccent : Colors.greenAccent;
         break;
       case 2:
         label = '${temp.toInt()}°C WEATHER';
@@ -233,13 +233,20 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
         color = Colors.deepPurpleAccent;
         break;
       default:
-        label = activeCount == 0
-            ? 'SYSTEM READY'
-            : activeCount == 1
-            ? activeSwitches.first.nickname ?? activeSwitches.first.name
-            : '$activeCount DEVICES ON';
-        icon = Icons.power_rounded;
-        color = Colors.greenAccent;
+        // Priority Override: If Mains Cut, show it on default view too
+        if (voltage < 160) {
+          label = 'MAINS CUT';
+          icon = Icons.bolt_rounded;
+          color = Colors.redAccent;
+        } else {
+          label = activeCount == 0
+              ? 'SYSTEM READY'
+              : activeCount == 1
+              ? activeSwitches.first.nickname ?? activeSwitches.first.name
+              : '$activeCount DEVICES ON';
+          icon = Icons.power_rounded;
+          color = Colors.greenAccent;
+        }
     }
 
     return Container(

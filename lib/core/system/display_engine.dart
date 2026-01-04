@@ -75,9 +75,15 @@ class DisplayEngine {
     );
   }
 
+  static double _userScale = 1.0;
+
+  static void setUserScale(double scale) {
+    _userScale = scale;
+  }
+
   static double w(double val) => val * _scaleW;
   static double h(double val) => val * _scaleH;
-  static double sp(double val) => val * _scaleMin * _textScale;
+  static double sp(double val) => val * _scaleMin * _textScale * _userScale;
   static double r(double val) => val * _scaleMin;
   static double p(double val) => val * _scaleMin;
 

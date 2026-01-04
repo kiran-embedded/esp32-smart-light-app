@@ -1,7 +1,7 @@
 {
-  "version": "v1.2.0+2025",
+  "version": "v1.2.0+2030",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/app-release.apk",
-  "release_notes": "• Layout Fixes: Optimized for Redmi Note 10\n• Dynamic Island: Responsive width\n• Action Buttons: Layout bug fix",
+  "release_notes": "• New Feature: Font Size Control\n• Safety: Low Voltage (<160V) Mains Cut Alert\n• Dynamic Island: Critical Alerts Override",
   "ota_version": "1.2.0",
   "ota_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/firmware.bin"
 }

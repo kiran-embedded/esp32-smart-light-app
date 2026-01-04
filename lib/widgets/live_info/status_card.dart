@@ -69,7 +69,10 @@ class _StatusCardState extends ConsumerState<StatusCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final voltageColor = (widget.voltage > 200 && widget.voltage < 250)
+    final voltageColor = widget.voltage < 160
+        ? Colors
+              .redAccent // CRITICAL LOW VOLTAGE
+        : (widget.voltage > 200 && widget.voltage < 250)
         ? Colors.greenAccent
         : (widget.voltage > 250 ? Colors.redAccent : Colors.tealAccent);
 
@@ -229,12 +232,14 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                   ), // Replaced pulse with scale
                   const SizedBox(width: 8),
                   Text(
-                    'AC MAIN',
+                    widget.voltage < 160 ? 'MAINS POWER CUT' : 'AC MAIN',
                     style: GoogleFonts.outfit(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: widget.voltage < 160
+                          ? Colors.redAccent
+                          : theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -308,12 +313,14 @@ class _StatusCardState extends ConsumerState<StatusCard> {
               ),
               const SizedBox(height: 6),
               Text(
-                "SYSTEM ACTIVE",
+                widget.voltage < 160 ? "CRITICAL ALERT" : "SYSTEM ACTIVE",
                 style: GoogleFonts.outfit(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
-                  color: theme.colorScheme.primary,
+                  color: widget.voltage < 160
+                      ? Colors.red
+                      : theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -369,10 +376,12 @@ class _StatusCardState extends ConsumerState<StatusCard> {
         color = Colors.cyanAccent;
         break;
       default:
-        label = '${voltage.toInt()}V GRID';
-        subLabel = "Stable Voltage";
+        label = widget.voltage < 160
+            ? 'POWER FAULT'
+            : '${voltage.toInt()}V GRID';
+        subLabel = widget.voltage < 160 ? "Check Mains" : "Stable Voltage";
         icon = Icons.bolt_rounded;
-        color = Colors.yellowAccent;
+        color = widget.voltage < 160 ? Colors.red : Colors.yellowAccent;
     }
 
     return Container(

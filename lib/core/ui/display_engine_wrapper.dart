@@ -1,18 +1,24 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../system/display_engine.dart';
+import '../../providers/font_settings_provider.dart';
 
 /// A global wrapper that provides high-end visual polish and scaling context.
 /// This imparts the "Unreal Engine" feel through subtle grain, vignetting, and smooth overlays.
-class DisplayEngineWrapper extends StatelessWidget {
+class DisplayEngineWrapper extends ConsumerWidget {
   final Widget child;
 
   const DisplayEngineWrapper({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Initialize standard Responsive as well for backward compatibility
     DisplayEngine.init(context);
+
+    // Inject User Font Scale into Engine
+    final userScale = ref.watch(fontSettingsProvider);
+    DisplayEngine.setUserScale(userScale);
 
     return Stack(
       children: [
