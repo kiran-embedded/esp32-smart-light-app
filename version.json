@@ -1,7 +1,7 @@
 {
-  "version": "1.2.0+2035",
+  "version": "1.2.0+16",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/app-release.apk",
-  "release_notes": "v1.2.0+2035: Micro-Animations (120FPS Polish), Bouncing Scroll, DPI Control & UI Overhaul.",
+  "release_notes": "v1.2.0+16: Global Voltage Sync, UI Depth Engine, Premium Noise Texture, and Performance Scaling.",
   "ota_version": "1.2.0",
   "ota_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/firmware.bin"
 }
