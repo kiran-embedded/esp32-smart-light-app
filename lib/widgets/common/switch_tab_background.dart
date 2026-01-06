@@ -27,6 +27,8 @@ class SwitchTabBackground extends ConsumerWidget {
     Color secondaryColor = Colors.purpleAccent;
 
     final activeSwitches = devices.where((s) => s.isActive).toList();
+    final theme = Theme.of(context).colorScheme;
+
     if (activeSwitches.isNotEmpty) {
       // Generate color hash from active switch ID for consistency
       final s = activeSwitches.first;
@@ -34,7 +36,7 @@ class SwitchTabBackground extends ConsumerWidget {
       primaryColor = HSVColor.fromAHSV(
         1.0,
         (hash.abs() % 360).toDouble(),
-        1.0,
+        0.8, // Slightly desaturated for better blending
         1.0,
       ).toColor();
 
@@ -44,31 +46,62 @@ class SwitchTabBackground extends ConsumerWidget {
         secondaryColor = HSVColor.fromAHSV(
           1.0,
           (hash2.abs() % 360).toDouble(),
-          1.0,
+          0.8,
           1.0,
         ).toColor();
       } else {
         secondaryColor = HSVColor.fromColor(
           primaryColor,
-        ).withHue((HSVColor.fromColor(primaryColor).hue + 180) % 360).toColor();
+        ).withHue((HSVColor.fromColor(primaryColor).hue + 60) % 360).toColor();
       }
+    } else {
+      // Idle: Use theme colors
+      primaryColor = theme.primary.withOpacity(0.4);
+      secondaryColor = theme.tertiary.withOpacity(0.3);
     }
 
     return Stack(
       children: [
-        // Background Layer
+        // 1. Background Layer (Animated Painter)
         Positioned.fill(
           child: _buildBackground(style, primaryColor, secondaryColor),
         ),
-        // Blending Layer (New)
+
+        // 2. Depth Layer (Vignette for recessed look)
         Positioned.fill(
-          child: Container(
-            color: Colors.black.withOpacity(
-              0.3,
-            ), // Universal darken for contrast
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  radius: 1.2,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.6),
+                  ],
+                  stops: const [0.6, 1.0],
+                ),
+              ),
+            ),
           ),
         ),
-        // Content Layer
+
+        // 3. Noise Texture Layer (Premium feel)
+        const Positioned.fill(child: IgnorePointer(child: _NoiseTexture())),
+
+        // 4. Blending & Contrast Layer
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.25),
+                backgroundBlendMode: BlendMode.darken,
+              ),
+            ),
+          ),
+        ),
+
+        // 5. Content Layer
         child,
       ],
     );
@@ -259,6 +292,32 @@ class SwitchTabBackground extends ConsumerWidget {
         );
     }
   }
+}
+
+class _NoiseTexture extends StatelessWidget {
+  const _NoiseTexture();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _NoisePainter());
+  }
+}
+
+class _NoisePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = Random(42);
+    final paint = Paint();
+    for (int i = 0; i < 1500; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      paint.color = Colors.white.withOpacity(random.nextDouble() * 0.05);
+      canvas.drawRect(Rect.fromLTWH(x, y, 1, 1), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 enum _PainterType {

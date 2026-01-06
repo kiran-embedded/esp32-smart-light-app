@@ -96,98 +96,110 @@ class _StatusCardState extends ConsumerState<StatusCard> {
           HapticService.medium(); // Smooth "thud" for the action
           _handleTap();
         },
-        child: AnimatedScale(
-          scale: _isPressed ? 0.96 : 1.0, // Subtler squish
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
-            duration: const Duration(
-              milliseconds: 450,
-            ), // Slower, more fluid expansion
-            curve: Curves.fastLinearToSlowEaseIn, // Liquid-like physics
-            width: Responsive.screenWidth * 0.90, // Slightly narrower
-            height: _isExpanded ? 135.h : 72.h, // Reduced height (was 150/75)
-            decoration: BoxDecoration(
-              color: Colors.transparent, // Handled by inner container
-              borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-                if (_isExpanded)
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.15),
-                    blurRadius: 50,
-                    spreadRadius: -10,
-                  ),
-              ],
-            ),
-            child: PixelLedBorder(
-              borderRadius: _isExpanded ? 40 : 36,
-              strokeWidth: 2.0,
-              duration: const Duration(seconds: 4),
-              colors: const [
-                Color(0xFF00E5FF), // Cyan
-                Color(0xFF2979FF), // Blue
-                Color(0xFFD500F9), // Purple
-                Color(0xFF00E5FF), // Wrap
-              ],
-              child: ClipRRect(
+        child: Animate(
+          onPlay: (c) => c.repeat(reverse: true),
+          effects: [
+            if (!ref.watch(performanceProvider))
+              ScaleEffect(
+                begin: const Offset(1, 1),
+                end: const Offset(1.015, 1.015),
+                duration: 3.seconds,
+                curve: Curves.easeInOutSine,
+              ),
+          ],
+          child: AnimatedScale(
+            scale: _isPressed ? 0.96 : 1.0, // Subtler squish
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            child: AnimatedContainer(
+              duration: const Duration(
+                milliseconds: 450,
+              ), // Slower, more fluid expansion
+              curve: Curves.fastLinearToSlowEaseIn, // Liquid-like physics
+              width: Responsive.screenWidth * 0.90, // Slightly narrower
+              height: _isExpanded ? 135.h : 72.h, // Reduced height (was 150/75)
+              decoration: BoxDecoration(
+                color: Colors.transparent, // Handled by inner container
                 borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
-                child: Container(
-                  color: Colors.black, // Opaque Background
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Background Subtle Glow (Very faint)
-                      Positioned.fill(
-                        child: Consumer(
-                          builder: (context, ref, _) {
-                            final perf = ref.watch(performanceProvider);
-                            if (perf) return const SizedBox.shrink();
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                  if (_isExpanded)
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.15),
+                      blurRadius: 50,
+                      spreadRadius: -10,
+                    ),
+                ],
+              ),
+              child: PixelLedBorder(
+                borderRadius: _isExpanded ? 40 : 36,
+                strokeWidth: 2.0,
+                duration: const Duration(seconds: 4),
+                colors: const [
+                  Color(0xFF00E5FF), // Cyan
+                  Color(0xFF2979FF), // Blue
+                  Color(0xFFD500F9), // Purple
+                  Color(0xFF00E5FF), // Wrap
+                ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
+                  child: Container(
+                    color: Colors.black, // Opaque Background
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Background Subtle Glow (Very faint)
+                        Positioned.fill(
+                          child: Consumer(
+                            builder: (context, ref, _) {
+                              final perf = ref.watch(performanceProvider);
+                              if (perf) return const SizedBox.shrink();
 
-                            return Animate(
-                              onPlay: (c) => c.repeat(reverse: true),
-                              effects: [
-                                ShimmerEffect(
-                                  duration: 5.seconds,
-                                  color: voltageColor.withOpacity(0.05),
-                                  angle: 45,
-                                ),
-                              ],
-                              child: Container(color: Colors.transparent),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Content Crossfade
-                      AnimatedCrossFade(
-                        firstChild: SizedBox(
-                          height: 72.h,
-                          child: _buildDefaultView(theme, voltageColor),
-                        ),
-                        secondChild: SizedBox(
-                          height: 135.h,
-                          child: _buildExpandedView(
-                            theme,
-                            activeCount,
-                            activeSwitches,
-                            liveInfo.acVoltage,
-                            liveInfo.temperature,
-                            connSettings.mode,
-                            _displayIndex,
+                              return Animate(
+                                onPlay: (c) => c.repeat(reverse: true),
+                                effects: [
+                                  ShimmerEffect(
+                                    duration: 5.seconds,
+                                    color: voltageColor.withOpacity(0.05),
+                                    angle: 45,
+                                  ),
+                                ],
+                                child: Container(color: Colors.transparent),
+                              );
+                            },
                           ),
                         ),
-                        crossFadeState: !_isExpanded
-                            ? CrossFadeState.showFirst
-                            : CrossFadeState.showSecond,
-                        duration: const Duration(milliseconds: 400),
-                        sizeCurve: Curves.fastLinearToSlowEaseIn,
-                      ),
-                    ],
+
+                        // Content Crossfade
+                        AnimatedCrossFade(
+                          firstChild: SizedBox(
+                            height: 72.h,
+                            child: _buildDefaultView(theme, voltageColor),
+                          ),
+                          secondChild: SizedBox(
+                            height: 135.h,
+                            child: _buildExpandedView(
+                              theme,
+                              activeCount,
+                              activeSwitches,
+                              liveInfo.acVoltage,
+                              liveInfo.temperature,
+                              connSettings.mode,
+                              _displayIndex,
+                            ),
+                          ),
+                          crossFadeState: !_isExpanded
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                          duration: const Duration(milliseconds: 400),
+                          sizeCurve: Curves.fastLinearToSlowEaseIn,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -248,12 +260,29 @@ class _StatusCardState extends ConsumerState<StatusCard> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    widget.voltage.toStringAsFixed(1),
-                    style: GoogleFonts.outfit(
-                      fontSize: 28.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.2),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                    child: Text(
+                      widget.voltage.toStringAsFixed(1),
+                      key: ValueKey(widget.voltage.toStringAsFixed(1)),
+                      style: GoogleFonts.outfit(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -403,13 +432,17 @@ class _StatusCardState extends ConsumerState<StatusCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: GoogleFonts.outfit(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0.w,
-                  color: Colors.white,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  label,
+                  key: ValueKey(label),
+                  style: GoogleFonts.outfit(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0.w,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               Text(

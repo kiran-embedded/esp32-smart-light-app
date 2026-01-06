@@ -7,12 +7,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/theme_provider.dart';
 import '../../providers/voice_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/switch_provider.dart';
 import '../../providers/immersive_provider.dart';
 import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_background_provider.dart';
-import '../../providers/animation_provider.dart';
 import '../../providers/connection_settings_provider.dart';
 import '../../providers/sound_settings_provider.dart';
 import '../../providers/switch_settings_provider.dart';
@@ -20,21 +18,27 @@ import '../../providers/performance_provider.dart';
 import '../../providers/network_settings_provider.dart';
 import '../../providers/haptic_provider.dart';
 import '../../providers/update_provider.dart';
+import '../../providers/live_info_provider.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../services/performance_monitor_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/haptic_service.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/font_settings_provider.dart';
+import '../../providers/display_settings_provider.dart';
 import '../../services/esp32_code_generator.dart';
 import '../../services/file_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/voice_service.dart';
 import '../../services/update_service.dart';
 
-import '../login/login_screen.dart';
+import 'package:path_provider/path_provider.dart';
+
 import 'help_support_screen.dart';
 import '../../widgets/robo/robo_assistant.dart';
+import '../../widgets/common/animated_cupertino_switch.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -79,231 +83,383 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               const _IosSectionHeader(title: 'Updates'),
               _buildUpdateTile(context, ref),
 
-              // --- 1. CORE SYSTEM ---
-              const _IosSectionHeader(title: 'Core System'),
+              // --- 1. APPEARANCE & VISUALS (Priority) ---
+              const _IosSectionHeader(title: 'Appearance & Visuals'),
               _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Fullscreen Mode',
-                    subtitle: 'Hide status and navigation bars',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(immersiveModeProvider),
-                      onChanged: (value) async {
-                        ref
-                            .read(immersiveModeProvider.notifier)
-                            .setImmersiveMode(value);
-                      },
-                    ),
-                  ),
-                  _buildAnimationSettings(context, ref),
-                ],
-              ),
-
-              // --- 2. CONNECTIVITY ---
-              const _IosSectionHeader(title: 'Connectivity'),
-              _IosGroupedContainer(
-                children: [_buildConnectionSettings(context, ref)],
-              ),
-
-              // --- 3. SENSORY & FEEDBACK ---
-              const _IosSectionHeader(title: 'Sensory & Feedback'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Voice Feedback',
-                    subtitle: 'Enable AI voice responses',
-                    trailing: CupertinoSwitch(
-                      value: voiceEnabled,
-                      onChanged: (value) async {
-                        ref
-                            .read(voiceEnabledProvider.notifier)
-                            .setVoiceEnabled(value);
-                      },
-                    ),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Master Sound',
-                    subtitle: 'Enable all app sounds',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(soundSettingsProvider).masterSound,
-                      onChanged: (val) => ref
-                          .read(soundSettingsProvider.notifier)
-                          .setMasterSound(val),
-                    ),
-                  ),
-                  if (ref.watch(soundSettingsProvider).masterSound) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Master Volume: ${(ref.watch(soundSettingsProvider).masterVolume * 100).toInt()}%',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Slider(
-                            value: ref
-                                .watch(soundSettingsProvider)
-                                .masterVolume,
-                            activeColor: theme.colorScheme.primary,
-                            inactiveColor: Colors.white.withOpacity(0.1),
-                            onChanged: (val) => ref
-                                .read(soundSettingsProvider.notifier)
-                                .setMasterVolume(val),
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
                           ),
                         ],
+                  children: [
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Display Zoom',
+                      subtitle: ref.watch(displaySettingsProvider) == 0.9
+                          ? 'Small'
+                          : (ref.watch(displaySettingsProvider) == 1.1
+                                ? 'Large'
+                                : 'Standard'),
+                      trailing:
+                          SizedBox(
+                                width: 150,
+                                child: CupertinoSegmentedControl<double>(
+                                  children: {
+                                    0.9: Text(
+                                      'S',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    1.0: Text(
+                                      'M',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    1.1: Text(
+                                      'L',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  },
+                                  onValueChanged: (val) {
+                                    HapticService.medium();
+                                    ref
+                                        .read(displaySettingsProvider.notifier)
+                                        .setDensity(val);
+                                  },
+                                  groupValue: ref.watch(
+                                    displaySettingsProvider,
+                                  ),
+                                  borderColor: theme.colorScheme.primary,
+                                  selectedColor: theme.colorScheme.primary,
+                                  unselectedColor: Colors.transparent,
+                                  padding: EdgeInsets.zero,
+                                ),
+                              )
+                              .animate(
+                                key: ValueKey(
+                                  ref.watch(displaySettingsProvider),
+                                ),
+                              )
+                              .scale(
+                                duration: 200.ms,
+                                curve: Curves.easeOutBack,
+                              ),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Font Scale',
+                      subtitle:
+                          '${(ref.watch(fontSettingsProvider) * 100).toInt()}%',
+                      onTap: () {},
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 15),
+                      child: Slider(
+                        value: ref.watch(fontSettingsProvider),
+                        min: 0.8,
+                        max: 1.4,
+                        divisions: 6,
+                        activeColor: theme.colorScheme.primary,
+                        inactiveColor: Colors.white.withOpacity(0.1),
+                        onChanged: (val) {
+                          ref
+                              .read(fontSettingsProvider.notifier)
+                              .setFontScale(val);
+                        },
                       ),
                     ),
                     _buildIosSettingTile(
                       context,
-                      title: 'Switch Sounds',
-                      subtitle: 'Click sound when toggling',
-                      trailing: CupertinoSwitch(
-                        value: ref.watch(soundSettingsProvider).switchSound,
+                      title: 'Theme',
+                      subtitle: _getThemeName(currentTheme),
+                      onTap: () => _showThemePicker(context, ref, currentTheme),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Switch Style',
+                      subtitle: _getSwitchStyleName(
+                        ref.watch(switchStyleProvider),
+                      ),
+                      onTap: () => _showSwitchStylePicker(context, ref),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Tab Background',
+                      subtitle: _getSwitchBackgroundName(
+                        ref.watch(switchBackgroundProvider),
+                      ),
+                      onTap: () => _showBackgroundPicker(context, ref),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Glass Blur Effects',
+                      subtitle: 'Frosted glass visuals (GPU heavy)',
+                      trailing: AnimatedCupertinoSwitch(
+                        value: ref
+                            .watch(switchSettingsProvider)
+                            .blurEffectsEnabled,
+                        onChanged: (val) => ref
+                            .read(switchSettingsProvider.notifier)
+                            .setBlurEffects(val),
+                      ),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Dynamic Blending',
+                      subtitle: ref.watch(performanceProvider)
+                          ? 'Disabled by Performance Mode'
+                          : 'Glass transparency effect',
+                      trailing: AnimatedCupertinoSwitch(
+                        value: ref
+                            .watch(switchSettingsProvider)
+                            .dynamicBlending,
+                        onChanged: ref.watch(performanceProvider)
+                            ? null
+                            : (val) => ref
+                                  .read(switchSettingsProvider.notifier)
+                                  .setDynamicBlending(val),
+                      ),
+                      isLast: true,
+                    ),
+                  ],
+                ),
+              ),
+
+              // --- 2. CORE SYSTEM ---
+              _IosSectionHeader(title: 'Core System')
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideX(
+                    begin: -0.1,
+                    duration: 450.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
+              _IosGroupedContainer(
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ],
+                  children: [
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Fullscreen Mode',
+                      subtitle: 'Hide status and navigation bars',
+                      trailing: AnimatedCupertinoSwitch(
+                        value: ref.watch(immersiveModeProvider),
+                        onChanged: (value) async {
+                          ref
+                              .read(immersiveModeProvider.notifier)
+                              .setImmersiveMode(value);
+                        },
+                      ),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Voltage Calibration',
+                      subtitle:
+                          '${ref.watch(liveInfoProvider).acVoltage.toStringAsFixed(0)}V Detected',
+                      onTap: () => _showVoltageCalibrationDialog(context, ref),
+                    ),
+                  ],
+                ),
+              ),
+
+              // --- 3. CONNECTIVITY ---
+              _IosSectionHeader(title: 'Connectivity')
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideX(
+                    begin: -0.1,
+                    duration: 450.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
+              _IosGroupedContainer(
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ],
+                  children: [_buildConnectionSettings(context, ref)],
+                ),
+              ),
+
+              // --- 4. SENSORY & FEEDBACK ---
+              _IosSectionHeader(title: 'Sensory & Feedback')
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideX(
+                    begin: -0.1,
+                    duration: 450.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
+              _IosGroupedContainer(
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ],
+                  children: [
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Voice Feedback',
+                      subtitle: 'Enable AI voice responses',
+                      trailing: AnimatedCupertinoSwitch(
+                        value: voiceEnabled,
+                        onChanged: (value) async {
+                          ref
+                              .read(voiceEnabledProvider.notifier)
+                              .setVoiceEnabled(value);
+                        },
+                      ),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Master Sound',
+                      subtitle: 'Enable all app sounds',
+                      trailing: AnimatedCupertinoSwitch(
+                        value: ref.watch(soundSettingsProvider).masterSound,
                         onChanged: (val) => ref
                             .read(soundSettingsProvider.notifier)
-                            .setSwitchSound(val),
+                            .setMasterSound(val),
                       ),
                     ),
-                  ],
-                  if (voiceEnabled) ...[
+                    if (ref.watch(soundSettingsProvider).masterSound) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Master Volume: ${(ref.watch(soundSettingsProvider).masterVolume * 100).toInt()}%',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Slider(
+                              value: ref
+                                  .watch(soundSettingsProvider)
+                                  .masterVolume,
+                              activeColor: theme.colorScheme.primary,
+                              inactiveColor: Colors.white.withOpacity(0.1),
+                              onChanged: (val) => ref
+                                  .read(soundSettingsProvider.notifier)
+                                  .setMasterVolume(val),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildIosSettingTile(
+                        context,
+                        title: 'Switch Sounds',
+                        subtitle: 'Click sound when toggling',
+                        trailing: AnimatedCupertinoSwitch(
+                          value: ref.watch(soundSettingsProvider).switchSound,
+                          onChanged: (val) => ref
+                              .read(soundSettingsProvider.notifier)
+                              .setSwitchSound(val),
+                        ),
+                      ),
+                    ],
+                    if (voiceEnabled) ...[
+                      _buildIosSettingTile(
+                        context,
+                        title: 'Voice Engine',
+                        subtitle: ref.watch(voiceEngineProvider) ?? 'Default',
+                        trailing: Icon(
+                          Icons.record_voice_over,
+                          color: Colors.white.withOpacity(0.3),
+                        ),
+                        onTap: () async {
+                          final service = ref.read(voiceServiceProvider);
+                          await service.testSpeak();
+                        },
+                      ),
+                    ],
                     _buildIosSettingTile(
                       context,
-                      title: 'Voice Engine',
-                      subtitle: ref.watch(voiceEngineProvider) ?? 'Default',
+                      title: 'Haptic Feedback',
+                      subtitle: _getHapticName(ref.watch(hapticStyleProvider)),
                       trailing: Icon(
-                        Icons.record_voice_over,
+                        Icons.vibration,
                         color: Colors.white.withOpacity(0.3),
                       ),
-                      onTap: () async {
-                        final service = ref.read(voiceServiceProvider);
-                        await service.testSpeak();
-                      },
+                      onTap: () => _showHapticPicker(context, ref),
+                      isLast: true,
                     ),
                   ],
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Haptic Feedback',
-                    subtitle: _getHapticName(ref.watch(hapticStyleProvider)),
-                    trailing: Icon(
-                      Icons.vibration,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    onTap: () => _showHapticPicker(context, ref),
-                    isLast: true,
-                  ),
-                ],
+                ),
               ),
 
               // --- 3.5. PERFORMANCE ---
-              const _IosSectionHeader(title: 'Performance'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Performance Mode',
-                    subtitle: ref.watch(performanceProvider)
-                        ? 'Optimized (Fast, No Blur)'
-                        : 'High Quality (Blur, Animations)',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(performanceProvider),
-                      activeColor: Colors.amberAccent,
-                      onChanged: (val) {
-                        ref.read(performanceProvider.notifier).toggle(val);
-                      },
-                    ),
-                    isLast: true,
+              _IosSectionHeader(title: 'Performance')
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideX(
+                    begin: -0.1,
+                    duration: 450.ms,
+                    curve: Curves.easeOutCubic,
                   ),
-                ],
+              _IosGroupedContainer(
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ],
+                  children: [
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Performance Mode',
+                      subtitle: ref.watch(performanceProvider)
+                          ? 'Optimized (Fast, No Blur)'
+                          : 'High Quality (Blur, Animations)',
+                      trailing: AnimatedCupertinoSwitch(
+                        value: ref.watch(performanceProvider),
+                        onChanged: (val) =>
+                            ref.read(performanceProvider.notifier).toggle(val),
+                      ),
+                      isLast: true,
+                    ),
+                  ],
+                ),
               ),
 
-              // --- 4. APPEARANCE & STYLE ---
-              const _IosSectionHeader(title: 'Appearance'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Font Scale',
-                    subtitle:
-                        '${(ref.watch(fontSettingsProvider) * 100).toInt()}%',
-                    onTap: () {}, // visual only
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 15),
-                    child: Slider(
-                      value: ref.watch(fontSettingsProvider),
-                      min: 0.8,
-                      max: 1.4,
-                      divisions: 6,
-                      activeColor: theme.colorScheme.primary,
-                      inactiveColor: Colors.white.withOpacity(0.1),
-                      onChanged: (val) {
-                        ref
-                            .read(fontSettingsProvider.notifier)
-                            .setFontScale(val);
-                      },
-                    ),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Theme',
-                    subtitle: _getThemeName(currentTheme),
-                    onTap: () => _showThemePicker(context, ref, currentTheme),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Switch Style',
-                    subtitle: _getSwitchStyleName(
-                      ref.watch(switchStyleProvider),
-                    ),
-                    onTap: () => _showSwitchStylePicker(context, ref),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Tab Background',
-                    subtitle: _getSwitchBackgroundName(
-                      ref.watch(switchBackgroundProvider),
-                    ),
-                    onTap: () => _showBackgroundPicker(context, ref),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Glass Blur Effects',
-                    subtitle: 'Frosted glass visuals (GPU heavy)',
-                    trailing: CupertinoSwitch(
-                      value: ref
-                          .watch(switchSettingsProvider)
-                          .blurEffectsEnabled,
-                      onChanged: (val) => ref
-                          .read(switchSettingsProvider.notifier)
-                          .setBlurEffects(val),
-                    ),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Dynamic Blending',
-                    subtitle: ref.watch(performanceProvider)
-                        ? 'Disabled by Performance Mode'
-                        : 'Glass transparency effect',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(switchSettingsProvider).dynamicBlending,
-                      onChanged: ref.watch(performanceProvider)
-                          ? null
-                          : (val) => ref
-                                .read(switchSettingsProvider.notifier)
-                                .setDynamicBlending(val),
-                    ),
-                    isLast: true,
-                  ),
-                ],
-              ),
+              // --- 5. PERFORMANCE ---
 
               // --- 5. ADVANCED TOOLS ---
               GestureDetector(
@@ -314,83 +470,187 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       .read(performanceStatsProvider.notifier)
                       .toggleConsole(true);
                 },
-                child: const _IosSectionHeader(title: 'Advanced Tools'),
+                child: _IosSectionHeader(title: 'Advanced Tools')
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideX(
+                      begin: -0.1,
+                      duration: 450.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
               ),
               _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'ESP32 Firmware',
-                    subtitle: 'Generate C++ controller code',
-                    onTap: () => _showEsp32FirmwareDialog(context, ref),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Unlink Google',
-                    subtitle: 'Disconnect from Cloud services',
-                    onTap: () {},
-                    isLast: true,
-                  ),
-                ],
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ],
+                  children: [
+                    _buildIosSettingTile(
+                      context,
+                      title: 'ESP32 Firmware',
+                      subtitle: 'Generate C++ controller code',
+                      onTap: () => _showEsp32FirmwareDialog(context, ref),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Unlink Google',
+                      subtitle: 'Disconnect from Cloud services',
+                      onTap: () {},
+                      isLast: true,
+                    ),
+                  ],
+                ),
               ),
 
               // --- 6. SUPPORT & IDENTITY ---
-              const _IosSectionHeader(title: 'Support & Identity'),
+              _IosSectionHeader(title: 'Support & Identity')
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideX(
+                    begin: -0.1,
+                    duration: 450.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
               _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Help Center',
-                    subtitle: 'FAQ and troubleshooting',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HelpSupportScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Source Code',
-                    subtitle: 'github.com/kiran-embedded',
-                    onTap: () {
-                      launchUrl(
-                        Uri.parse(
-                          'https://github.com/kiran-embedded/esp32-smart-light-app',
-                        ),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Logout',
-                    subtitle: 'Sign out from Nebula',
-                    onTap: () async {
-                      await ref.read(authProvider.notifier).signOut();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
                           ),
-                          (route) => false,
+                        ],
+                  children: [
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Help Center',
+                      subtitle: 'FAQ and troubleshooting',
+                      trailing:
+                          const Icon(
+                                Icons.help_outline_rounded,
+                                size: 18,
+                                color: Colors.white24,
+                              )
+                              .animate(
+                                onPlay: (c) => ref.watch(performanceProvider)
+                                    ? null
+                                    : c.repeat(reverse: true),
+                              )
+                              .scale(
+                                begin: const Offset(1, 1),
+                                end: const Offset(1.1, 1.1),
+                                duration: 2.seconds,
+                                curve: Curves.easeInOutSine,
+                              ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HelpSupportScreen(),
+                          ),
                         );
-                      }
-                    },
-                    isLast: true,
+                      },
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Source Code',
+                      subtitle: 'github.com/kiran-embedded',
+                      onTap: () {
+                        launchUrl(
+                          Uri.parse(
+                            'https://github.com/kiran-embedded/esp32-smart-light-app',
+                          ),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      },
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Privacy Policy',
+                      subtitle: 'How we handle your data',
+                      onTap: () {
+                        launchUrl(
+                          Uri.parse('https://kiran-embedded.github.io/privacy'),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      },
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Terms of Service',
+                      subtitle: 'Usage guidelines',
+                      onTap: () {
+                        launchUrl(
+                          Uri.parse('https://kiran-embedded.github.io/terms'),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      },
+                      isLast: true,
+                    ),
+                  ],
+                ),
+              ),
+
+              // --- 7. MAINTENANCE ---
+              _IosSectionHeader(title: 'Maintenance')
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideX(
+                    begin: -0.1,
+                    duration: 450.ms,
+                    curve: Curves.easeOutCubic,
                   ),
-                ],
+              _IosGroupedContainer(
+                children: AnimateList(
+                  interval: ref.watch(performanceProvider) ? 0.ms : 40.ms,
+                  effects: ref.watch(performanceProvider)
+                      ? [FadeEffect(duration: 200.ms)]
+                      : [
+                          FadeEffect(duration: 400.ms),
+                          SlideEffect(
+                            begin: const Offset(0, 0.1),
+                            end: Offset.zero,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ],
+                  children: [
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Clear Cache',
+                      subtitle: 'Remove temporary files',
+                      onTap: () => _clearCache(context),
+                    ),
+                    _buildIosSettingTile(
+                      context,
+                      title: 'Reset All',
+                      subtitle: 'Restore factory defaults',
+                      onTap: () => _resetAll(context),
+                      isLast: true,
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 40),
               Center(
                 child: Text(
-                  "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+2030'}",
+                  "Nebula Core Restore v1.2.0+16",
                   style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.25),
                     fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -442,7 +702,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }) {
     return Column(
       children: [
-        InkWell(
+        _SettingTileWrapper(
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -474,10 +734,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 if (trailing != null) trailing,
                 if (onTap != null && trailing == null)
                   Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: Colors.white.withOpacity(0.2),
-                  ),
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.white.withOpacity(0.2),
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .slideX(
+                        begin: 0,
+                        end: 0.2,
+                        duration: 2.seconds,
+                        curve: Curves.easeInOutSine,
+                      ),
               ],
             ),
           ),
@@ -500,65 +767,88 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final hasUpdate = updateState.updateInfo?.hasUpdate ?? false;
 
     return _IosGroupedContainer(
-      children: [
-        _buildIosSettingTile(
-          context,
-          title: 'Software Update',
-          subtitle: hasUpdate
-              ? 'Version ${updateState.updateInfo!.latestVersion} Available'
-              : 'App is up to date',
-          trailing: hasUpdate
-              ? Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    '1',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+      children: AnimateList(
+        interval: 40.ms,
+        effects: [
+          FadeEffect(duration: 400.ms),
+          SlideEffect(
+            begin: const Offset(0, 0.1),
+            end: Offset.zero,
+            curve: Curves.easeOutCubic,
+          ),
+        ],
+        children: [
+          _buildIosSettingTile(
+            context,
+            title: 'Software Update',
+            subtitle: hasUpdate
+                ? 'Version ${updateState.updateInfo!.latestVersion} Available'
+                : 'App is up to date',
+            trailing: hasUpdate
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      '1',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : Icon(
+                    Icons.check_circle,
+                    color: Colors.greenAccent.withOpacity(0.5),
+                    size: 18,
                   ),
-                )
-              : Icon(
-                  Icons.check_circle,
-                  color: Colors.greenAccent.withOpacity(0.5),
-                  size: 18,
-                ),
-          onTap: () => _checkForUpdates(context, ref),
-          isLast: true,
-        ),
-      ],
+            onTap: () => _checkForUpdates(context, ref),
+            isLast: true,
+          ),
+        ],
+      ),
     );
   }
 
   void _showHapticPicker(BuildContext context, WidgetRef ref) {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: const Text('Haptic Intensity'),
-        actions: HapticStyle.values.map((style) {
-          return CupertinoActionSheetAction(
-            onPressed: () {
-              ref.read(hapticStyleProvider.notifier).setHapticStyle(style);
-              HapticService.feedback(style);
-              Navigator.pop(context);
-            },
-            child: Text(_getHapticName(style)),
-          );
-        }).toList(),
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          isDestructiveAction: true,
-          child: const Text('Cancel'),
-        ),
-      ),
+      builder: (context) =>
+          CupertinoActionSheet(
+            title: const Text('Haptic Intensity'),
+            actions: HapticStyle.values.asMap().entries.map((entry) {
+              final index = entry.key;
+              final style = entry.value;
+              return CupertinoActionSheetAction(
+                    onPressed: () {
+                      ref
+                          .read(hapticStyleProvider.notifier)
+                          .setHapticStyle(style);
+                      HapticService.feedback(style);
+                      Navigator.pop(context);
+                    },
+                    child: Text(_getHapticName(style)),
+                  )
+                  .animate()
+                  .fadeIn(delay: (index * 50).ms)
+                  .slideY(begin: 0.1, end: 0);
+            }).toList(),
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(context),
+              isDestructiveAction: true,
+              child: const Text('Cancel'),
+            ),
+          ).animate().scale(
+            begin: const Offset(0.9, 0.9),
+            curve: Curves.easeOutBack,
+            duration: 400.ms,
+          ),
     );
   }
 
@@ -573,49 +863,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Select Theme',
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+      builder: (context) =>
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: AppThemeMode.values.length,
-                itemBuilder: (context, index) {
-                  final mode = AppThemeMode.values[index];
-                  final isSelected = mode == current;
-                  return ListTile(
-                    onTap: () {
-                      ref.read(themeProvider.notifier).setTheme(mode);
-                      Navigator.pop(context);
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Select Theme',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ).animate().fadeIn().scale(begin: const Offset(0.9, 0.9)),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: AppThemeMode.values.length,
+                    itemBuilder: (context, index) {
+                      final mode = AppThemeMode.values[index];
+                      final isSelected = mode == current;
+                      return ListTile(
+                            onTap: () {
+                              ref.read(themeProvider.notifier).setTheme(mode);
+                              Navigator.pop(context);
+                            },
+                            title: Text(
+                              _getThemeName(mode),
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.outfit(
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Colors.white.withOpacity(0.8),
+                                fontWeight: isSelected ? FontWeight.bold : null,
+                              ),
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(delay: (index * 40).ms)
+                          .slideX(begin: 0.1, end: 0);
                     },
-                    title: Text(
-                      _getThemeName(mode),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.white.withOpacity(0.8),
-                        fontWeight: isSelected ? FontWeight.bold : null,
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ).animate().slideY(
+            begin: 1,
+            end: 0,
+            curve: Curves.easeOutCubic,
+            duration: 400.ms,
+          ),
     );
   }
 
@@ -626,45 +929,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Switch Style',
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+      builder: (context) =>
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: SwitchStyleType.values.length,
-                itemBuilder: (context, index) {
-                  final style = SwitchStyleType.values[index];
-                  return ListTile(
-                    onTap: () {
-                      ref.read(switchStyleProvider.notifier).setStyle(style);
-                      Navigator.pop(context);
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Switch Style',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ).animate().fadeIn().scale(begin: const Offset(0.9, 0.9)),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: SwitchStyleType.values.length,
+                    itemBuilder: (context, index) {
+                      final style = SwitchStyleType.values[index];
+                      return ListTile(
+                            onTap: () {
+                              ref
+                                  .read(switchStyleProvider.notifier)
+                                  .setStyle(style);
+                              Navigator.pop(context);
+                            },
+                            title: Text(
+                              _getSwitchStyleName(style),
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(delay: (index * 30).ms)
+                          .slideX(begin: 0.1, end: 0);
                     },
-                    title: Text(
-                      _getSwitchStyleName(style),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ).animate().slideY(
+            begin: 1,
+            end: 0,
+            curve: Curves.easeOutCubic,
+            duration: 400.ms,
+          ),
     );
   }
 
@@ -675,47 +993,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Tab Background',
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+      builder: (context) =>
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: SwitchBackgroundType.values.length,
-                itemBuilder: (context, index) {
-                  final style = SwitchBackgroundType.values[index];
-                  return ListTile(
-                    onTap: () {
-                      ref
-                          .read(switchBackgroundProvider.notifier)
-                          .setStyle(style);
-                      Navigator.pop(context);
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Tab Background',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ).animate().fadeIn().scale(begin: const Offset(0.9, 0.9)),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: SwitchBackgroundType.values.length,
+                    itemBuilder: (context, index) {
+                      final style = SwitchBackgroundType.values[index];
+                      return ListTile(
+                            onTap: () {
+                              ref
+                                  .read(switchBackgroundProvider.notifier)
+                                  .setStyle(style);
+                              Navigator.pop(context);
+                            },
+                            title: Text(
+                              _getSwitchBackgroundName(style),
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(delay: (index * 30).ms)
+                          .slideX(begin: 0.1, end: 0);
                     },
-                    title: Text(
-                      _getSwitchBackgroundName(style),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ).animate().slideY(
+            begin: 1,
+            end: 0,
+            curve: Curves.easeOutCubic,
+            duration: 400.ms,
+          ),
     );
   }
 
@@ -1009,46 +1340,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           context,
           title: 'Ultra Low Latency',
           subtitle: '1ms Target (Best for fast switches)',
-          trailing: CupertinoSwitch(
+          trailing: AnimatedCupertinoSwitch(
             value: ref.watch(lowLatencyProvider),
-            activeColor: Colors.redAccent,
             onChanged: (val) {
               ref.read(lowLatencyProvider.notifier).toggle(val);
             },
           ),
-          isLast: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAnimationSettings(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(animationSettingsProvider);
-    final notifier = ref.read(animationSettingsProvider.notifier);
-
-    return Column(
-      children: [
-        _buildDropdownTile<AppLaunchAnimation>(
-          context,
-          title: 'Startup Energy',
-          subtitle: 'Choose how the app awakens',
-          value: settings.launchType,
-          items: AppLaunchAnimation.values,
-          onChanged: (val) {
-            notifier.setLaunchAnimation(val!);
-            HapticService.heavy();
-          },
-        ),
-        _buildDropdownTile<UiTransitionAnimation>(
-          context,
-          title: 'Fluidity Style',
-          subtitle: 'Navigation & touch physics',
-          value: settings.uiType,
-          items: UiTransitionAnimation.values,
-          onChanged: (val) {
-            notifier.setUiAnimation(val!);
-            HapticService.selection();
-          },
           isLast: true,
         ),
       ],
@@ -1181,6 +1478,126 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       );
     }
   }
+
+  void _showVoltageCalibrationDialog(BuildContext context, WidgetRef ref) {
+    final liveInfo = ref.read(liveInfoProvider);
+    final controller = TextEditingController(
+      text: liveInfo.acVoltage.toStringAsFixed(1),
+    );
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Calibrate Voltage'),
+        content: Column(
+          children: [
+            const SizedBox(height: 8),
+            const Text(
+              'Enter the value shown on your reference multimeter.\nThe app will calculate and save the offset automatically.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            CupertinoTextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              placeholder: 'e.g. 230.5',
+              padding: const EdgeInsets.all(12),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              final entered = double.tryParse(controller.text);
+              if (entered != null) {
+                ref.read(liveInfoProvider.notifier).calibrateVoltage(entered);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Calibrate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _clearCache(BuildContext context) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Cache cleared successfully',
+              style: GoogleFonts.outfit(),
+            ),
+            backgroundColor: Colors.greenAccent.withOpacity(0.8),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error clearing cache: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _resetAll(BuildContext context) async {
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Factory Reset'),
+        content: const Text(
+          'This will clear all your settings and configurations. The app will restart. Are you sure?',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('Reset Everything'),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (context.mounted) {
+        // Since we can't easily force restart the app from within on many platforms without native plugins,
+        // we'll at least wipe state and go back to a safe route or inform user.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All data wiped. Please restart the app manually.'),
+          ),
+        );
+        // Navigate to home or initial setup if possible
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    }
+  }
 }
 
 class _IosSectionHeader extends StatelessWidget {
@@ -1190,14 +1607,14 @@ class _IosSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 24, 16, 8),
+      padding: const EdgeInsets.fromLTRB(28, 0, 24, 8),
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.outfit(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w600,
+          color: Colors.white.withOpacity(0.4),
           letterSpacing: 1.2,
-          color: Colors.white.withOpacity(0.3),
         ),
       ),
     );
@@ -1260,29 +1677,69 @@ class _ScannerLineAnimationState extends State<_ScannerLineAnimation>
               top: _controller.value * MediaQuery.of(context).size.height,
               left: 0,
               right: 0,
-              child: Container(
-                height: 2,
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.5),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      theme.colorScheme.primary,
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
+              child:
+                  Container(
+                        height: 2,
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(0.5),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              theme.colorScheme.primary,
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _SettingTileWrapper extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _SettingTileWrapper({required this.child, this.onTap});
+
+  @override
+  State<_SettingTileWrapper> createState() => _SettingTileWrapperState();
+}
+
+class _SettingTileWrapperState extends State<_SettingTileWrapper> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        if (widget.onTap != null) {
+          HapticService.light();
+          setState(() => _isPressed = true);
+        }
+      },
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
+      ),
     );
   }
 }

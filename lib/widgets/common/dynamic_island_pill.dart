@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/switch_provider.dart';
 import '../../providers/live_info_provider.dart';
 import '../../providers/connection_settings_provider.dart';
@@ -52,78 +53,98 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
     final theme = Theme.of(context);
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (!_isExpanded) {
-            _isExpanded = true;
-            _displayIndex = 0;
-            _startCollapseTimer(); // Start timer on expansion
-          } else {
-            _displayIndex = (_displayIndex + 1) % 5; // Cycle 5 stats
-            _startCollapseTimer(); // Reset timer on interaction
-            if (_displayIndex == 0) _isExpanded = false;
-          }
-        });
-        HapticService.selection();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 600),
-        curve: const Cubic(0.2, 0.9, 0.4, 1.0),
-        width: _isExpanded
-            ? (DisplayEngine.screenW * 0.9).clamp(280.0, 420.0)
-            : 125.w, // Dynamic Width based on screen
-        height: _isExpanded ? 52.h : 36.h, // Slightly taller for better touch
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(
-            _isExpanded ? 24.r : 50.r,
-          ), // Perfect stadium border
-          border: Border.all(
-            color: theme.colorScheme.primary.withOpacity(
-              _isExpanded ? 0.5 : 0.3,
-            ),
-            width: 1.5.w,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              blurRadius: (_isExpanded ? 15 : 10).r,
-              spreadRadius: 1.r,
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Internal Content with CrossFade
-            AnimatedCrossFade(
-              firstChild: _buildCollapsedContent(activeCount),
-              secondChild: _buildExpandedContent(
-                activeCount,
-                activeSwitches,
-                liveInfo.acVoltage,
-                liveInfo.temperature,
-                connSettings.mode,
-                _displayIndex,
+          onTap: () {
+            setState(() {
+              if (!_isExpanded) {
+                _isExpanded = true;
+                _displayIndex = 0;
+                _startCollapseTimer(); // Start timer on expansion
+              } else {
+                _displayIndex = (_displayIndex + 1) % 5; // Cycle 5 stats
+                _startCollapseTimer(); // Reset timer on interaction
+                if (_displayIndex == 0) _isExpanded = false;
+              }
+            });
+            HapticService.selection();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 600),
+            curve: const Cubic(0.2, 0.9, 0.4, 1.0),
+            width: _isExpanded
+                ? (DisplayEngine.screenW * 0.9).clamp(280.0, 420.0)
+                : 125.w, // Dynamic Width based on screen
+            height: _isExpanded
+                ? 52.h
+                : 36.h, // Slightly taller for better touch
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(
+                _isExpanded ? 24.r : 50.r,
+              ), // Perfect stadium border
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(
+                  _isExpanded ? 0.5 : 0.3,
+                ),
+                width: 1.5.w,
               ),
-              crossFadeState: _isExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 250),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  blurRadius: (_isExpanded ? 15 : 10).r,
+                  spreadRadius: 1.r,
+                ),
+              ],
             ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Internal Content with CrossFade
+                AnimatedCrossFade(
+                  firstChild: _buildCollapsedContent(activeCount),
+                  secondChild: _buildExpandedContent(
+                    activeCount,
+                    activeSwitches,
+                    liveInfo.acVoltage,
+                    liveInfo.temperature,
+                    connSettings.mode,
+                    _displayIndex,
+                  ),
+                  crossFadeState: _isExpanded
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 250),
+                ),
 
-            // Subtle Shimmer removed for static look
-            if (sensorState.isMonitoring)
-              Positioned(
-                right: (_isExpanded ? 16 : 12).w, // Adjusted for balance
-                top: (_isExpanded ? 18 : 15).h,
-                child: _buildSensorIndicator(sensorState.isMoving),
-              ),
-          ],
-        ),
-      ),
-    );
+                // Subtle Shimmer removed for static look
+                if (sensorState.isMonitoring)
+                  Positioned(
+                    right: (_isExpanded ? 16 : 12).w, // Adjusted for balance
+                    top: (_isExpanded ? 18 : 15).h,
+                    child: _buildSensorIndicator(sensorState.isMoving)
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(0.9, 0.9),
+                          end: const Offset(1.1, 1.1),
+                          duration: 2.seconds,
+                        ) // Breathing
+                        .fade(begin: 0.6, end: 1.0, duration: 2.seconds),
+                  ),
+              ],
+            ),
+          ),
+        )
+        .animate(
+          onPlay: (c) => c.repeat(reverse: true),
+        ) // Global Subtle Breathing for the whole pill
+        .custom(
+          duration: 4.seconds,
+          builder: (context, value, child) {
+            // Very subtle scale 1.0 -> 1.02
+            final scale = 1.0 + (value * 0.02);
+            return Transform.scale(scale: scale, child: child);
+          },
+        );
   }
 
   Widget _buildSensorIndicator(bool isMoving) {

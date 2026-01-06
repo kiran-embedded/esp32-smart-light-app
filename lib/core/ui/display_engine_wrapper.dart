@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../system/display_engine.dart';
 import '../../providers/font_settings_provider.dart';
+import '../../providers/display_settings_provider.dart';
 
 /// A global wrapper that provides high-end visual polish and scaling context.
 /// This imparts the "Unreal Engine" feel through subtle grain, vignetting, and smooth overlays.
@@ -16,9 +17,12 @@ class DisplayEngineWrapper extends ConsumerWidget {
     // Initialize standard Responsive as well for backward compatibility
     DisplayEngine.init(context);
 
-    // Inject User Font Scale into Engine
+    // Inject User Font Scale & Density into Engine
     final userScale = ref.watch(fontSettingsProvider);
+    final userDensity = ref.watch(displaySettingsProvider);
+
     DisplayEngine.setUserScale(userScale);
+    DisplayEngine.setUserDensity(userDensity);
 
     return Stack(
       children: [

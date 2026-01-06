@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/switch_device.dart';
 import '../../services/haptic_service.dart';
-import '../../providers/haptic_provider.dart';
 import '../../services/device_icon_resolver.dart';
 import '../../core/ui/adaptive_text_engine.dart';
 import '../../providers/switch_style_provider.dart';
@@ -12,6 +11,7 @@ import '../../providers/performance_provider.dart'; // Added
 import '../../core/ui/responsive_layout.dart';
 import 'dart:math' as math; // For Cyberpunk jitter
 import 'dart:ui'; // For blur effects
+import 'package:flutter_animate/flutter_animate.dart';
 
 class SwitchTile extends ConsumerStatefulWidget {
   final SwitchDevice device;
@@ -49,13 +49,17 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     _pressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 200),
+      reverseDuration: const Duration(milliseconds: 300),
     );
 
-    _pressAnimation = Tween<double>(
-      begin: 0,
-      end: 2.0,
-    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
+    _pressAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
+      CurvedAnimation(
+        parent: _pressController,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.elasticOut,
+      ),
+    );
 
     _iconAnimController = AnimationController(
       vsync: this,
@@ -124,15 +128,33 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     });
 
     _rippleController.forward(from: 0);
-    HapticService.feedback(ref.read(hapticStyleProvider));
+    HapticService.lightImpact();
 
-    await _pressController.forward();
+    // iOS Tap Down: Fast compress
+    _pressController.animateTo(1.0, duration: 80.ms, curve: Curves.easeOutQuad);
+  }
+
+  Future<void> _handleTapUp(TapUpDetails details) async {
+    // iOS Tap Up: Slow spring release
+    await _pressController.animateTo(
+      0.0,
+      duration: 400.ms,
+      curve: Curves.elasticOut,
+    );
     widget.onTap();
-    await _pressController.reverse();
 
-    Future.delayed(const Duration(seconds: 10), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) setState(() => _isInteracted = false);
     });
+  }
+
+  Future<void> _handleTapCancel() async {
+    _pressController.animateTo(
+      0.0,
+      duration: 300.ms,
+      curve: Curves.easeOutBack,
+    );
+    if (mounted) setState(() => _isInteracted = false);
   }
 
   @override
@@ -206,49 +228,86 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             child: SizedBox(
               width: side,
               height: side,
-              child: GestureDetector(
-                onTapDown: _handleTapDown,
-                onLongPress: () {
-                  HapticService.pulse();
-                  widget.onLongPress();
-                },
-                child: AnimatedBuilder(
-                  animation: Listenable.merge([
-                    _pressController,
-                    _iconAnimController,
-                    _rippleController,
-                    _parallaxController,
-                  ]),
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: 1.0 - (_pressController.value * 0.05),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(
-                                0.8,
-                              ), // Deep projection
-                              blurRadius: 40,
-                              offset: const Offset(0, 20),
-                              spreadRadius: -15,
-                            ),
-                          ],
+              child:
+                  GestureDetector(
+                        onTapDown: _handleTapDown,
+                        onTapUp: _handleTapUp,
+                        onTapCancel: _handleTapCancel,
+                        onLongPress: () {
+                          HapticService.medium();
+                          widget.onLongPress();
+                        },
+                        child: AnimatedBuilder(
+                          animation: Listenable.merge([
+                            _pressAnimation,
+                            _iconAnimController,
+                            _rippleController,
+                            _parallaxController,
+                          ]),
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _pressAnimation.value,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: widget.device.isActive
+                                          ? uniqueColor.withOpacity(0.3)
+                                          : Colors.black.withOpacity(0.2),
+                                      blurRadius: 15,
+                                      spreadRadius: widget.device.isActive
+                                          ? 2
+                                          : 0,
+                                    ),
+                                  ],
+                                ),
+                                child: Animate(
+                                  key: ValueKey(widget.device.isActive),
+                                  effects: [
+                                    ScaleEffect(
+                                      begin: const Offset(1, 1),
+                                      end: const Offset(1.03, 1.03),
+                                      duration: 200.ms,
+                                      curve: Curves.easeOutBack,
+                                    ),
+                                    ShimmerEffect(
+                                      color: Colors.white.withOpacity(0.1),
+                                      duration: 400.ms,
+                                    ),
+                                  ],
+                                  child: _buildStyleDispatcher(
+                                    style,
+                                    theme,
+                                    displayName,
+                                    uniqueColor,
+                                    contentColor,
+                                    iconInfo,
+                                    blendingEnabled,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        child: _buildStyleDispatcher(
-                          style,
-                          theme,
-                          displayName,
-                          uniqueColor,
-                          contentColor,
-                          iconInfo,
-                          blendingEnabled, // Pass blending flag
-                        ),
+                      )
+                      .animate(target: _isInteracted ? 1 : 0)
+                      .scale(
+                        end: const Offset(0.95, 0.95),
+                        duration: 50.ms,
+                        curve: Curves.easeOut,
+                      ) // Tap Bounce
+                      .animate(
+                        target: widget.device.isActive ? 1 : 0,
+                        onPlay: (c) => c.repeat(reverse: true),
+                      )
+                      .custom(
+                        duration: 2500.ms,
+                        builder: (context, value, child) {
+                          // Subtle Breathing when Active
+                          final scale = 1.0 + (value * 0.015);
+                          return Transform.scale(scale: scale, child: child);
+                        },
                       ),
-                    );
-                  },
-                ),
-              ),
             ),
           );
         },

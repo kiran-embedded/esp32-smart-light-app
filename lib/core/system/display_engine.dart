@@ -76,16 +76,26 @@ class DisplayEngine {
   }
 
   static double _userScale = 1.0;
+  static double _userDensity = 1.0;
 
   static void setUserScale(double scale) {
     _userScale = scale;
   }
 
-  static double w(double val) => val * _scaleW;
-  static double h(double val) => val * _scaleH;
-  static double sp(double val) => val * _scaleMin * _textScale * _userScale;
-  static double r(double val) => val * _scaleMin;
-  static double p(double val) => val * _scaleMin;
+  static void setUserDensity(double density) {
+    _userDensity = density;
+  }
+
+  // W/H/R/P now affected by density (DPI)
+  static double w(double val) => val * _scaleW * _userDensity;
+  static double h(double val) => val * _scaleH * _userDensity;
+
+  // SP affects text. It combines Density (DPI) AND Font Scale.
+  static double sp(double val) =>
+      val * _scaleMin * _textScale * _userScale * _userDensity;
+
+  static double r(double val) => val * _scaleMin * _userDensity;
+  static double p(double val) => val * _scaleMin * _userDensity;
 
   static double get screenW => _width;
   static double get screenH => _height;

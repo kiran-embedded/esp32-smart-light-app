@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/switch_provider.dart';
 import '../../services/voice_service.dart';
 import '../../services/sound_service.dart';
@@ -55,30 +56,35 @@ class SwitchGrid extends ConsumerWidget {
       itemBuilder: (context, index) {
         final device = devices[index];
         return SwitchTile(
-          device: device,
-          onTap: () {
-            ref.read(switchDevicesProvider.notifier).toggleSwitch(device.id);
+              device: device,
+              onTap: () {
+                ref
+                    .read(switchDevicesProvider.notifier)
+                    .toggleSwitch(device.id);
 
-            // Sound Effect
-            final soundService = ref.read(soundServiceProvider);
-            if (!device.isActive) {
-              soundService.playSwitchOn();
-            } else {
-              soundService.playSwitchOff();
-            }
+                // Sound Effect
+                final soundService = ref.read(soundServiceProvider);
+                if (!device.isActive) {
+                  soundService.playSwitchOn();
+                } else {
+                  soundService.playSwitchOff();
+                }
 
-            // Trigger robo reaction
-            robo.triggerRoboReaction(ref, robo.RoboReaction.nod);
+                // Trigger robo reaction
+                robo.triggerRoboReaction(ref, robo.RoboReaction.nod);
 
-            // Voice feedback
-            final voiceService = ref.read(voiceServiceProvider);
-            final status = !device.isActive ? 'on' : 'off';
-            voiceService.speak('${device.name} is $status.');
-          },
-          onLongPress: () {
-            _showAdvancedSheet(context, ref, device);
-          },
-        );
+                // Voice feedback
+                final voiceService = ref.read(voiceServiceProvider);
+                final status = !device.isActive ? 'on' : 'off';
+                voiceService.speak('${device.name} is $status.');
+              },
+              onLongPress: () {
+                _showAdvancedSheet(context, ref, device);
+              },
+            )
+            .animate(delay: (50 * index).ms) // Staggered delay
+            .fade(duration: 400.ms)
+            .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
       },
     );
 

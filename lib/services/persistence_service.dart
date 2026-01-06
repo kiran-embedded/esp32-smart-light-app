@@ -130,4 +130,17 @@ class PersistenceService {
       return [];
     }
   }
+
+  // Voltage Calibration
+  static const String _voltageCalibrationKey = 'voltage_calibration_offset';
+
+  static Future<void> saveVoltageCalibration(double offset) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_voltageCalibrationKey, offset);
+  }
+
+  static Future<double> getVoltageCalibration() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_voltageCalibrationKey) ?? 0.0;
+  }
 }

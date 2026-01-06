@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/live_info.dart';
 import '../core/constants/app_constants.dart';
+import '../services/persistence_service.dart';
 import 'package:flutter/foundation.dart';
 
 final liveInfoProvider = StateNotifierProvider<LiveInfoNotifier, LiveInfo>((
@@ -15,8 +16,10 @@ final liveInfoProvider = StateNotifierProvider<LiveInfoNotifier, LiveInfo>((
 class LiveInfoNotifier extends StateNotifier<LiveInfo> {
   Timer? _timer;
   Timer? _weatherTimer;
-  StreamSubscription<DatabaseEvent>? _sensorSubscription;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  double _voltageOffset = 0.0;
+  StreamSubscription<DatabaseEvent>? _sensorSubscription;
+  StreamSubscription<DatabaseEvent>? _calibrationSubscription;
 
   LiveInfoNotifier()
     : super(
@@ -29,6 +32,7 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
           current: 0.0,
         ),
       ) {
+    _loadCalibration();
     _startTimer();
     _loadWeather();
     _initFirebaseListeners();
@@ -36,6 +40,43 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
     _weatherTimer = Timer.periodic(const Duration(minutes: 30), (_) {
       _loadWeather();
     });
+  }
+
+  Future<void> _loadCalibration() async {
+    // 1. Initial local load
+    _voltageOffset = await PersistenceService.getVoltageCalibration();
+
+    // 2. Setup Firebase listener for global sync
+    _calibrationSubscription = _database
+        .child('settings/voltage_calibration')
+        .onValue
+        .listen((event) {
+          final data = event.snapshot.value;
+          if (data != null) {
+            final remoteOffset = double.tryParse(data.toString()) ?? 0.0;
+            if (remoteOffset != _voltageOffset) {
+              _voltageOffset = remoteOffset;
+              PersistenceService.saveVoltageCalibration(_voltageOffset);
+              if (kDebugMode)
+                print('Sync: Remote Calibration Applied: $_voltageOffset');
+            }
+          }
+        });
+  }
+
+  Future<void> calibrateVoltage(double expectedVoltage) async {
+    final currentReported = state.acVoltage;
+    // accurate offset calculation
+    _voltageOffset = expectedVoltage - (currentReported - _voltageOffset);
+
+    // Save locally
+    await PersistenceService.saveVoltageCalibration(_voltageOffset);
+
+    // Sync to Firebase for all devices
+    await _database.child('settings/voltage_calibration').set(_voltageOffset);
+
+    // Immediate update
+    state = state.copyWith(acVoltage: expectedVoltage);
   }
 
   void _initFirebaseListeners() {
@@ -49,9 +90,21 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
               final data = event.snapshot.value;
               if (data != null && data is Map) {
                 // Parse voltage
+                // Parse voltage
                 double voltage = state.acVoltage;
                 if (data.containsKey('voltage')) {
-                  voltage = double.tryParse(data['voltage'].toString()) ?? 0.0;
+                  double rawVoltage =
+                      double.tryParse(data['voltage'].toString()) ?? 0.0;
+
+                  // Apply Calibration
+                  voltage = rawVoltage + _voltageOffset;
+
+                  // Mains Cut Logic / Floating Voltage Fix
+                  // specific threshold: if voltage < 160, show 0 (Mains Cut)
+                  // Also handle negative values just in case
+                  if (voltage < 160.0) {
+                    voltage = 0.0;
+                  }
                 }
 
                 // Parse current
@@ -142,6 +195,7 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
     _timer?.cancel();
     _weatherTimer?.cancel();
     _sensorSubscription?.cancel();
+    _calibrationSubscription?.cancel();
     super.dispose();
   }
 }
