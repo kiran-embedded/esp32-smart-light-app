@@ -582,7 +582,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       subtitle: 'How we handle your data',
                       onTap: () {
                         launchUrl(
-                          Uri.parse('https://kiran-embedded.github.io/privacy'),
+                          Uri.parse(
+                            'https://github.com/kiran-embedded/esp32-smart-light-app/blob/main/PRIVACY_POLICY.md',
+                          ),
                           mode: LaunchMode.externalApplication,
                         );
                       },
@@ -593,7 +595,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       subtitle: 'Usage guidelines',
                       onTap: () {
                         launchUrl(
-                          Uri.parse('https://kiran-embedded.github.io/terms'),
+                          Uri.parse(
+                            'https://github.com/kiran-embedded/esp32-smart-light-app/blob/main/TERMS_OF_SERVICE.md',
+                          ),
                           mode: LaunchMode.externalApplication,
                         );
                       },
