@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
+import '../../core/system/display_engine.dart';
 
 class DeveloperTestOverlay extends ConsumerStatefulWidget {
   const DeveloperTestOverlay({super.key});
@@ -78,14 +79,57 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
                     ],
                   ),
                   const Divider(color: Colors.white24),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
+
+                  // Performance Stats
                   _row("FPS:", stats.fps.toStringAsFixed(1), Colors.green),
                   _row(
                     "CPU:",
                     "${(stats.cpuUsage * 100).toInt()}%",
                     Colors.orange,
                   ),
-                  _row("MEM:", "${stats.memoryUsage.toInt()}MB", Colors.purple),
+
+                  const Divider(color: Colors.white10),
+
+                  // NADE Stats
+                  const Text(
+                    "DISPLAY ENGINE (NADE)",
+                    style: TextStyle(
+                      color: Colors.white38,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  _miniRow(
+                    "Scale W/H",
+                    "${DisplayEngine.scaleW.toStringAsFixed(2)} / ${DisplayEngine.scaleH.toStringAsFixed(2)}",
+                  ),
+                  _miniRow(
+                    "Scale Min",
+                    DisplayEngine.scaleMin.toStringAsFixed(2),
+                  ),
+                  _miniRow(
+                    "Aspect Ratio",
+                    DisplayEngine.aspectRatio.toStringAsFixed(2),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // System Architecture
+                  const Text(
+                    "HARDWARE DIAGNOSTICS",
+                    style: TextStyle(
+                      color: Colors.white38,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  _miniRow("Device", DisplayEngine.deviceModel),
+                  _miniRow("Arch", DisplayEngine.cpuHardware),
+                  _miniRow("OS", DisplayEngine.androidVersion),
+
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -106,14 +150,25 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "DIAGNOSTIC ACTIVE",
-                    style: TextStyle(color: Colors.white24, fontSize: 10),
-                  ),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniRow(String l, String v) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(l, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+          Text(
+            v,
+            style: const TextStyle(color: Colors.cyanAccent, fontSize: 10),
           ),
         ],
       ),

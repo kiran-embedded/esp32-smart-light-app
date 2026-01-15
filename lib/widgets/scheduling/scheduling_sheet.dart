@@ -7,6 +7,7 @@ import '../../providers/switch_schedule_provider.dart';
 import '../../providers/switch_provider.dart';
 import '../../widgets/common/frosted_glass.dart';
 import '../../services/haptic_service.dart';
+import '../../widgets/common/animated_cupertino_switch.dart';
 
 class SchedulingSheet extends ConsumerStatefulWidget {
   const SchedulingSheet({super.key});
@@ -60,19 +61,7 @@ class _SchedulingSheetState extends ConsumerState<SchedulingSheet> {
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                IconButton(
-                  onPressed: () => _showAddScheduleDialog(context),
-                  icon: Icon(
-                    Icons.add_rounded,
-                    color: theme.colorScheme.primary,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
+                _AddButton(onPressed: () => _showAddScheduleDialog(context)),
               ],
             ),
           ),
@@ -136,132 +125,133 @@ class _SchedulingSheetState extends ConsumerState<SchedulingSheet> {
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: FrostedGlass(
-        radius: BorderRadius.circular(20),
-        padding: const EdgeInsets.all(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-        child: Row(
-          children: [
-            // Time Column
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: FrostedGlass(
+            radius: BorderRadius.circular(20),
+            padding: const EdgeInsets.all(16),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            child: Row(
+              children: [
+                // Time Column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          Text(
+                            '${schedule.hour.toString().padLeft(2, '0')}:${schedule.minute.toString().padLeft(2, '0')}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: schedule.targetState
+                                  ? Colors.green.withOpacity(0.2)
+                                  : Colors.red.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              schedule.targetState ? 'ON' : 'OFF',
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: schedule.targetState
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
                       Text(
-                        '${schedule.hour.toString().padLeft(2, '0')}:${schedule.minute.toString().padLeft(2, '0')}',
+                        targetSwitch.nickname ?? targetSwitch.name,
                         style: GoogleFonts.outfit(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          fontSize: 12,
+                          color: Colors.white70,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: schedule.targetState
-                              ? Colors.green.withOpacity(0.2)
-                              : Colors.red.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          schedule.targetState ? 'ON' : 'OFF',
-                          style: GoogleFonts.outfit(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: schedule.targetState
-                                ? Colors.greenAccent
-                                : Colors.redAccent,
-                          ),
-                        ),
+                      const SizedBox(height: 12),
+                      // Day selector indicators
+                      Row(
+                        children: List.generate(7, (i) {
+                          final isSelected = schedule.days.contains(i + 1);
+                          return Container(
+                            margin: const EdgeInsets.only(right: 6),
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected
+                                  ? theme.colorScheme.primary.withOpacity(0.2)
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : Colors.white10,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                days[i],
+                                style: GoogleFonts.outfit(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : Colors.white24,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    targetSwitch.nickname ?? targetSwitch.name,
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Day selector indicators
-                  Row(
-                    children: List.generate(7, (i) {
-                      final isSelected = schedule.days.contains(i + 1);
-                      return Container(
-                        margin: const EdgeInsets.only(right: 6),
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSelected
-                              ? theme.colorScheme.primary.withOpacity(0.2)
-                              : Colors.transparent,
-                          border: Border.all(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : Colors.white10,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            days[i],
-                            style: GoogleFonts.outfit(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : Colors.white24,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-
-            // Switch & Actions
-            Column(
-              children: [
-                Switch(
-                  value: schedule.isEnabled,
-                  activeColor: theme.colorScheme.primary,
-                  onChanged: (val) {
-                    ref
-                        .read(switchScheduleProvider.notifier)
-                        .updateSchedule(schedule.copyWith(isEnabled: val));
-                    HapticService.selection();
-                  },
                 ),
-                IconButton(
-                  onPressed: () {
-                    ref
-                        .read(switchScheduleProvider.notifier)
-                        .deleteSchedule(schedule.id);
-                    HapticService.heavy();
-                  },
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.redAccent,
-                    size: 20,
-                  ),
+
+                // Switch & Actions
+                Column(
+                  children: [
+                    AnimatedCupertinoSwitch(
+                      value: schedule.isEnabled,
+                      onChanged: (val) {
+                        ref
+                            .read(switchScheduleProvider.notifier)
+                            .updateSchedule(schedule.copyWith(isEnabled: val));
+                      },
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        ref
+                            .read(switchScheduleProvider.notifier)
+                            .deleteSchedule(schedule.id);
+                        HapticService.heavy();
+                      },
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.redAccent,
+                        size: 20,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn().slideX(begin: 0.1, end: 0);
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 400.ms)
+        .slideX(begin: 0.05, duration: 450.ms, curve: Curves.easeOutCubic);
   }
 
   void _showAddScheduleDialog(BuildContext context) async {
@@ -445,6 +435,45 @@ class _SchedulingSheetState extends ConsumerState<SchedulingSheet> {
               child: const Text('Add'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddButton extends StatefulWidget {
+  final VoidCallback onPressed;
+
+  const _AddButton({required this.onPressed});
+
+  @override
+  State<_AddButton> createState() => _AddButtonState();
+}
+
+class _AddButtonState extends State<_AddButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTapDown: (_) {
+        HapticService.light();
+        setState(() => _isPressed = true);
+      },
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onPressed,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(Icons.add_rounded, color: theme.colorScheme.primary),
         ),
       ),
     );

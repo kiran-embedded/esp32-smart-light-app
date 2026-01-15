@@ -4,6 +4,8 @@ import '../../services/haptic_service.dart';
 import '../../providers/performance_provider.dart';
 import '../../core/ui/responsive_layout.dart';
 
+import 'package:flutter_animate/flutter_animate.dart';
+
 class PremiumAppBar extends ConsumerWidget {
   final Widget title;
   final Widget? trailing;
@@ -68,7 +70,16 @@ class PremiumAppBar extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(child: title),
+                    Expanded(
+                      child: title
+                          .animate()
+                          .fadeIn(duration: 400.ms, curve: Curves.easeOut)
+                          .slideX(
+                            begin: -0.1,
+                            duration: 450.ms,
+                            curve: Curves.easeOutCubic,
+                          ),
+                    ),
                     if (trailing != null) ...[
                       SizedBox(width: 16.w),
                       GestureDetector(
@@ -78,7 +89,14 @@ class PremiumAppBar extends ConsumerWidget {
                             onTrailingTap!();
                           }
                         },
-                        child: trailing!,
+                        child: trailing!
+                            .animate()
+                            .fadeIn(duration: 400.ms, delay: 100.ms)
+                            .scale(
+                              begin: const Offset(0.8, 0.8),
+                              curve: Curves.elasticOut,
+                              duration: 600.ms,
+                            ),
                       ),
                     ],
                   ],

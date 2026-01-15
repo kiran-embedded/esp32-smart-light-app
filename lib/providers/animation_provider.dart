@@ -46,8 +46,8 @@ class AnimationSettings {
   final UiTransitionAnimation uiType;
 
   const AnimationSettings({
-    this.launchType = AppLaunchAnimation.neonPulse,
-    this.uiType = UiTransitionAnimation.zeroLatency,
+    this.launchType = AppLaunchAnimation.iPhoneBlend,
+    this.uiType = UiTransitionAnimation.iosExactSlide,
   });
 
   AnimationSettings copyWith({

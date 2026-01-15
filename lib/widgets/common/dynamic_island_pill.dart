@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../common/pixel_led_border.dart'; // Import PixelLedBorder
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/switch_provider.dart';
 import '../../providers/live_info_provider.dart';
 import '../../providers/connection_settings_provider.dart';
@@ -163,16 +164,16 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill>
 
   Widget _buildSensorIndicator(bool isMoving) {
     return Container(
-      width: 5,
-      height: 5,
+      width: 5.r,
+      height: 5.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFFFD0054).withOpacity(isMoving ? 0.8 : 0.4),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFD0054).withOpacity(isMoving ? 0.6 : 0.2),
-            blurRadius: isMoving ? 6 : 3,
-            spreadRadius: isMoving ? 1 : 0,
+            blurRadius: (isMoving ? 6 : 3).r,
+            spreadRadius: isMoving ? 1.r : 0,
           ),
         ],
       ),
@@ -227,7 +228,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill>
               fontSize: (9 * fScale * pScale).toDouble(),
               fontWeight: FontWeight.bold,
               color: isConnected ? Colors.greenAccent : Colors.redAccent,
-              letterSpacing: 0.5,
+              letterSpacing: 0.5.w,
             ),
           ),
         );
@@ -279,13 +280,20 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill>
         color = Colors.deepPurpleAccent;
         break;
       default:
-        label = activeCount == 0
-            ? 'SYSTEM READY'
-            : activeCount == 1
-            ? activeSwitches.first.nickname ?? activeSwitches.first.name
-            : '$activeCount DEVICES ON';
-        icon = Icons.power_rounded;
-        color = Colors.greenAccent;
+        // Priority Override: If Mains Cut, show it on default view too
+        if (voltage < 160) {
+          label = 'MAINS CUT';
+          icon = Icons.bolt_rounded;
+          color = Colors.redAccent;
+        } else {
+          label = activeCount == 0
+              ? 'SYSTEM READY'
+              : activeCount == 1
+              ? activeSwitches.first.nickname ?? activeSwitches.first.name
+              : '$activeCount DEVICES ON';
+          icon = Icons.power_rounded;
+          color = Colors.greenAccent;
+        }
     }
 
     return Container(
@@ -310,7 +318,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill>
                 fontSize: (11 * fScale * pScale).toDouble(),
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: 1.2,
+                letterSpacing: 1.2.w,
               ),
             ),
           ),

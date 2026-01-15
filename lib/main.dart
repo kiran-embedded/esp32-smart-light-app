@@ -26,10 +26,10 @@ import 'providers/voice_provider.dart';
 import 'providers/display_settings_provider.dart'; // Added
 import 'widgets/common/restart_widget.dart';
 import 'services/performance_service.dart';
-import 'core/ui/responsive_layout.dart';
+import 'services/performance_monitor_service.dart';
+import 'core/ui/display_engine_wrapper.dart';
 import 'widgets/debug/global_fps_meter.dart';
 import 'widgets/debug/developer_test_overlay.dart';
-import 'services/performance_monitor_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

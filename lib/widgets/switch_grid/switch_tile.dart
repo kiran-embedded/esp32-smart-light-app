@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/switch_device.dart';
 import '../../services/haptic_service.dart';
-import '../../providers/haptic_provider.dart';
 import '../../services/device_icon_resolver.dart';
 import '../../core/ui/adaptive_text_engine.dart';
 import '../../providers/switch_style_provider.dart';
@@ -51,7 +50,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     _pressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 200),
+      reverseDuration: const Duration(milliseconds: 300),
     );
 
     _pressAnimation = Tween<double>(begin: 0, end: 2.0).animate(
@@ -125,15 +125,33 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     });
 
     _rippleController.forward(from: 0);
-    HapticService.feedback(ref.read(hapticStyleProvider));
+    HapticService.lightImpact();
 
-    await _pressController.forward();
+    // iOS Tap Down: Fast compress
+    _pressController.animateTo(1.0, duration: 80.ms, curve: Curves.easeOutQuad);
+  }
+
+  Future<void> _handleTapUp(TapUpDetails details) async {
+    // iOS Tap Up: Slow spring release
+    await _pressController.animateTo(
+      0.0,
+      duration: 400.ms,
+      curve: Curves.elasticOut,
+    );
     widget.onTap();
-    await _pressController.reverse();
 
-    Future.delayed(const Duration(seconds: 10), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) setState(() => _isInteracted = false);
     });
+  }
+
+  Future<void> _handleTapCancel() async {
+    _pressController.animateTo(
+      0.0,
+      duration: 300.ms,
+      curve: Curves.easeOutBack,
+    );
+    if (mounted) setState(() => _isInteracted = false);
   }
 
   @override
@@ -248,11 +266,25 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                           iconInfo,
                           blendingEnabled, // Pass blending flag
                         ),
+                      )
+                      .animate(target: _isInteracted ? 1 : 0)
+                      .scale(
+                        end: const Offset(0.95, 0.95),
+                        duration: 50.ms,
+                        curve: Curves.easeOut,
+                      ) // Tap Bounce
+                      .animate(
+                        target: widget.device.isActive ? 1 : 0,
+                        onPlay: (c) => c.repeat(reverse: true),
+                      )
+                      .custom(
+                        duration: 2500.ms,
+                        builder: (context, value, child) {
+                          // Subtle Breathing when Active
+                          final scale = 1.0 + (value * 0.015);
+                          return Transform.scale(scale: scale, child: child);
+                        },
                       ),
-                    );
-                  },
-                ),
-              ),
             ),
           );
         },

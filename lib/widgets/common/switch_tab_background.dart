@@ -28,6 +28,8 @@ class SwitchTabBackground extends ConsumerWidget {
     Color secondaryColor = theme.colorScheme.secondary;
 
     final activeSwitches = devices.where((s) => s.isActive).toList();
+    final theme = Theme.of(context).colorScheme;
+
     if (activeSwitches.isNotEmpty) {
       // Blend theme with active switch color for "Synced but Dynamic" feel
       final s = activeSwitches.first;
@@ -56,15 +58,20 @@ class SwitchTabBackground extends ConsumerWidget {
           secondaryColor,
         );
       }
+    } else {
+      // Idle: Use theme colors
+      primaryColor = theme.primary.withOpacity(0.4);
+      secondaryColor = theme.tertiary.withOpacity(0.3);
     }
 
     return Stack(
       children: [
-        // Background Layer
+        // 1. Background Layer (Animated Painter)
         Positioned.fill(
           child: _buildBackground(style, primaryColor, secondaryColor),
         ),
-        // Blending Layer (New)
+
+        // 2. Depth Layer (Vignette for recessed look)
         Positioned.fill(
           child: Container(
             color: Colors.black.withOpacity(
@@ -72,7 +79,23 @@ class SwitchTabBackground extends ConsumerWidget {
             ), // Lighter overlay for better blending
           ),
         ),
-        // Content Layer
+
+        // 3. Noise Texture Layer (Premium feel)
+        const Positioned.fill(child: IgnorePointer(child: _NoiseTexture())),
+
+        // 4. Blending & Contrast Layer
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.25),
+                backgroundBlendMode: BlendMode.darken,
+              ),
+            ),
+          ),
+        ),
+
+        // 5. Content Layer
         child,
       ],
     );
@@ -263,6 +286,32 @@ class SwitchTabBackground extends ConsumerWidget {
         );
     }
   }
+}
+
+class _NoiseTexture extends StatelessWidget {
+  const _NoiseTexture();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _NoisePainter());
+  }
+}
+
+class _NoisePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = Random(42);
+    final paint = Paint();
+    for (int i = 0; i < 1500; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      paint.color = Colors.white.withOpacity(random.nextDouble() * 0.05);
+      canvas.drawRect(Rect.fromLTWH(x, y, 1, 1), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 enum _PainterType {

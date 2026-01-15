@@ -17,7 +17,6 @@ import '../../providers/connection_settings_provider.dart';
 import '../../services/connectivity_service.dart';
 
 import '../../providers/switch_schedule_provider.dart';
-import '../../providers/animation_provider.dart';
 import '../../providers/google_home_provider.dart';
 import '../../providers/live_info_provider.dart';
 
@@ -156,40 +155,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     setState(() => _currentPage = index);
 
-    // Apply User's Fluidity Setting
-    final animSettings = ref.read(animationSettingsProvider);
-
-    if (animSettings.uiType == UiTransitionAnimation.zeroLatency) {
-      // Instant snap
-      _pageController.jumpToPage(index);
-    } else {
-      // Dynamic curves based on selection
-      Curve curve = Curves.easeOut;
-      Duration duration = const Duration(milliseconds: 300);
-
-      switch (animSettings.uiType) {
-        case UiTransitionAnimation.iOSSlide:
-        case UiTransitionAnimation.iosExactSlide:
-          curve = Curves.fastLinearToSlowEaseIn; // classic iOS push feel
-          duration = const Duration(milliseconds: 400);
-          break;
-        case UiTransitionAnimation.butterZoom:
-          curve = Curves.easeInOutCubic;
-          duration = const Duration(milliseconds: 350);
-          break;
-        case UiTransitionAnimation.elasticSnap:
-          curve = Curves.elasticOut;
-          duration = const Duration(milliseconds: 600);
-          break;
-        case UiTransitionAnimation.fluidFade:
-          curve = Curves.easeOutQuad;
-          break;
-        default:
-          curve = Curves.fastOutSlowIn;
-      }
-
-      _pageController.animateToPage(index, duration: duration, curve: curve);
-    }
+    // Hardcoded premium iOS-standard spring animation
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 550),
+      curve: Curves.fastLinearToSlowEaseIn,
+    );
   }
 
   @override
@@ -217,10 +188,23 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     Responsive.paddingTop, // Start strictly at grid level
                 child: ClipRect(
                   // Force clip to prevent particle bleeding
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeInOut,
-                    opacity: _currentPage == 1 ? 1.0 : 0.0,
+                  child: AnimatedBuilder(
+                    animation: _pageController,
+                    builder: (context, child) {
+                      double opacity = 0.0;
+                      if (_pageController.hasClients &&
+                          _pageController.position.haveDimensions) {
+                        final page =
+                            _pageController.page ?? _currentPage.toDouble();
+                        opacity = (1.0 - (page - 1).abs()).clamp(0.0, 1.0);
+                      } else {
+                        opacity = _currentPage == 1 ? 1.0 : 0.0;
+                      }
+
+                      if (opacity <= 0.01) return const SizedBox.shrink();
+
+                      return Opacity(opacity: opacity, child: child);
+                    },
                     child: const SwitchTabBackground(child: SizedBox.expand()),
                   ),
                 ),

@@ -85,6 +85,9 @@ class HapticService {
   static Future<void> medium() async => feedback(HapticStyle.medium);
   static Future<void> heavy() async => feedback(HapticStyle.heavy);
 
+  static Future<void> lightImpact() async => light();
+  static Future<void> mediumImpact() async => medium();
+
   static Future<void> selection() async => HapticFeedback.selectionClick();
 
   static Future<void> pulse() async {

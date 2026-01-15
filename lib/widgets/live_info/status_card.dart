@@ -69,7 +69,10 @@ class _StatusCardState extends ConsumerState<StatusCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final voltageColor = (widget.voltage > 200 && widget.voltage < 250)
+    final voltageColor = widget.voltage < 160
+        ? Colors
+              .redAccent // CRITICAL LOW VOLTAGE
+        : (widget.voltage > 200 && widget.voltage < 250)
         ? Colors.greenAccent
         : (widget.voltage > 250 ? Colors.redAccent : Colors.tealAccent);
 
@@ -93,31 +96,36 @@ class _StatusCardState extends ConsumerState<StatusCard> {
           HapticService.medium(); // Smooth "thud" for the action
           _handleTap();
         },
-        child: AnimatedScale(
-          scale: _isPressed ? 0.96 : 1.0, // Subtler squish
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
-            duration: const Duration(
-              milliseconds: 450,
-            ), // Slower, more fluid expansion
-            curve: Curves.fastLinearToSlowEaseIn, // Liquid-like physics
-            width: Responsive.screenWidth * 0.90, // Slightly narrower
-            height: _isExpanded ? 135.h : 72.h, // Reduced height (was 150/75)
-            decoration: BoxDecoration(
-              color: Colors.transparent, // Handled by inner container
-              borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-                if (_isExpanded)
+        child: Animate(
+          onPlay: (c) => c.repeat(reverse: true),
+          effects: [
+            if (!ref.watch(performanceProvider))
+              ScaleEffect(
+                begin: const Offset(1, 1),
+                end: const Offset(1.015, 1.015),
+                duration: 3.seconds,
+                curve: Curves.easeInOutSine,
+              ),
+          ],
+          child: AnimatedScale(
+            scale: _isPressed ? 0.96 : 1.0, // Subtler squish
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            child: AnimatedContainer(
+              duration: const Duration(
+                milliseconds: 450,
+              ), // Slower, more fluid expansion
+              curve: Curves.fastLinearToSlowEaseIn, // Liquid-like physics
+              width: Responsive.screenWidth * 0.90, // Slightly narrower
+              height: _isExpanded ? 135.h : 72.h, // Reduced height (was 150/75)
+              decoration: BoxDecoration(
+                color: Colors.transparent, // Handled by inner container
+                borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
+                boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.15),
-                    blurRadius: 50,
-                    spreadRadius: -10,
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
               ],
             ),
@@ -146,46 +154,47 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                             final perf = ref.watch(performanceProvider);
                             if (perf) return const SizedBox.shrink();
 
-                            return Animate(
-                              onPlay: (c) => c.repeat(reverse: true),
-                              effects: [
-                                ShimmerEffect(
-                                  duration: 5.seconds,
-                                  color: voltageColor.withOpacity(0.05),
-                                  angle: 45,
-                                ),
-                              ],
-                              child: Container(color: Colors.transparent),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Content Crossfade
-                      AnimatedCrossFade(
-                        firstChild: SizedBox(
-                          height: 72.h,
-                          child: _buildDefaultView(theme, voltageColor),
-                        ),
-                        secondChild: SizedBox(
-                          height: 135.h,
-                          child: _buildExpandedView(
-                            theme,
-                            activeCount,
-                            activeSwitches,
-                            liveInfo.acVoltage,
-                            liveInfo.temperature,
-                            connSettings.mode,
-                            _displayIndex,
+                              return Animate(
+                                onPlay: (c) => c.repeat(reverse: true),
+                                effects: [
+                                  ShimmerEffect(
+                                    duration: 5.seconds,
+                                    color: voltageColor.withOpacity(0.05),
+                                    angle: 45,
+                                  ),
+                                ],
+                                child: Container(color: Colors.transparent),
+                              );
+                            },
                           ),
                         ),
-                        crossFadeState: !_isExpanded
-                            ? CrossFadeState.showFirst
-                            : CrossFadeState.showSecond,
-                        duration: const Duration(milliseconds: 400),
-                        sizeCurve: Curves.fastLinearToSlowEaseIn,
-                      ),
-                    ],
+
+                        // Content Crossfade
+                        AnimatedCrossFade(
+                          firstChild: SizedBox(
+                            height: 72.h,
+                            child: _buildDefaultView(theme, voltageColor),
+                          ),
+                          secondChild: SizedBox(
+                            height: 135.h,
+                            child: _buildExpandedView(
+                              theme,
+                              activeCount,
+                              activeSwitches,
+                              liveInfo.acVoltage,
+                              liveInfo.temperature,
+                              connSettings.mode,
+                              _displayIndex,
+                            ),
+                          ),
+                          crossFadeState: !_isExpanded
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                          duration: const Duration(milliseconds: 400),
+                          sizeCurve: Curves.fastLinearToSlowEaseIn,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -230,12 +239,14 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                   ), // Replaced pulse with scale
                   const SizedBox(width: 8),
                   Text(
-                    'AC MAIN',
+                    widget.voltage < 160 ? 'MAINS POWER CUT' : 'AC MAIN',
                     style: GoogleFonts.outfit(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: widget.voltage < 160
+                          ? Colors.redAccent
+                          : theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -327,12 +338,14 @@ class _StatusCardState extends ConsumerState<StatusCard> {
               ),
               const SizedBox(height: 6),
               Text(
-                "SYSTEM ACTIVE",
+                widget.voltage < 160 ? "CRITICAL ALERT" : "SYSTEM ACTIVE",
                 style: GoogleFonts.outfit(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
-                  color: theme.colorScheme.primary,
+                  color: widget.voltage < 160
+                      ? Colors.red
+                      : theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -388,10 +401,12 @@ class _StatusCardState extends ConsumerState<StatusCard> {
         color = Colors.cyanAccent;
         break;
       default:
-        label = '${voltage.toInt()}V GRID';
-        subLabel = "Stable Voltage";
+        label = widget.voltage < 160
+            ? 'POWER FAULT'
+            : '${voltage.toInt()}V GRID';
+        subLabel = widget.voltage < 160 ? "Check Mains" : "Stable Voltage";
         icon = Icons.bolt_rounded;
-        color = Colors.yellowAccent;
+        color = widget.voltage < 160 ? Colors.red : Colors.yellowAccent;
     }
 
     return Container(
