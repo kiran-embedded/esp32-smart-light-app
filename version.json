@@ -1,0 +1,7 @@
+{
+  "version": "v1.2.0+15",
+  "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/app-release.apk",
+  "release_notes": "• Fix: Corrected Version Display in Settings\n• Login Screen: Unlocked high-FPS (disabled heavy blur)\n• Dynamic Blending: Refined transparency aesthetics",
+  "ota_version": "1.2.0",
+  "ota_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/firmware.bin"
+}
