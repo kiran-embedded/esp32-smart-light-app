@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/switch_device.dart';
 import '../services/firebase_switch_service.dart';
 import '../services/persistence_service.dart';
+import '../services/local_network_service.dart';
+import 'connection_settings_provider.dart';
+import '../services/connectivity_service.dart';
 
 final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
@@ -17,6 +20,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _telemetrySubscription;
   final Map<String, DateTime> _pendingSwitches = {};
+  Timer? _localPollingTimer;
 
   SwitchDevicesNotifier(this._ref, {Map<String, String>? initialNicknames})
     : super([
@@ -121,19 +125,88 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       _telemetrySubscription = firebaseService.listenToTelemetry().listen((
         telemetry,
       ) {
-        _lastTelemetry = telemetry;
-        _mergeAndEmit();
+        final mode = _ref.read(connectivityProvider).activeMode;
+        if (mode == ConnectionMode.cloud) {
+          _lastTelemetry = telemetry;
+          _mergeAndEmit();
+        }
       });
 
       _commandsSubscription = firebaseService.listenToCommands().listen((
         commands,
       ) {
-        _lastCommands = commands;
-        _mergeAndEmit();
+        final mode = _ref.read(connectivityProvider).activeMode;
+        if (mode == ConnectionMode.cloud) {
+          _lastCommands = commands;
+          _mergeAndEmit();
+        }
+      });
+
+      // Start local polling if in local mode
+      _updatePollingTimer();
+
+      // Listen to effective connection mode changes and FLUSH buffer on change
+      _ref.listen(connectivityProvider, (previous, next) {
+        if (previous?.activeMode != next.activeMode) {
+          // FLUSH BUFFER: Prevent random triggering from stale data of other mode
+          _lastTelemetry = {};
+          _lastCommands = {};
+          _updatePollingTimer();
+          if (next.activeMode == ConnectionMode.local) {
+            _pollLocalStatus();
+          }
+        }
       });
     } catch (e) {
       print('Error initializing telemetry sync: $e');
     }
+  }
+
+  void _updatePollingTimer() {
+    _localPollingTimer?.cancel();
+    final mode = _ref.read(connectivityProvider).activeMode;
+
+    if (mode == ConnectionMode.local) {
+      _localPollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+        _pollLocalStatus();
+      });
+    }
+  }
+
+  Future<void> _pollLocalStatus() async {
+    try {
+      final connectivity = _ref.read(connectivityProvider);
+      final localService = _ref.read(localNetworkServiceProvider);
+      final status = await localService.getDeviceStatus(
+        "hotspot_fallback", // Or dynamic ID if we had it mapped
+      );
+      if (status != null) {
+        _processLocalStatus(status);
+      }
+    } catch (e) {
+      print('Local polling error: $e');
+    }
+  }
+
+  void _processLocalStatus(Map<String, dynamic> status) {
+    // Map local status to telemetry format
+    final Map<String, dynamic> telemetry = {
+      'lastSeen': DateTime.now().millisecondsSinceEpoch,
+      'voltage': status['voltage'] ?? 0.0,
+    };
+
+    if (status.containsKey('relays') && status['relays'] is List) {
+      final relays = status['relays'] as List;
+      for (int i = 0; i < relays.length; i++) {
+        // Unified Hardware Logic: 1 = Active, 0 = Inactive
+        telemetry['relay${i + 1}'] = (relays[i] == true || relays[i] == 1)
+            ? 1
+            : 0;
+      }
+    }
+
+    _lastTelemetry = telemetry;
+    _mergeAndEmit();
   }
 
   void _mergeAndEmit() {
@@ -169,27 +242,29 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
     final currentDeviceMap = {for (var d in state) d.id: d};
 
-    state = allRelayIds.map((id) {
+    // OPTIMIZATION: Cache sorted list instead of re-sorting every frame
+    // For now, sorting logic stays but mapped operation is lighter
+    var newState = allRelayIds.map((id) {
       bool newIsActive = false;
       if (telemetry.containsKey(id)) {
         final rawVal = telemetry[id];
         if (rawVal != null) {
           if (rawVal is int)
-            newIsActive = (rawVal == 0); // 0 = Active, 1 = Inactive (Inverted)
+            newIsActive = (rawVal == 1);
           else if (rawVal is bool)
-            newIsActive = !rawVal;
+            newIsActive = rawVal;
           else
             newIsActive =
-                (rawVal.toString() == '0' || rawVal.toString() == 'false');
+                (rawVal.toString() == '1' || rawVal.toString() == 'true');
         }
       } else if (_lastCommands.containsKey(id)) {
         final rawVal = _lastCommands[id];
         if (rawVal != null) {
           if (rawVal is int)
-            newIsActive = (rawVal == 0);
+            newIsActive = (rawVal == 1);
           else
             newIsActive =
-                (rawVal.toString() == '0' || rawVal.toString() == 'false');
+                (rawVal.toString() == '1' || rawVal.toString() == 'true');
         }
       } else if (currentDeviceMap.containsKey(id)) {
         newIsActive = currentDeviceMap[id]!.isActive;
@@ -200,7 +275,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
+        // Sync latency window: 1.5 seconds for snappy feedback
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 1500) {
           final existing = currentDeviceMap[id];
           if (existing != null && newIsActive != existing.isActive) {
             newIsActive = existing.isActive;
@@ -227,6 +303,23 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         ).copyWith(isActive: newIsActive, isConnected: isConnected);
       }
     }).toList();
+
+    // PERFORMANCE: Only update state if something actually changed
+    // Simple deep equality check (optimistic)
+    if (_hasStateChanged(state, newState)) {
+      state = newState;
+    }
+  }
+
+  bool _hasStateChanged(
+    List<SwitchDevice> oldState,
+    List<SwitchDevice> newState,
+  ) {
+    if (oldState.length != newState.length) return true;
+    for (int i = 0; i < oldState.length; i++) {
+      if (oldState[i] != newState[i]) return true;
+    }
+    return false;
   }
 
   bool _isDeviceConnected(dynamic lastSeen) {
@@ -256,8 +349,51 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         if (d.id == id) d.copyWith(isActive: newState, isPending: true) else d,
     ];
 
-    // Non-blocking fire and forget
-    _ref.read(firebaseSwitchServiceProvider).sendCommand(id, newState ? 0 : 1);
+    // FIX: Read ACTIVE mode, not just user setting
+    final mode = _ref.read(connectivityProvider).activeMode;
+
+    if (mode == ConnectionMode.local) {
+      // Use Local Service
+      // Assuming 'hotspot_fallback' or similar; in real scenario we use d.id mapping
+      // For now, if local mode is active, we assume we want to talk to the discovered device override.
+      // But typically we should use: _ref.read(localNetworkServiceProvider).getIp(id);
+
+      // Ensure we have discovery running if we haven't found anything yet
+      final localService = _ref.read(localNetworkServiceProvider);
+      if (localService.getIp("hotspot_fallback") == null) {
+        // Trigger a quick aggressive scan/verification on current subnet if possible?
+        // Or just rely on the service's internal fallback we just added.
+        print(
+          "SwitchProvider: No IP for hotspot_fallback, hoping service has ANY IP...",
+        );
+      }
+
+      final success = await localService.sendLocalCommand(
+        "hotspot_fallback", // Or discovered ID
+        deviceIndex, // 0-3
+        newState,
+      );
+
+      if (!success) {
+        // Revert on failure
+        state = [
+          for (final d in state)
+            if (d.id == id)
+              d.copyWith(isActive: previousState, isPending: false)
+            else
+              d,
+        ];
+        _pendingSwitches.remove(id);
+      } else {
+        // Success: Trigger immediate poll to update state
+        _pollLocalStatus();
+      }
+    } else {
+      // Use Firebase Service
+      _ref
+          .read(firebaseSwitchServiceProvider)
+          .sendCommand(id, newState ? 1 : 0);
+    }
   }
 
   Future<void> updateNickname(String id, String newName) async {
@@ -290,6 +426,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   void dispose() {
     _telemetrySubscription?.cancel();
     _commandsSubscription?.cancel();
+    _localPollingTimer?.cancel();
     super.dispose();
   }
 }

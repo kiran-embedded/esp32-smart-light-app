@@ -36,17 +36,31 @@ class _PixelLedBorderState extends ConsumerState<PixelLedBorder>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
+  int _iteration = 0;
+
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
+    _controller.addStatusListener(_onAnimStatus); // Listen for completion
     _checkAnimation();
+  }
+
+  void _onAnimStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      setState(() {
+        _iteration++;
+      });
+      _controller.reset();
+      _controller.forward();
+    }
   }
 
   void _checkAnimation() {
     final performanceMode = ref.read(performanceProvider);
     if (!widget.isStatic && !performanceMode) {
-      if (!_controller.isAnimating) _controller.repeat();
+      if (!_controller.isAnimating)
+        _controller.forward(); // Use forward + Listener
     } else {
       _controller.stop();
     }
@@ -82,12 +96,13 @@ class _PixelLedBorderState extends ConsumerState<PixelLedBorder>
 
     return RepaintBoundary(
       child: CustomPaint(
-        painter: _PixelLedPainter(
+        foregroundPainter: _PixelLedPainter(
           animation: _controller,
           borderRadius: widget.borderRadius,
           strokeWidth: widget.strokeWidth,
           colors: effectiveColors,
           isRainbow: widget.enableInfiniteRainbow,
+          iteration: _iteration, // Pass iteration count
         ),
         child: widget.child,
       ),
@@ -101,6 +116,7 @@ class _PixelLedPainter extends CustomPainter {
   final double strokeWidth;
   final List<Color> colors;
   final bool isRainbow;
+  final int iteration;
 
   _PixelLedPainter({
     required this.animation,
@@ -108,6 +124,7 @@ class _PixelLedPainter extends CustomPainter {
     required this.strokeWidth,
     required this.colors,
     this.isRainbow = false,
+    this.iteration = 0,
   }) : super(repaint: animation);
 
   @override
@@ -120,32 +137,52 @@ class _PixelLedPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round; // Ensure smooth endings if segmented
 
-    // Industry Level: SweepGradient for "Running LED" effect
+    // Dynamic Style based on Iteration
+    // 0: Normal Sweep
+    // 1: Tight Beam (Gap)
+    // 2: Reverse Direction (Simulated)
+    // 3: Breathing Sync
+    final style = iteration % 4; // Cycle 4 styles
+
+    List<double>? stops;
+    double rotation = animation.value * 2 * math.pi;
+
+    if (style == 1) {
+      // Tight Beam logic
+      stops = List.generate(colors.length + 1, (i) {
+        // Compress stops to create gaps? Or simpler: Just shift colors
+        return i / colors.length;
+      });
+      // Accelerate
+      rotation = animation.value * 4 * math.pi;
+    } else if (style == 2) {
+      // Reverse
+      rotation = -animation.value * 2 * math.pi;
+    } else if (style == 3) {
+      // Breathing rotation (sway)
+      rotation =
+          (math.sin(animation.value * math.pi * 2) * 0.8) +
+          (animation.value * 2 * math.pi);
+    }
+
     paint.shader = SweepGradient(
       colors: isRainbow
           ? colors
           : [...colors, colors.first], // Ensure wrap for custom colors too
-      stops: isRainbow
-          ? null
-          : List.generate(colors.length + 1, (i) => i / colors.length),
-      transform: GradientRotation(animation.value * 2 * math.pi),
+      stops: stops,
+      transform: GradientRotation(rotation),
     ).createShader(rect);
 
-    // Subtle Glow Layer
+    // Softer "Water" Glow Layer
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
-      // For rainbow: smoother, tighter glow. custom: existing logic
-      ..strokeWidth = isRainbow ? strokeWidth + 2.0 : strokeWidth * 2
-      // For rainbow: less blur for "tube" definition
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isRainbow ? 3.0 : 4.0);
+      ..strokeWidth = isRainbow ? strokeWidth + 1.2 : strokeWidth * 1.8
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isRainbow ? 2.0 : 3.5);
 
-    // If rainbow, reduce opacity of the glow to prevent "whiteout"
+    // If rainbow, reduce opacity of the glow
     if (isRainbow) {
-      glowPaint.color = Colors.white.withOpacity(0.4);
-      // We can't apply shader on top of color easily with standard Paint,
-      // but applying the SAME shader to glow works well for neon.
       glowPaint.shader = paint.shader;
-      // Use alpha composite to soften? Standard draw is fine.
+      glowPaint.color = Colors.white.withOpacity(0.15); // Much fainter
     } else {
       glowPaint.shader = paint.shader;
     }

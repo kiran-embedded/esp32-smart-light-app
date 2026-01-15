@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../common/pixel_led_border.dart'; // Import PixelLedBorder
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../../providers/switch_provider.dart';
@@ -8,6 +9,8 @@ import '../../providers/live_info_provider.dart';
 import '../../providers/connection_settings_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../services/user_activity_service.dart';
+import '../../providers/display_settings_provider.dart';
+import '../../core/ui/responsive_layout.dart'; // Added for .r extension
 
 class DynamicIslandPill extends ConsumerStatefulWidget {
   const DynamicIslandPill({super.key});
@@ -16,7 +19,10 @@ class DynamicIslandPill extends ConsumerStatefulWidget {
   ConsumerState<DynamicIslandPill> createState() => _DynamicIslandPillState();
 }
 
-class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
+class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _breathController;
+
   bool _isExpanded = false;
   int _displayIndex =
       0; // 0: Switches, 1: Voltage, 2: System Health, 3: Network
@@ -34,8 +40,18 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _breathController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
+  }
+
+  @override
   void dispose() {
     _collapseTimer?.cancel();
+    _breathController.dispose();
     super.dispose();
   }
 
@@ -45,6 +61,15 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
     final liveInfo = ref.watch(liveInfoProvider);
     final connSettings = ref.watch(connectionSettingsProvider);
     final sensorState = ref.watch(userActivityServiceProvider);
+    final displaySettings = ref.watch(displaySettingsProvider);
+
+    // Base dimensions multiplied by scale
+    final double scale = displaySettings.pillScale;
+    final double expandedWidth = 260.0 * scale;
+    final double collapsedWidth = 100.0 * scale;
+    final double height = (_isExpanded ? 48.0 : 32.0) * scale;
+    final double radius = (_isExpanded ? 24.0 : 50.0) * scale;
+
     final activeSwitches = switches.where((s) => s.isActive).toList();
     final activeCount = activeSwitches.length;
 
@@ -65,60 +90,73 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
         });
         HapticService.selection();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 600),
-        curve: const Cubic(0.2, 0.9, 0.4, 1.0),
-        width: _isExpanded ? 260 : 100, // Compact 100px for iPhone pill look
-        height: _isExpanded ? 48 : 32, // Sleek 32px height
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(
-            _isExpanded ? 24 : 50,
-          ), // Perfect stadium border
-          border: Border.all(
-            color: theme.colorScheme.primary.withOpacity(
-              _isExpanded ? 0.5 : 0.3,
-            ),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              blurRadius: _isExpanded ? 15 : 10,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Internal Content with CrossFade
-            AnimatedCrossFade(
-              firstChild: _buildCollapsedContent(activeCount),
-              secondChild: _buildExpandedContent(
-                activeCount,
-                activeSwitches,
-                liveInfo.acVoltage,
-                liveInfo.temperature,
-                connSettings.mode,
-                _displayIndex,
-              ),
-              crossFadeState: _isExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 250),
-            ),
+      child: AnimatedBuilder(
+        animation: _breathController,
+        builder: (context, child) {
+          // Replaced existing Border/Shadow logic with PixelLedBorder
+          // Theme Colors (Blended)
+          final themeColors = [
+            theme.colorScheme.primary,
+            theme.colorScheme.secondary,
+            theme.colorScheme.tertiary,
+            theme.colorScheme.primary, // Wrap
+          ];
 
-            // Subtle Shimmer removed for static look
-            if (sensorState.isMonitoring)
-              Positioned(
-                right: _isExpanded ? 16 : 12, // Adjusted for balance
-                top: _isExpanded ? 18 : 15,
-                child: _buildSensorIndicator(sensorState.isMoving),
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 600),
+            curve: const Cubic(0.2, 0.9, 0.4, 1.0),
+            width: _isExpanded ? expandedWidth : collapsedWidth,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.black, // Solid Black Body
+              borderRadius: BorderRadius.circular(radius),
+              // NO Border or Shadow here, handled by PixelLedBorder
+            ),
+            child: PixelLedBorder(
+              isStatic: false, // ALWAYS MOVING
+              enableInfiniteRainbow: false, // Use Theme Colors
+              colors: themeColors,
+              borderRadius: radius,
+              strokeWidth: 1.5 * scale, // Thinner border
+              duration: const Duration(seconds: 4),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Internal Content with CrossFade
+                  AnimatedCrossFade(
+                    firstChild: _buildCollapsedContent(
+                      activeCount,
+                      scale,
+                      displaySettings.fontSize,
+                    ),
+                    secondChild: _buildExpandedContent(
+                      activeCount,
+                      activeSwitches,
+                      liveInfo.acVoltage,
+                      liveInfo.temperature,
+                      connSettings.mode,
+                      _displayIndex,
+                      scale,
+                      displaySettings.fontSize,
+                    ),
+                    crossFadeState: _isExpanded
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 250),
+                  ),
+
+                  // Subtle Sensor Indicator
+                  if (sensorState.isMonitoring)
+                    Positioned(
+                      right: _isExpanded ? 16.r : 12.r, // Adjusted for balance
+                      top: _isExpanded ? 18.r : 15.r,
+                      child: _buildSensorIndicator(sensorState.isMoving),
+                    ),
+                ],
               ),
-          ],
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -141,19 +179,19 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
     );
   }
 
-  Widget _buildCollapsedContent(int activeCount) {
+  Widget _buildCollapsedContent(int activeCount, double pScale, double fScale) {
     return Container(
-      width: 120,
-      height: 36,
+      width: (120 * pScale).toDouble(),
+      height: (36 * pScale).toDouble(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildConnectivityIcon(), // Connected/Offline Pill
+          _buildConnectivityIcon(pScale, fScale), // Connected/Offline Pill
           if (activeCount > 0) ...[
-            const SizedBox(width: 8),
+            SizedBox(width: (8 * pScale).toDouble()),
             Container(
-              width: 4,
-              height: 4,
+              width: (4 * pScale).toDouble(),
+              height: (4 * pScale).toDouble(),
               decoration: const BoxDecoration(
                 color: Colors.greenAccent,
                 shape: BoxShape.circle,
@@ -165,25 +203,28 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
     );
   }
 
-  Widget _buildConnectivityIcon() {
+  Widget _buildConnectivityIcon(double pScale, double fScale) {
     return StreamBuilder<DatabaseEvent>(
       stream: FirebaseDatabase.instance.ref('.info/connected').onValue,
       builder: (context, snapshot) {
         final isConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: EdgeInsets.symmetric(
+            horizontal: (8 * pScale).toDouble(),
+            vertical: (2 * pScale).toDouble(),
+          ),
           decoration: BoxDecoration(
             color: (isConnected ? Colors.green : Colors.red).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular((12 * pScale).toDouble()),
             border: Border.all(
               color: (isConnected ? Colors.green : Colors.red).withOpacity(0.5),
-              width: 1,
+              width: (1 * pScale).toDouble(),
             ),
           ),
           child: Text(
             isConnected ? "CONNECTED" : "OFFLINE",
             style: GoogleFonts.outfit(
-              fontSize: 9,
+              fontSize: (9 * fScale * pScale).toDouble(),
               fontWeight: FontWeight.bold,
               color: isConnected ? Colors.greenAccent : Colors.redAccent,
               letterSpacing: 0.5,
@@ -201,6 +242,8 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
     double temp,
     ConnectionMode mode,
     int index,
+    double pScale,
+    double fScale,
   ) {
     String label = "";
     IconData icon = Icons.info_outline_rounded;
@@ -208,9 +251,15 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
 
     switch (index) {
       case 1:
-        label = '${voltage.toInt()}V AC STABLE';
-        icon = Icons.bolt_rounded;
-        color = voltage < 180 ? Colors.redAccent : Colors.greenAccent;
+        if (voltage < 180) {
+          label = 'MAINS CUT OFF';
+          icon = Icons.power_off_rounded;
+          color = Colors.redAccent;
+        } else {
+          label = '${voltage.toInt()}V AC STABLE';
+          icon = Icons.bolt_rounded;
+          color = Colors.greenAccent;
+        }
         break;
       case 2:
         label = '${temp.toInt()}°C WEATHER';
@@ -240,24 +289,25 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
     }
 
     return Container(
-      width: 260, // Increased to 260 for full text visibility
-      height: 48,
-      padding: const EdgeInsets.only(
-        left: 12,
-        right: 20,
+      width: (260 * pScale)
+          .toDouble(), // Increased to 260 for full text visibility
+      height: (48 * pScale).toDouble(),
+      padding: EdgeInsets.only(
+        left: (12 * pScale).toDouble(),
+        right: (20 * pScale).toDouble(),
       ), // Optimized padding for text fit
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 10),
+          Icon(icon, size: (16 * fScale * pScale).toDouble(), color: color),
+          SizedBox(width: (10 * pScale).toDouble()),
           Flexible(
             child: Text(
               label.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.outfit(
-                fontSize: 11,
+                fontSize: (11 * fScale * pScale).toDouble(),
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
                 letterSpacing: 1.2,
@@ -265,17 +315,17 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
             ),
           ),
           const Spacer(),
-          _buildActivityPulse(activeCount > 0),
+          _buildActivityPulse(activeCount > 0, pScale),
         ],
       ),
     );
   }
 
-  Widget _buildActivityPulse(bool active) {
+  Widget _buildActivityPulse(bool active, double pScale) {
     return RepaintBoundary(
       child: Container(
-        width: 8,
-        height: 8,
+        width: (8 * pScale).toDouble(),
+        height: (8 * pScale).toDouble(),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: active ? Colors.greenAccent : Colors.white10,
@@ -283,8 +333,8 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
               ? [
                   BoxShadow(
                     color: Colors.greenAccent.withOpacity(0.5),
-                    blurRadius: 4,
-                    spreadRadius: 1,
+                    blurRadius: (4 * pScale).toDouble(),
+                    spreadRadius: (1 * pScale).toDouble(),
                   ),
                 ]
               : [],

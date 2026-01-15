@@ -13,6 +13,8 @@ import '../../services/user_activity_service.dart';
 
 import 'dart:async';
 import '../../providers/switch_provider.dart';
+import '../../providers/connection_settings_provider.dart';
+import '../../services/connectivity_service.dart';
 
 import '../../providers/switch_schedule_provider.dart';
 import '../../providers/animation_provider.dart';
@@ -23,6 +25,7 @@ import '../../widgets/robo/robo_assistant.dart';
 import '../../widgets/robo/robo_assistant.dart' as robo;
 import '../../widgets/live_info/time_date_widget.dart';
 import '../../widgets/live_info/status_card.dart';
+import '../../widgets/live_info/connection_status_pill.dart';
 import '../../widgets/switch_grid/switch_grid.dart';
 import '../../widgets/voice/voice_assistant_overlay.dart';
 import '../../widgets/common/frosted_glass.dart';
@@ -238,19 +241,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 ),
               ),
 
-              // No Internet Overlay
-              if (!isConnected && !_ignoreOffline)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.8),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: NoInternetWidget(
-                        onRetry: () => HapticService.selection(),
-                      ),
-                    ),
-                  ).animate().fadeIn(duration: 300.ms),
-                ),
+              // No Internet Overlay - REMOVED per user request
+              // The status pill informs the user already.
             ],
           ),
         );
@@ -335,6 +327,7 @@ class DashboardView extends ConsumerWidget {
             child: Column(
               children: [
                 SizedBox(height: 65.h), // Account for App Bar
+                const ConnectionStatusPill(), // NEW: Connection Status Pill
                 const Spacer(flex: 1), // Top breathing room
                 const RepaintBoundary(
                   child: RoboAssistant(eyesOnly: true, autoTuneEnabled: false),
@@ -361,20 +354,32 @@ class DashboardView extends ConsumerWidget {
           left: 0,
           right: 0,
           child: PremiumAppBar(
-            title: Text(
-              'NEBULA CORE',
-              style: GoogleFonts.outfit(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.w,
-                color: theme.colorScheme.primary,
-                shadows: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
+            title: ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.secondary,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.srcIn,
+              child: Text(
+                'NEBULA CORE',
+                style: GoogleFonts.outfit(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2.w,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
               ),
             ),
             trailing: _EnvironmentInfo(
@@ -411,6 +416,7 @@ class _ControlViewState extends ConsumerState<ControlView> {
     // Consistent spacing strategy
     final topPadding = MediaQuery.of(context).padding.top;
     final contentTopPadding = topPadding + 65.h + 20.h;
+    final theme = Theme.of(context);
 
     return Stack(
       children: [
@@ -440,20 +446,32 @@ class _ControlViewState extends ConsumerState<ControlView> {
           left: 0,
           right: 0,
           child: PremiumAppBar(
-            title: Text(
-              'SMART SWITCHES',
-              style: GoogleFonts.outfit(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5.w,
-                color: const Color(0xFF00E5FF), // Neon Cyan
-                shadows: [
-                  BoxShadow(
-                    color: const Color(0xFF00E5FF).withOpacity(0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
+            title: ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.secondary,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.srcIn,
+              child: Text(
+                'SMART SWITCHES',
+                style: GoogleFonts.outfit(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5.w,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -546,7 +564,7 @@ class _ActionButtons extends ConsumerWidget {
                   : Icons.mic_none_rounded,
               isActive: assistantService.isListening,
               theme: theme,
-              activeColor: Colors.orangeAccent,
+              activeColor: theme.colorScheme.secondary,
               onTap: () async {
                 await showModalBottomSheet(
                   context: context,
@@ -635,13 +653,13 @@ class _ActionButtons extends ConsumerWidget {
   }
 }
 
-class _GlassButton extends StatelessWidget {
+class _GlassButton extends StatefulWidget {
   final String label;
   final IconData icon;
   final bool isActive;
   final ThemeData theme;
   final VoidCallback onTap;
-  final Color activeColor;
+  final Color? activeColor;
 
   const _GlassButton({
     required this.label,
@@ -649,39 +667,97 @@ class _GlassButton extends StatelessWidget {
     required this.isActive,
     required this.theme,
     required this.onTap,
-    this.activeColor = const Color(0xFF00E676),
+    this.activeColor,
   });
 
   @override
+  State<_GlassButton> createState() => _GlassButtonState();
+}
+
+class _GlassButtonState extends State<_GlassButton> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
+    // Styling matching "Flux Reactor" (StatusCard)
+    final isNeon = widget.isActive;
+
+    // Theme Blended Colors
+    final themeColors = [
+      widget.theme.colorScheme.primary,
+      widget.theme.colorScheme.secondary,
+      widget.theme.colorScheme.tertiary,
+      widget.theme.colorScheme.primary, // Wrap
+    ];
+
     return GestureDetector(
-      onTap: onTap,
-      child: PixelLedBorder(
-        enableInfiniteRainbow: true,
-        duration: const Duration(seconds: 4),
-        colors: const [],
-        child: FrostedGlass(
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          radius: BorderRadius.circular(20.r),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: isActive
-                    ? activeColor
-                    : theme.colorScheme.onSurface.withOpacity(0.6),
-                size: 24.r,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: GoogleFonts.roboto(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+      onTap: () {
+        HapticService.selection(); // Crisp haptic
+        widget.onTap();
+      },
+      child: AnimatedScale(
+        scale: _isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          height: 80, // Restored height to 80 as per original
+          decoration: BoxDecoration(
+            // Outer glow - Vibrant when active, Subtle when inactive
+            boxShadow: [
+              BoxShadow(
+                color: widget.theme.colorScheme.primary.withOpacity(
+                  isNeon ? 0.35 : 0.1,
                 ),
+                blurRadius: isNeon ? 20 : 10,
+                spreadRadius: isNeon ? -2 : -4,
               ),
             ],
+          ),
+          child: PixelLedBorder(
+            isStatic: false, // ALWAYS MOVING "Timely change"
+            enableInfiniteRainbow: false, // BLENDED with Theme
+            colors: themeColors,
+            borderRadius: 28,
+            strokeWidth: 1.5, // Thinner liquid border
+            duration: const Duration(milliseconds: 2500),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF0A0A0A), // SOLID BLACK/GRAPHITE
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: [
+                          widget.theme.colorScheme.primary,
+                          widget.theme.colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.srcIn,
+                    child: Icon(
+                      widget.icon,
+                      color: Colors.white, // Mask base
+                      size: 30, // Much larger/vivid
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.label,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: isNeon ? FontWeight.bold : FontWeight.w500,
+                      color: Colors.white.withOpacity(isNeon ? 0.9 : 0.6),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

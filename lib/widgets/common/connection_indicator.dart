@@ -17,12 +17,12 @@ class ConnectionIndicator extends ConsumerWidget {
 
     if (settings.mode == ConnectionMode.local) {
       label = 'LOCAL';
-      color = const Color(0xFF00FFC2); // Aqua
+      color = Colors.yellowAccent;
       icon = Icons.wifi_tethering_rounded;
-    } else if (settings.mode == ConnectionMode.hybrid) {
-      label = 'HYBRID';
-      color = Colors.purpleAccent;
-      icon = Icons.flash_on_rounded;
+    } else if (settings.mode == ConnectionMode.hybridAuto) {
+      label = 'AUTO';
+      color = Colors.cyanAccent;
+      icon = Icons.auto_mode_rounded;
     }
 
     return Container(

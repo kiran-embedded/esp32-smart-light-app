@@ -23,6 +23,7 @@ import 'providers/immersive_provider.dart';
 import 'providers/animation_provider.dart';
 import 'providers/sound_settings_provider.dart';
 import 'providers/voice_provider.dart';
+import 'providers/display_settings_provider.dart'; // Added
 import 'widgets/common/restart_widget.dart';
 import 'services/performance_service.dart';
 import 'core/ui/responsive_layout.dart';
@@ -204,7 +205,11 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
         pageTransitionsTheme: _buildPageTransitions(animSettings.uiType),
       ),
       builder: (context, child) {
-        Responsive.init(context);
+        // Global Response Init with identifying scale
+        // We use pillScale as the proxy for "Display Size"
+        final display = ref.watch(displaySettingsProvider);
+        Responsive.init(context, scaleFactor: display.pillScale);
+
         return Consumer(
           builder: (context, ref, _) {
             final stats = ref.watch(performanceStatsProvider);
@@ -339,8 +344,8 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
               // At 1.0 (start of exit): 1.05
               // At 0.0 (end of exit): 1.0
               // This gives a settling effect "Zoom Out"
-              scale: Tween<double>(begin: 1.05, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeIn),
+              scale: Tween<double>(begin: 1.08, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
               ),
               child: child,
             ),
@@ -357,13 +362,15 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
   Duration _getTransitionDuration(AppLaunchAnimation type) {
     switch (type) {
       case AppLaunchAnimation.galaxySpiral:
+        return const Duration(milliseconds: 1400); // Slower, more majestic
       case AppLaunchAnimation.cinematicFade:
-        return const Duration(milliseconds: 1200);
+        return const Duration(milliseconds: 1000);
       case AppLaunchAnimation.cyberGlitch:
-        return const Duration(milliseconds: 600);
+        return const Duration(milliseconds: 700);
       case AppLaunchAnimation.bladeRunner:
-      case AppLaunchAnimation.pixelReveal:
-        return const Duration(milliseconds: 400); // Fast
+        return const Duration(milliseconds: 500);
+      case AppLaunchAnimation.bottomSpring:
+        return const Duration(milliseconds: 900);
       default:
         return const Duration(milliseconds: 800);
     }
@@ -372,11 +379,13 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
   Curve _getInCurve(AppLaunchAnimation type) {
     switch (type) {
       case AppLaunchAnimation.galaxySpiral:
-        return Curves.easeOutExpo;
+        return Curves.easeInOutCirc; // More dramatic ease
       case AppLaunchAnimation.bottomSpring:
-        return Curves.elasticOut;
+        return Curves.elasticOut; // Keep elastic
       case AppLaunchAnimation.fluidWave:
-        return Curves.easeInOutCubic;
+        return Curves.slowMiddle; // Viscous feel
+      case AppLaunchAnimation.bladeRunner:
+        return Curves.fastLinearToSlowEaseIn; // Snap and glide
       default:
         return Curves.easeOutQuart;
     }

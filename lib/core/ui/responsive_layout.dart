@@ -15,32 +15,34 @@ class Responsive {
   static late double scaleHeight;
   static late double scaleText;
 
-  static void init(BuildContext context) {
+  static void init(BuildContext context, {double scaleFactor = 1.0}) {
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
     screenHeight = _mediaQueryData.size.height;
     pixelRatio = _mediaQueryData.devicePixelRatio;
     textScaleFactor = _mediaQueryData.textScaleFactor;
 
-    // Base dimensions for reference
+    // Base dimensions for reference (simulating iPhone X / 11 Pro base)
     const double baseWidth = 375.0;
     const double baseHeight = 812.0;
 
-    scaleWidth = screenWidth / baseWidth;
-    scaleHeight = screenHeight / baseHeight;
+    // Apply global scale factor
+    scaleWidth = (screenWidth / baseWidth) * scaleFactor;
+    scaleHeight = (screenHeight / baseHeight) * scaleFactor;
 
-    // Scale text slightly less aggressively to avoid massive font on tablets
+    // Scale text logic
     scaleText = math.min(scaleWidth, scaleHeight);
+
+    // Tablet/Large Screen Optimization
     if (screenWidth > 600) {
-      // Tablet optimization: Don't let scale factor grow too large
-      scaleText = 1.0 + (scaleText - 1.0) * 0.5;
+      // On tablets, the raw scale might be too huge. Dampen it.
+      // But respect the user's "Display Size" choice (scaleFactor).
+      // If scaleFactor is high (Large), we let it grow more.
+      scaleText = 1.0 + (scaleText - 1.0) * 0.6;
     }
 
     debugPrint(
-      'NEBULA_RESPONSIVE: Initialized with Screen Size: ${screenWidth}x${screenHeight}',
-    );
-    debugPrint(
-      'NEBULA_RESPONSIVE: Scaling Factors - Width: ${scaleWidth.toStringAsFixed(3)}, Height: ${scaleHeight.toStringAsFixed(3)}, Text: ${scaleText.toStringAsFixed(3)}',
+      'NEBULA_RESPONSIVE: Init Screen: ${screenWidth}x${screenHeight} | ScaleFactor: $scaleFactor | Final W: ${scaleWidth.toStringAsFixed(2)}',
     );
   }
 

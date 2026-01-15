@@ -129,17 +129,19 @@ class LiveInfoHUD extends ConsumerWidget {
 
     if (iconCode.contains('☁') || iconCode.contains('Cloud')) {
       icon = isNight ? Icons.nightlight_round : Icons.cloud;
-      color = isNight ? Colors.purpleAccent : Colors.lightBlueAccent;
+      color = isNight
+          ? theme.colorScheme.tertiary
+          : theme.colorScheme.secondary;
     } else if (iconCode.contains('🌧') || iconCode.contains('Rain')) {
       icon = Icons.water_drop;
-      color = Colors.blue;
+      color = theme.colorScheme.primary;
     } else if (iconCode.contains('❄') || iconCode.contains('Snow')) {
       icon = Icons.ac_unit;
-      color = Colors.cyan;
+      color = theme.colorScheme.secondary;
     } else {
       // Default Sun/Moon
       icon = isNight ? Icons.nightlight_round : Icons.wb_sunny_rounded;
-      color = isNight ? Colors.amberAccent : Colors.orangeAccent;
+      color = isNight ? theme.colorScheme.secondary : theme.colorScheme.primary;
     }
 
     return Container(

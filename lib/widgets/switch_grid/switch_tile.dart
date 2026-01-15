@@ -12,6 +12,8 @@ import '../../providers/performance_provider.dart'; // Added
 import '../../core/ui/responsive_layout.dart';
 import 'dart:math' as math; // For Cyberpunk jitter
 import 'dart:ui'; // For blur effects
+import 'package:flutter_animate/flutter_animate.dart';
+import '../common/pixel_led_border.dart';
 
 class SwitchTile extends ConsumerStatefulWidget {
   final SwitchDevice device;
@@ -52,10 +54,9 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       duration: const Duration(milliseconds: 100),
     );
 
-    _pressAnimation = Tween<double>(
-      begin: 0,
-      end: 2.0,
-    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
+    _pressAnimation = Tween<double>(begin: 0, end: 2.0).animate(
+      CurvedAnimation(parent: _pressController, curve: Curves.elasticOut),
+    ); // Snappier tap
 
     _iconAnimController = AnimationController(
       vsync: this,
@@ -224,16 +225,19 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       scale: 1.0 - (_pressController.value * 0.05),
                       child: Container(
                         decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(
-                                0.8,
-                              ), // Deep projection
-                              blurRadius: 40,
-                              offset: const Offset(0, 20),
-                              spreadRadius: -15,
-                            ),
-                          ],
+                          // Only show deep shadow if NOT in performance mode
+                          boxShadow: performanceMode
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(
+                                      0.8,
+                                    ), // Deep projection
+                                    blurRadius: 40,
+                                    offset: const Offset(0, 20),
+                                    spreadRadius: -15,
+                                  ),
+                                ],
                         ),
                         child: _buildStyleDispatcher(
                           style,
@@ -516,12 +520,9 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     final isActive = widget.device.isActive;
     final isLight = theme.brightness == Brightness.light;
 
-    // Transparent if blending is enabled and switch is OFF
-    final offColor = blendingEnabled && !isActive
-        ? (isLight
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.3)) // Frosted Glass tint
-        : (isLight ? Colors.white.withOpacity(0.6) : const Color(0xFF1E1E1E));
+    // Colored Off State Logic: Use the unique color but very dark/transparent
+    // preventing the "Void Black" look
+    // final offColor ... logic replaced inline above for ShapeDecoration
 
     // If blending enabled and Active, add a bit of transparency/glass
     final effectiveColor = (blendingEnabled && isActive)
@@ -537,26 +538,35 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     Widget container = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
-      decoration: BoxDecoration(
-        color: isActive ? effectiveColor : offColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 2),
+      decoration: ShapeDecoration(
+        color: isActive
+            ? effectiveColor
+            : color.withOpacity(isLight ? 0.15 : 0.2), // Colored Off-State
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.circular(40),
+          side: BorderSide(color: borderColor, width: 2),
+        ),
         // Reduce shadow opacity if blending to let background shine
-        boxShadow: isActive
+        shadows: isActive
             ? [
                 BoxShadow(
-                  color: effectiveColor.withOpacity(0.4),
-                  blurRadius: 12,
-                  spreadRadius: 1,
+                  color: effectiveColor.withOpacity(0.5), // More vibrant glow
+                  blurRadius: 16, // Softer
+                  spreadRadius: 2,
+                ),
+                BoxShadow(
+                  color: effectiveColor.withOpacity(0.2),
+                  blurRadius: 30, // Deep glow
+                  spreadRadius: 5,
                 ),
               ]
             : (isLight || blendingEnabled
                   ? [
                       // Soft shadow for off state in light mode OR blending
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
                     ]
                   : []),
@@ -643,7 +653,11 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                   height: isActive ? 400 : 20,
                   decoration: BoxDecoration(
                     color: color.withOpacity(
-                      isActive ? (blendingEnabled ? 0.8 : 1.0) : 0.0,
+                      isActive
+                          ? (blendingEnabled
+                                ? 0.7
+                                : 1.0) // More transparent liquid if blending
+                          : 0.0,
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -1266,95 +1280,98 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
   ) {
     final isActive = widget.device.isActive;
 
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _rgbController,
-        builder: (context, child) {
-          final borderCol = isActive
-              ? Colors.transparent
-              : (blendingEnabled
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.transparent);
+    // Unified Theme Colors
+    final themeColors = [
+      theme.colorScheme.primary,
+      theme.colorScheme.secondary,
+      theme.colorScheme.tertiary,
+      theme.colorScheme.primary, // Wrap
+    ];
 
-          Widget container = Container(
-            padding: const EdgeInsets.all(3), // Border width
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: SweepGradient(
-                colors: [
-                  Colors.red,
-                  Colors.orange,
-                  Colors.yellow,
-                  Colors.green,
-                  Colors.blue,
-                  Colors.purple,
-                  Colors.red,
-                ],
-                transform: GradientRotation(_rgbController.value * 2 * math.pi),
-              ),
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: color.withOpacity(0.6),
-                        blurRadius: 15,
-                        spreadRadius: -2,
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: blendingEnabled
-                    ? Colors.black.withOpacity(0.4)
-                    : Colors.black,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isActive ? iconInfo.iconOn : iconInfo.iconOff,
-                      color: isActive
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.3),
-                      size: 34.r,
-                      shadows: isActive
-                          ? [
-                              BoxShadow(
-                                color: Colors.cyanAccent,
-                                blurRadius: 10.r,
-                              ),
-                              BoxShadow(
-                                color: Colors.purpleAccent,
-                                blurRadius: 10.r,
-                                offset: Offset(2.w, 2.h),
-                              ),
-                            ]
-                          : [],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      name,
-                      style: GoogleFonts.pressStart2p(
-                        color: Colors.white,
-                        fontSize: 8.sp,
-                      ),
-                    ),
+    return PixelLedBorder(
+      isStatic: false, // Living DASH feel
+      enableInfiniteRainbow: false, // THEME SYNCED
+      colors: themeColors,
+      borderRadius: 18,
+      strokeWidth: 1.5,
+      duration: const Duration(seconds: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(blendingEnabled ? 0.2 : 1.0),
+          borderRadius: BorderRadius.circular(18),
+          // Background Synced Tint
+          gradient: isActive
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.15),
+                    theme.colorScheme.secondary.withOpacity(0.05),
+                    Colors.black.withOpacity(0.1),
                   ],
+                )
+              : null,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Theme Blended Icon
+              ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: isActive
+                            ? [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.secondary,
+                              ]
+                            : [
+                                Colors.white.withOpacity(0.4),
+                                Colors.white.withOpacity(0.1),
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.srcIn,
+                    child: Icon(
+                      isActive ? iconInfo.iconOn : iconInfo.iconOff,
+                      color: Colors.white,
+                      size: 34.r,
+                    ),
+                  )
+                  .animate(target: isActive ? 1 : 0)
+                  .shimmer(
+                    duration: const Duration(seconds: 2),
+                    color: theme.colorScheme.primary.withOpacity(0.3),
+                  ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  name.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.pressStart2p(
+                    color: isActive
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.4),
+                    fontSize: 7.sp,
+                    shadows: isActive
+                        ? [
+                            Shadow(
+                              color: theme.colorScheme.primary.withOpacity(0.5),
+                              blurRadius: 8,
+                            ),
+                          ]
+                        : [],
+                  ),
                 ),
               ),
-            ),
-          );
-
-          if (blendingEnabled) {
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(children: [const SizedBox.shrink(), container]),
-            );
-          }
-          return container;
-        },
+            ],
+          ),
+        ),
       ),
     );
   }

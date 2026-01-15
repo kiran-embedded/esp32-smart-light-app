@@ -5,6 +5,8 @@ class LiveInfo {
   final String weatherDescription;
   final double acVoltage;
   final double current;
+  final bool isDeviceOnline;
+  final DateTime? deviceLastSeen;
 
   LiveInfo({
     required this.currentTime,
@@ -13,6 +15,8 @@ class LiveInfo {
     required this.weatherDescription,
     required this.acVoltage,
     required this.current,
+    this.isDeviceOnline = false,
+    this.deviceLastSeen,
   });
 
   LiveInfo copyWith({
@@ -22,6 +26,8 @@ class LiveInfo {
     String? weatherDescription,
     double? acVoltage,
     double? current,
+    bool? isDeviceOnline,
+    DateTime? deviceLastSeen,
   }) {
     return LiveInfo(
       currentTime: currentTime ?? this.currentTime,
@@ -30,7 +36,8 @@ class LiveInfo {
       weatherDescription: weatherDescription ?? this.weatherDescription,
       acVoltage: acVoltage ?? this.acVoltage,
       current: current ?? this.current,
+      isDeviceOnline: isDeviceOnline ?? this.isDeviceOnline,
+      deviceLastSeen: deviceLastSeen ?? this.deviceLastSeen,
     );
   }
 }
-

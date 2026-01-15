@@ -64,9 +64,9 @@ class AnimatedNavIcon extends ConsumerWidget {
                 return ShaderMask(
                   shaderCallback: (bounds) => LinearGradient(
                     colors: [
-                      Colors.cyanAccent,
-                      Colors.purpleAccent,
                       theme.colorScheme.primary,
+                      theme.colorScheme.secondary,
+                      theme.colorScheme.tertiary,
                     ],
                     transform: GradientRotation(value * 6.28),
                   ).createShader(bounds),
@@ -97,7 +97,7 @@ class AnimatedNavIcon extends ConsumerWidget {
               duration: 800.ms,
             )
             .tint(
-              color: const Color(0xFFFF0000),
+              color: theme.colorScheme.primary,
               duration: 800.ms,
               curve: Curves.easeInOut,
             ); // Pulse redder

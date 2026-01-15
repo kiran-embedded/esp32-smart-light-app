@@ -68,7 +68,10 @@ class AnimationSettingsNotifier extends StateNotifier<AnimationSettings> {
     UiTransitionAnimation initialUi = UiTransitionAnimation.zeroLatency,
   }) : super(AnimationSettings(launchType: initialLaunch, uiType: initialUi));
 
-  // Async load is no longer needed inside the notifier as we inject it
+  void seed(AnimationSettings settings) {
+    state = settings;
+  }
+
   // But we keep the setter methods which save to persistence.
 
   void setLaunchAnimation(AppLaunchAnimation type) {

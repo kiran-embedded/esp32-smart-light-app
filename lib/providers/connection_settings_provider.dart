@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/persistence_service.dart';
-
 import 'switch_provider.dart';
 
-enum ConnectionMode { local, cloud, hybrid }
+enum ConnectionMode { cloud, local, hybridAuto }
 
 class ConnectionSettings {
   final ConnectionMode mode;
@@ -42,11 +41,19 @@ class ConnectionSettingsNotifier extends StateNotifier<ConnectionSettings> {
     final isLowData = settings['isLowData'] as bool;
     final isPerformance = settings['isPerformance'] as bool;
 
-    state = ConnectionSettings(
-      mode: ConnectionMode.values.firstWhere(
+    // Handle legacy 'hotspot' string by mapping it to 'local'
+    var parsedMode = ConnectionMode.cloud;
+    if (modeStr == 'hotspot') {
+      parsedMode = ConnectionMode.local;
+    } else {
+      parsedMode = ConnectionMode.values.firstWhere(
         (m) => m.name == modeStr,
         orElse: () => ConnectionMode.cloud,
-      ),
+      );
+    }
+
+    state = ConnectionSettings(
+      mode: parsedMode,
       isLowDataMode: isLowData,
       isPerformanceMode: isPerformance,
     );

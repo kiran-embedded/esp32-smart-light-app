@@ -22,35 +22,39 @@ class SwitchTabBackground extends ConsumerWidget {
       return const ColoredBox(color: Colors.black);
     }
 
-    // Dynamic Color Extraction
-    Color primaryColor = Colors.cyanAccent;
-    Color secondaryColor = Colors.purpleAccent;
+    // Dynamic Theme-Synced Color Extraction
+    final theme = Theme.of(context);
+    Color primaryColor = theme.colorScheme.primary;
+    Color secondaryColor = theme.colorScheme.secondary;
 
     final activeSwitches = devices.where((s) => s.isActive).toList();
     if (activeSwitches.isNotEmpty) {
-      // Generate color hash from active switch ID for consistency
+      // Blend theme with active switch color for "Synced but Dynamic" feel
       final s = activeSwitches.first;
-      final hash = s.id.hashCode;
-      primaryColor = HSVColor.fromAHSV(
+      final switchColor = HSVColor.fromAHSV(
         1.0,
-        (hash.abs() % 360).toDouble(),
+        (s.id.hashCode.abs() % 360).toDouble(),
         1.0,
         1.0,
       ).toColor();
 
+      primaryColor = Color.alphaBlend(
+        switchColor.withOpacity(0.3),
+        primaryColor,
+      );
+
       if (activeSwitches.length > 1) {
         final s2 = activeSwitches[1];
-        final hash2 = s2.id.hashCode;
-        secondaryColor = HSVColor.fromAHSV(
+        final switchColor2 = HSVColor.fromAHSV(
           1.0,
-          (hash2.abs() % 360).toDouble(),
+          (s2.id.hashCode.abs() % 360).toDouble(),
           1.0,
           1.0,
         ).toColor();
-      } else {
-        secondaryColor = HSVColor.fromColor(
-          primaryColor,
-        ).withHue((HSVColor.fromColor(primaryColor).hue + 180) % 360).toColor();
+        secondaryColor = Color.alphaBlend(
+          switchColor2.withOpacity(0.3),
+          secondaryColor,
+        );
       }
     }
 
@@ -64,8 +68,8 @@ class SwitchTabBackground extends ConsumerWidget {
         Positioned.fill(
           child: Container(
             color: Colors.black.withOpacity(
-              0.3,
-            ), // Universal darken for contrast
+              0.15,
+            ), // Lighter overlay for better blending
           ),
         ),
         // Content Layer
@@ -425,8 +429,8 @@ class _NeonBorderPainter extends CustomPainter {
           20 // Thicker for softer glow
       ..maskFilter = const MaskFilter.blur(
         BlurStyle.normal,
-        4,
-      ); // Reduced from 10
+        4, // Reduced blur
+      );
 
     final colors = [
       primary.withOpacity(0.6), // Reduced opacity
@@ -444,10 +448,9 @@ class _NeonBorderPainter extends CustomPainter {
 
     canvas.drawRect(rect.deflate(10), paint);
 
-    // Inner glow
+    // Inner glow - Optimized: Removed heavy blur in favor of opacity layering
     paint.strokeWidth = 4;
-    paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    // paint.maskFilter = null; // Removed sharp inner line
+    paint.maskFilter = null; // Removed inner blur for performance
     canvas.drawRect(rect.deflate(10), paint);
   }
 
@@ -597,11 +600,12 @@ class _LiquidPlasmaPainter extends CustomPainter {
     final paint = Paint()
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
     final t = animation.value * 2 * pi;
-    for (int i = 0; i < 8; i++) {
-      // Reduced from 20
+    // Optimized: Use drawPoints for plasma balls if possible, but circles are okay if count is low
+    // Reducing count from 8 to 5 for speed
+    for (int i = 0; i < 5; i++) {
       final x = size.width / 2 + sin(t * (i + 1) * 0.1) * size.width * 0.4;
       final y = size.height / 2 + cos(t * (i + 1) * 0.13) * size.height * 0.4;
-      paint.color = Color.lerp(primary, secondary, i / 8)!.withOpacity(0.5);
+      paint.color = Color.lerp(primary, secondary, i / 5)!.withOpacity(0.5);
       canvas.drawCircle(Offset(x, y), 60 + sin(t) * 20, paint);
     }
   }

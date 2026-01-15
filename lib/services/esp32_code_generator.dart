@@ -163,12 +163,13 @@ class Esp32CodeGenerator {
     // Use user's preferred robust firmware template + WebServer additions
     buffer.write('''
 /*
- * NEBULA CORE – HYBRID SYSTEM (PRO LED + DIRECT HTTP)
+ * NEBULA CORE – HYBRID SYSTEM (PRO LED + DIRECT HTTP + HOTSPOT)
  * ---------------------------------------------------
  * GREEN: Server Heartbeat (Brief blip every 2s) -> System OK
  * RED:   Double-Flash Alert -> Error/No Internet
  * BLUE:  Instant Flash -> Switch Activity
- * WHITE/CYAN: Web Server Request
+ * WHITE: Web Server Request
+ * YELLOW: Access Point (Hotspot) Mode Active
  */
 
 #include <WiFi.h>
@@ -184,6 +185,10 @@ class Esp32CodeGenerator {
 /* ================= CONFIGURATION ================= */
 #define WIFI_SSID "$wifiSsid"
 #define WIFI_PASS "$wifiPassword"
+
+// Emergency Hotspot Config
+#define AP_SSID    "Nebula-Core-ESP32"
+#define AP_PASS    "nebula123"
 
 // OTA Credentials
 #define OTA_HOSTNAME "Nebula-Core-ESP32"
@@ -239,6 +244,7 @@ String deviceId;
 bool relayState[$totalRelays] = {${List.filled(totalRelays, '0').join(', ')}};
 bool updateRelays = false;    // Trigger hardware update
 bool forceTelemetry = false;  // Trigger immediate upload
+bool isAPMode = false;        // Track if AP mode is active
 
 volatile float sharedVoltage = 0.0;
 
@@ -251,6 +257,7 @@ enum SystemState {
   STATE_IDLE,
   STATE_WIFI_CONNECTING,
   STATE_WIFI_CONNECTED,
+  STATE_AP_MODE,
   STATE_FIREBASE_CONNECTING,
   STATE_FIREBASE_CONNECTED,
   STATE_FIREBASE_DISCONNECTED,
@@ -278,8 +285,9 @@ void triggerActivityLED() {
   if (isOTAActive) return; 
   isFlashing = true;
   flashStartTime = millis();
-  // INSTANT BLUE FLASH
-  setRGB(LOW, LOW, HIGH); 
+  // INSTANT WHITE FLASH for LOCAL / BLUE for CLOUD
+  if (isAPMode) setRGB(HIGH, HIGH, HIGH);
+  else setRGB(LOW, LOW, HIGH); 
 }
 
 // Logic: Determine current system status
@@ -289,6 +297,11 @@ void updateSystemState() {
     return;
   }
   
+  if (WiFi.getMode() & WIFI_AP) {
+    currentLedState = STATE_AP_MODE;
+    return;
+  }
+
   if (WiFi.status() != WL_CONNECTED) {
     currentLedState = STATE_WIFI_CONNECTING;
   }
@@ -315,12 +328,13 @@ void loopLED() {
     return;
   }
 
-  // 2. Activity Flash Override -> SOLID BLUE
+  // 2. Activity Flash Override -> SOLID BLUE/WHITE
   if (isFlashing) {
     if (currentMillis - flashStartTime >= FLASH_DUR) {
       isFlashing = false; 
     } else {
-      setRGB(LOW, LOW, HIGH); 
+      if (isAPMode) setRGB(HIGH, HIGH, HIGH);
+      else setRGB(LOW, LOW, HIGH); 
       return; 
     }
   }
@@ -332,6 +346,14 @@ void loopLED() {
         lastBlinkTime = currentMillis;
         blinkState = !blinkState;
         setRGB(LOW, LOW, blinkState ? HIGH : LOW);
+      }
+      break;
+
+    case STATE_AP_MODE: // YELLOW (Red+Green) Heartbeat
+      if ((currentMillis % 2000) < 100) {
+        setRGB(HIGH, HIGH, LOW); 
+      } else {
+        setRGB(LOW, LOW, LOW);  
       }
       break;
 
@@ -384,12 +406,29 @@ void handleRoot() {
   server.send(200, "text/plain", "NEBULA CORE CONTROLLER ONLINE");
 }
 
+void handleStatus() {
+  StaticJsonDocument<512> doc;
+  doc["deviceId"] = deviceId;
+  doc["voltage"] = sharedVoltage;
+  doc["uptime"] = millis() / 1000;
+  doc["mode"] = isAPMode ? "hotspot" : "cloud";
+  
+  JsonArray relays = doc.createNestedArray("relays");
+  for (int i = 0; i < $totalRelays; i++) {
+    relays.add(relayState[i]);
+  }
+  
+  String response;
+  serializeJson(doc, response);
+  server.send(200, "application/json", response);
+}
+
 void handleSet() {
   if (server.hasArg("relay") && server.hasArg("state")) {
     int r = server.arg("relay").toInt();
     int s = server.arg("state").toInt();
     
-    if (r >= 1 && r <= 4) {
+    if (r >= 1 && r <= $totalRelays) {
       relayState[r-1] = (s == 1); // 1 = ON
       updateRelays = true;
       
@@ -517,30 +556,51 @@ void setup() {
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
 
-  // --- WIFI CONFIG (AUTO-HEAL) ---
-  WiFi.mode(WIFI_STA);
+  // --- WIFI CONFIG (HYBRID) ---
+  WiFi.mode(WIFI_AP_STA); // Multimode: Connect to router + Stay available as AP
   WiFi.setSleep(false); 
   WiFi.setAutoReconnect(true); 
   WiFi.persistent(true);       
+  
+  // Start AP first for immediate availability
+  WiFi.softAP(AP_SSID, AP_PASS);
+  Serial.println("Hotspot Started: " AP_SSID);
+  Serial.print("AP IP Address: ");
+  Serial.println(WiFi.softAPIP());
+
+  // Connect to STA
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   
-  Serial.print("Connecting");
-  while (WiFi.status() != WL_CONNECTED) {
+  Serial.print("Connecting to WiFi");
+  unsigned long startAttempt = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 10000) {
     loopLED(); 
     delay(100); 
     Serial.print(".");
   }
-  Serial.println("\\n✅ WiFi Connected");
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\\n✅ WiFi Connected");
+    Serial.print("Local IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\\n⚠️ WiFi Timeout - Using AP Mode only");
+    isAPMode = true;
+  }
 
   deviceId = String((uint32_t)ESP.getEfuseMac(), HEX);
 
+  // --- mDNS (nebula.local) ---
+  if (MDNS.begin("nebula")) {
+    Serial.println("mDNS responder started (nebula.local)");
+  }
+
   // --- HTTP SERVER ---
   server.on("/", handleRoot);
+  server.on("/status", handleStatus);
   server.on("/set", handleSet);
   server.begin();
   Serial.println("HTTP Server Started");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
 
   // --- OTA SETUP ---
   ArduinoOTA.setHostname(OTA_HOSTNAME);
@@ -589,7 +649,7 @@ void loop() {
     lastCheck = millis();
 
     // 1. Efficient WiFi Reconnection
-    if (WiFi.status() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED && !isAPMode) {
       Serial.println("⚠️ WiFi Lost. Initiating fresh connection...");
       WiFi.disconnect();
       WiFi.begin(WIFI_SSID, WIFI_PASS); 

@@ -61,7 +61,33 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
                       double.tryParse(data['current_amp'].toString()) ?? 0.0;
                 }
 
-                state = state.copyWith(acVoltage: voltage, current: current);
+                // Parse device status
+                bool isOnline = state.isDeviceOnline;
+                if (data.containsKey('online')) {
+                  isOnline = data['online'] == true;
+                }
+
+                DateTime? lastSeen = state.deviceLastSeen;
+                if (data.containsKey('lastSeen')) {
+                  final rawTs = data['lastSeen'];
+                  int? ts;
+                  if (rawTs is int) {
+                    ts = rawTs;
+                  } else {
+                    ts = int.tryParse(rawTs.toString());
+                  }
+
+                  if (ts != null) {
+                    lastSeen = DateTime.fromMillisecondsSinceEpoch(ts);
+                  }
+                }
+
+                state = state.copyWith(
+                  acVoltage: voltage,
+                  current: current,
+                  isDeviceOnline: isOnline,
+                  deviceLastSeen: lastSeen,
+                );
               }
             },
             onError: (error) {
@@ -75,7 +101,18 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      state = state.copyWith(currentTime: DateTime.now());
+      final now = DateTime.now();
+      bool isOnline = state.isDeviceOnline;
+
+      // Heartbeat check: If lastSeen is older than 2 minutes, mark as offline
+      if (state.deviceLastSeen != null) {
+        final diff = now.difference(state.deviceLastSeen!);
+        if (diff.inMinutes >= 2) {
+          isOnline = false;
+        }
+      }
+
+      state = state.copyWith(currentTime: now, isDeviceOnline: isOnline);
     });
   }
 

@@ -113,12 +113,17 @@ class TimeDateWidget extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: (isNight ? Colors.purple : Colors.orange).withOpacity(0.2),
+        color:
+            (isNight ? theme.colorScheme.tertiary : theme.colorScheme.primary)
+                .withOpacity(0.2),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: (isNight ? Colors.purpleAccent : Colors.orangeAccent)
-                .withOpacity(0.4),
+            color:
+                (isNight
+                        ? theme.colorScheme.tertiary
+                        : theme.colorScheme.primary)
+                    .withOpacity(0.4),
             blurRadius: 15,
           ),
         ],
@@ -126,7 +131,9 @@ class TimeDateWidget extends StatelessWidget {
       child:
           Icon(
                 isNight ? Icons.nights_stay_rounded : Icons.wb_sunny_rounded,
-                color: isNight ? Colors.purpleAccent : Colors.orangeAccent,
+                color: isNight
+                    ? theme.colorScheme.tertiary
+                    : theme.colorScheme.primary,
                 size: 18,
               )
               .animate(onPlay: (c) => c.repeat(reverse: true))

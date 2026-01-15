@@ -123,14 +123,15 @@ class _StatusCardState extends ConsumerState<StatusCard> {
             ),
             child: PixelLedBorder(
               borderRadius: _isExpanded ? 40 : 36,
-              strokeWidth: 2.0,
+              strokeWidth: 1.5, // Thinner border
               duration: const Duration(seconds: 4),
-              colors: const [
-                Color(0xFF00E5FF), // Cyan
-                Color(0xFF2979FF), // Blue
-                Color(0xFFD500F9), // Purple
-                Color(0xFF00E5FF), // Wrap
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.secondary,
+                theme.colorScheme.tertiary,
+                theme.colorScheme.primary, // Wrap
               ],
+              enableInfiniteRainbow: false,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
                 child: Container(
@@ -240,31 +241,49 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                 ],
               ),
               const SizedBox(height: 4),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    widget.voltage.toStringAsFixed(1),
-                    style: GoogleFonts.outfit(
-                      fontSize: 28.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.srcIn,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          widget.voltage.toStringAsFixed(1),
+                          style: GoogleFonts.outfit(
+                            fontSize: 28.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6.0),
+                          child: Text(
+                            'V',
+                            style: GoogleFonts.outfit(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                  )
+                  .animate(onPlay: (c) => c.repeat())
+                  .shimmer(
+                    duration: 3.seconds,
+                    color: theme.colorScheme.primary.withOpacity(0.3),
                   ),
-                  const SizedBox(width: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
-                    child: Text(
-                      'V',
-                      style: GoogleFonts.outfit(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: voltageColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
 
@@ -394,15 +413,33 @@ class _StatusCardState extends ConsumerState<StatusCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: GoogleFonts.outfit(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0.w,
-                  color: Colors.white,
-                ),
-              ),
+              ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.srcIn,
+                    child: Text(
+                      label,
+                      style: GoogleFonts.outfit(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0.w,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                  .animate(onPlay: (c) => c.repeat())
+                  .shimmer(
+                    duration: 3.seconds,
+                    color: theme.colorScheme.primary.withOpacity(0.3),
+                  ),
               Text(
                 subLabel,
                 style: GoogleFonts.outfit(

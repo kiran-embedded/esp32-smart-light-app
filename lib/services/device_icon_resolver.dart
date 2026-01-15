@@ -20,31 +20,44 @@ class DeviceIconInfo {
 }
 
 class DeviceIconResolver {
+  // Cache results to avoid re-looping every frame
+  static final Map<String, DeviceIconInfo> _cache = {};
+
   static DeviceIconInfo resolve(String name, [String? category]) {
+    // 0. Check Cache
+    final String cacheKey = "$name|$category";
+    if (_cache.containsKey(cacheKey)) return _cache[cacheKey]!;
+
     // Standardize input
     final lower = name.toLowerCase().trim();
 
     // 1. Exact Category Override
     if (category != null) {
       final info = _categoryMap[category.toLowerCase()];
-      if (info != null) return info;
+      if (info != null) {
+        _cache[cacheKey] = info;
+        return info;
+      }
     }
 
     // 2. Comprehensive Keyword Matching
     for (final entry in _keywordMap.entries) {
       for (final keyword in entry.key) {
         if (lower.contains(keyword)) {
+          _cache[cacheKey] = entry.value;
           return entry.value;
         }
       }
     }
 
     // Default Appliance
-    return const DeviceIconInfo(
+    const defaultInfo = DeviceIconInfo(
       iconOff: Icons.power_settings_new_outlined,
       iconOn: Icons.power_settings_new,
       animation: DeviceIconAnimation.none,
     );
+    _cache[cacheKey] = defaultInfo;
+    return defaultInfo;
   }
 
   // Massive Keyword Map for "10k" appliance support feel

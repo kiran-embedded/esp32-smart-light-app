@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../providers/theme_provider.dart';
 import '../../providers/voice_provider.dart';
@@ -23,6 +24,7 @@ import '../../providers/update_provider.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
+import '../../providers/display_settings_provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
@@ -68,320 +70,406 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       children: [
         RepaintBoundary(
           child: ListView(
+            key: const PageStorageKey('settings_list_v2'),
             padding: EdgeInsets.only(
               bottom: 120,
               top: MediaQuery.of(context).padding.top + 20,
             ),
             physics: const BouncingScrollPhysics(),
-            children: [
-              // --- UPDATES ---
-              const _IosSectionHeader(title: 'Updates'),
-              _buildUpdateTile(context, ref),
+            children:
+                [
+                      // --- UPDATES ---
+                      const _IosSectionHeader(title: 'Updates'),
+                      _buildUpdateTile(context, ref),
 
-              // --- 1. CORE SYSTEM ---
-              const _IosSectionHeader(title: 'Core System'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Fullscreen Mode',
-                    subtitle: 'Hide status and navigation bars',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(immersiveModeProvider),
-                      onChanged: (value) async {
-                        ref
-                            .read(immersiveModeProvider.notifier)
-                            .setImmersiveMode(value);
-                      },
-                    ),
-                  ),
-                  _buildAnimationSettings(context, ref),
-                ],
-              ),
-
-              // --- 2. CONNECTIVITY ---
-              const _IosSectionHeader(title: 'Connectivity'),
-              _IosGroupedContainer(
-                children: [_buildConnectionSettings(context, ref)],
-              ),
-
-              // --- 3. SENSORY & FEEDBACK ---
-              const _IosSectionHeader(title: 'Sensory & Feedback'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Voice Feedback',
-                    subtitle: 'Enable AI voice responses',
-                    trailing: CupertinoSwitch(
-                      value: voiceEnabled,
-                      onChanged: (value) async {
-                        ref
-                            .read(voiceEnabledProvider.notifier)
-                            .setVoiceEnabled(value);
-                      },
-                    ),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Master Sound',
-                    subtitle: 'Enable all app sounds',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(soundSettingsProvider).masterSound,
-                      onChanged: (val) => ref
-                          .read(soundSettingsProvider.notifier)
-                          .setMasterSound(val),
-                    ),
-                  ),
-                  if (ref.watch(soundSettingsProvider).masterSound) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      // --- 1. CORE SYSTEM ---
+                      const _IosSectionHeader(title: 'Core System'),
+                      _IosGroupedContainer(
                         children: [
-                          Text(
-                            'Master Volume: ${(ref.watch(soundSettingsProvider).masterVolume * 100).toInt()}%',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 13,
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Fullscreen Mode',
+                            subtitle: 'Hide status and navigation bars',
+                            trailing: CupertinoSwitch(
+                              value: ref.watch(immersiveModeProvider),
+                              onChanged: (value) async {
+                                ref
+                                    .read(immersiveModeProvider.notifier)
+                                    .setImmersiveMode(value);
+                              },
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Slider(
-                            value: ref
-                                .watch(soundSettingsProvider)
-                                .masterVolume,
-                            activeColor: theme.colorScheme.primary,
-                            inactiveColor: Colors.white.withOpacity(0.1),
-                            onChanged: (val) => ref
-                                .read(soundSettingsProvider.notifier)
-                                .setMasterVolume(val),
+                          _buildAnimationSettings(context, ref),
+                        ],
+                      ),
+
+                      // --- 2. CONNECTIVITY ---
+                      const _IosSectionHeader(title: 'Connectivity'),
+                      _IosGroupedContainer(
+                        children: [_buildConnectionSettings(context, ref)],
+                      ),
+
+                      // --- 2.5. OFFLINE CONTROL ---
+                      const _IosSectionHeader(title: 'Offline Control'),
+                      _IosGroupedContainer(
+                        children: [
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Smart Hybrid Auto',
+                            subtitle: 'Auto-switch WiFi/Cloud',
+                            trailing: CupertinoSwitch(
+                              value:
+                                  ref.watch(connectionSettingsProvider).mode ==
+                                  ConnectionMode.hybridAuto,
+                              activeColor: Colors.cyanAccent,
+                              onChanged: (val) {
+                                ref
+                                    .read(connectionSettingsProvider.notifier)
+                                    .setMode(
+                                      val
+                                          ? ConnectionMode.hybridAuto
+                                          : ConnectionMode.cloud,
+                                    );
+                              },
+                            ),
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Local Only Mode',
+                            subtitle: 'Control via LAN/mDNS',
+                            trailing: CupertinoSwitch(
+                              value:
+                                  ref.watch(connectionSettingsProvider).mode ==
+                                  ConnectionMode.local,
+                              activeColor: Colors.yellowAccent,
+                              onChanged: (val) {
+                                ref
+                                    .read(connectionSettingsProvider.notifier)
+                                    .setMode(
+                                      val
+                                          ? ConnectionMode.local
+                                          : ConnectionMode.cloud,
+                                    );
+                              },
+                            ),
+                            isLast: true,
                           ),
                         ],
                       ),
-                    ),
-                    _buildIosSettingTile(
-                      context,
-                      title: 'Switch Sounds',
-                      subtitle: 'Click sound when toggling',
-                      trailing: CupertinoSwitch(
-                        value: ref.watch(soundSettingsProvider).switchSound,
-                        onChanged: (val) => ref
-                            .read(soundSettingsProvider.notifier)
-                            .setSwitchSound(val),
-                      ),
-                    ),
-                  ],
-                  if (voiceEnabled) ...[
-                    _buildIosSettingTile(
-                      context,
-                      title: 'Voice Engine',
-                      subtitle: ref.watch(voiceEngineProvider) ?? 'Default',
-                      trailing: Icon(
-                        Icons.record_voice_over,
-                        color: Colors.white.withOpacity(0.3),
-                      ),
-                      onTap: () async {
-                        final service = ref.read(voiceServiceProvider);
-                        await service.testSpeak();
-                      },
-                    ),
-                  ],
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Haptic Feedback',
-                    subtitle: _getHapticName(ref.watch(hapticStyleProvider)),
-                    trailing: Icon(
-                      Icons.vibration,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    onTap: () => _showHapticPicker(context, ref),
-                    isLast: true,
-                  ),
-                ],
-              ),
 
-              // --- 3.5. PERFORMANCE ---
-              const _IosSectionHeader(title: 'Performance'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Performance Mode',
-                    subtitle: ref.watch(performanceProvider)
-                        ? 'Optimized (Fast, No Blur)'
-                        : 'High Quality (Blur, Animations)',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(performanceProvider),
-                      activeColor: Colors.amberAccent,
-                      onChanged: (val) {
-                        ref.read(performanceProvider.notifier).toggle(val);
-                      },
-                    ),
-                    isLast: true,
-                  ),
-                ],
-              ),
-
-              // --- 4. APPEARANCE & STYLE ---
-              const _IosSectionHeader(title: 'Appearance'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Theme',
-                    subtitle: _getThemeName(currentTheme),
-                    onTap: () => _showThemePicker(context, ref, currentTheme),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Switch Style',
-                    subtitle: _getSwitchStyleName(
-                      ref.watch(switchStyleProvider),
-                    ),
-                    onTap: () => _showSwitchStylePicker(context, ref),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Tab Background',
-                    subtitle: _getSwitchBackgroundName(
-                      ref.watch(switchBackgroundProvider),
-                    ),
-                    onTap: () => _showBackgroundPicker(context, ref),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Glass Blur Effects',
-                    subtitle: 'Frosted glass visuals (GPU heavy)',
-                    trailing: CupertinoSwitch(
-                      value: ref
-                          .watch(switchSettingsProvider)
-                          .blurEffectsEnabled,
-                      onChanged: (val) => ref
-                          .read(switchSettingsProvider.notifier)
-                          .setBlurEffects(val),
-                    ),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Dynamic Blending',
-                    subtitle: ref.watch(performanceProvider)
-                        ? 'Disabled by Performance Mode'
-                        : 'Glass transparency effect',
-                    trailing: CupertinoSwitch(
-                      value: ref.watch(switchSettingsProvider).dynamicBlending,
-                      onChanged: ref.watch(performanceProvider)
-                          ? null
-                          : (val) => ref
-                                .read(switchSettingsProvider.notifier)
-                                .setDynamicBlending(val),
-                    ),
-                    isLast: true,
-                  ),
-                ],
-              ),
-
-              // --- 5. ADVANCED TOOLS ---
-              GestureDetector(
-                onDoubleTap: () {
-                  debugPrint("NEBULA_DEV: Secret Trigger Activated");
-                  HapticService.selection();
-                  ref
-                      .read(performanceStatsProvider.notifier)
-                      .toggleConsole(true);
-                },
-                child: const _IosSectionHeader(title: 'Advanced Tools'),
-              ),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'ESP32 Firmware',
-                    subtitle: 'Generate C++ controller code',
-                    onTap: () => _showEsp32FirmwareDialog(context, ref),
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Unlink Google',
-                    subtitle: 'Disconnect from Cloud services',
-                    onTap: () {},
-                    isLast: true,
-                  ),
-                ],
-              ),
-
-              // --- 6. SUPPORT & IDENTITY ---
-              const _IosSectionHeader(title: 'Support & Identity'),
-              _IosGroupedContainer(
-                children: [
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Help Center',
-                    subtitle: 'FAQ and troubleshooting',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HelpSupportScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Source Code',
-                    subtitle: 'github.com/kiran-embedded',
-                    onTap: () {
-                      launchUrl(
-                        Uri.parse(
-                          'https://github.com/kiran-embedded/esp32-smart-light-app',
-                        ),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-                  ),
-                  _buildIosSettingTile(
-                    context,
-                    title: 'Logout',
-                    subtitle: 'Sign out from Nebula',
-                    onTap: () async {
-                      await ref.read(authProvider.notifier).signOut();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
+                      // --- 3. SENSORY & FEEDBACK ---
+                      const _IosSectionHeader(title: 'Sensory & Feedback'),
+                      _IosGroupedContainer(
+                        children: [
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Voice Feedback',
+                            subtitle: 'Enable AI voice responses',
+                            trailing: CupertinoSwitch(
+                              value: voiceEnabled,
+                              onChanged: (value) async {
+                                ref
+                                    .read(voiceEnabledProvider.notifier)
+                                    .setVoiceEnabled(value);
+                              },
+                            ),
                           ),
-                          (route) => false,
-                        );
-                      }
-                    },
-                    isLast: true,
-                  ),
-                ],
-              ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Master Sound',
+                            subtitle: 'Enable all app sounds',
+                            trailing: CupertinoSwitch(
+                              value: ref
+                                  .watch(soundSettingsProvider)
+                                  .masterSound,
+                              onChanged: (val) => ref
+                                  .read(soundSettingsProvider.notifier)
+                                  .setMasterSound(val),
+                            ),
+                          ),
+                          if (ref.watch(soundSettingsProvider).masterSound) ...[
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                10,
+                                20,
+                                10,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Master Volume: ${(ref.watch(soundSettingsProvider).masterVolume * 100).toInt()}%',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Slider(
+                                    value: ref
+                                        .watch(soundSettingsProvider)
+                                        .masterVolume,
+                                    activeColor: theme.colorScheme.primary,
+                                    inactiveColor: Colors.white.withOpacity(
+                                      0.1,
+                                    ),
+                                    onChanged: (val) => ref
+                                        .read(soundSettingsProvider.notifier)
+                                        .setMasterVolume(val),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _buildIosSettingTile(
+                              context,
+                              title: 'Switch Sounds',
+                              subtitle: 'Click sound when toggling',
+                              trailing: CupertinoSwitch(
+                                value: ref
+                                    .watch(soundSettingsProvider)
+                                    .switchSound,
+                                onChanged: (val) => ref
+                                    .read(soundSettingsProvider.notifier)
+                                    .setSwitchSound(val),
+                              ),
+                            ),
+                          ],
+                          if (voiceEnabled) ...[
+                            _buildIosSettingTile(
+                              context,
+                              title: 'Voice Engine',
+                              subtitle:
+                                  ref.watch(voiceEngineProvider) ?? 'Default',
+                              trailing: Icon(
+                                Icons.record_voice_over,
+                                color: Colors.white.withOpacity(0.3),
+                              ),
+                              onTap: () async {
+                                final service = ref.read(voiceServiceProvider);
+                                await service.testSpeak();
+                              },
+                            ),
+                          ],
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Haptic Feedback',
+                            subtitle: _getHapticName(
+                              ref.watch(hapticStyleProvider),
+                            ),
+                            trailing: Icon(
+                              Icons.vibration,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                            onTap: () => _showHapticPicker(context, ref),
+                            isLast: true,
+                          ),
+                        ],
+                      ),
 
-              const SizedBox(height: 40),
-              Center(
-                child: Text(
-                  "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+15'}",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.2),
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: Text(
-                  "2026 Kiran Embedded Github",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.1),
-                    fontSize: 10.sp,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 120),
-            ],
+                      // --- 3.5. PERFORMANCE ---
+                      const _IosSectionHeader(title: 'Performance'),
+                      _IosGroupedContainer(
+                        children: [
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Performance Mode',
+                            subtitle: ref.watch(performanceProvider)
+                                ? 'Optimized (Fast, No Blur)'
+                                : 'High Quality (Blur, Animations)',
+                            trailing: CupertinoSwitch(
+                              value: ref.watch(performanceProvider),
+                              activeColor: Colors.amberAccent,
+                              onChanged: (val) {
+                                ref
+                                    .read(performanceProvider.notifier)
+                                    .toggle(val);
+                              },
+                            ),
+                            isLast: true,
+                          ),
+                        ],
+                      ),
+
+                      // --- 4. DISPLAY & APPEARANCE ---
+                      const _IosSectionHeader(title: 'Display & Appearance'),
+                      _IosGroupedContainer(
+                        children: [
+                          _buildDisplaySizeSettings(context, ref),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Divider(
+                              height: 1,
+                              thickness: 0.5,
+                              color: Colors.white.withOpacity(0.05),
+                            ),
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Theme',
+                            subtitle: _getThemeName(currentTheme),
+                            onTap: () =>
+                                _showThemePicker(context, ref, currentTheme),
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Switch Style',
+                            subtitle: _getSwitchStyleName(
+                              ref.watch(switchStyleProvider),
+                            ),
+                            onTap: () => _showSwitchStylePicker(context, ref),
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Tab Background',
+                            subtitle: _getSwitchBackgroundName(
+                              ref.watch(switchBackgroundProvider),
+                            ),
+                            onTap: () => _showBackgroundPicker(context, ref),
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Glass Blur Effects',
+                            subtitle: 'Frosted glass visuals (GPU heavy)',
+                            trailing: CupertinoSwitch(
+                              value: ref
+                                  .watch(switchSettingsProvider)
+                                  .blurEffectsEnabled,
+                              onChanged: (val) => ref
+                                  .read(switchSettingsProvider.notifier)
+                                  .setBlurEffects(val),
+                            ),
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Dynamic Blending',
+                            subtitle: ref.watch(performanceProvider)
+                                ? 'Disabled by Performance Mode'
+                                : 'Glass transparency effect',
+                            trailing: CupertinoSwitch(
+                              value: ref
+                                  .watch(switchSettingsProvider)
+                                  .dynamicBlending,
+                              onChanged: ref.watch(performanceProvider)
+                                  ? null
+                                  : (val) => ref
+                                        .read(switchSettingsProvider.notifier)
+                                        .setDynamicBlending(val),
+                            ),
+                            isLast: true,
+                          ),
+                        ],
+                      ),
+
+                      // --- 5. ADVANCED TOOLS ---
+                      GestureDetector(
+                        onDoubleTap: () {
+                          debugPrint("NEBULA_DEV: Secret Trigger Activated");
+                          HapticService.selection();
+                          ref
+                              .read(performanceStatsProvider.notifier)
+                              .toggleConsole(true);
+                        },
+                        child: const _IosSectionHeader(title: 'Advanced Tools'),
+                      ),
+                      _IosGroupedContainer(
+                        children: [
+                          _buildIosSettingTile(
+                            context,
+                            title: 'ESP32 Firmware',
+                            subtitle: 'Generate C++ controller code',
+                            onTap: () => _showEsp32FirmwareDialog(context, ref),
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Unlink Google',
+                            subtitle: 'Disconnect from Cloud services',
+                            onTap: () {},
+                            isLast: true,
+                          ),
+                        ],
+                      ),
+
+                      // --- 6. SUPPORT & IDENTITY ---
+                      const _IosSectionHeader(title: 'Support & Identity'),
+                      _IosGroupedContainer(
+                        children: [
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Help Center',
+                            subtitle: 'FAQ and troubleshooting',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const HelpSupportScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Source Code',
+                            subtitle: 'github.com/kiran-embedded',
+                            onTap: () {
+                              launchUrl(
+                                Uri.parse(
+                                  'https://github.com/kiran-embedded/esp32-smart-light-app',
+                                ),
+                                mode: LaunchMode.externalApplication,
+                              );
+                            },
+                          ),
+                          _buildIosSettingTile(
+                            context,
+                            title: 'Logout',
+                            subtitle: 'Sign out from Nebula',
+                            onTap: () async {
+                              await ref.read(authProvider.notifier).signOut();
+                              if (context.mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              }
+                            },
+                            isLast: true,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 40),
+                      Center(
+                        child: Text(
+                          "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+22'}",
+                          style: GoogleFonts.outfit(
+                            color: Colors.white.withOpacity(0.2),
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: Text(
+                          "2026 Kiran Embedded Github",
+                          style: GoogleFonts.outfit(
+                            color: Colors.white.withOpacity(0.1),
+                            fontSize: 10.sp,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 120),
+                    ]
+                    .animate(interval: 50.ms) // STAGGERED ENTRANCE
+                    .slideX(
+                      begin: 0.1,
+                      curve: Curves.easeOutQuart,
+                      duration: 500.ms,
+                    ) // Slide form right
+                    .fade(duration: 400.ms),
           ),
         ),
 
@@ -621,7 +709,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 shrinkWrap: true,
                 itemCount: SwitchStyleType.values.length,
                 itemBuilder: (context, index) {
+                  final currentStyle = ref.watch(switchStyleProvider);
                   final style = SwitchStyleType.values[index];
+                  final isSelected = style == currentStyle;
                   return ListTile(
                     onTap: () {
                       ref.read(switchStyleProvider.notifier).setStyle(style);
@@ -631,7 +721,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       _getSwitchStyleName(style),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.8),
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.white.withOpacity(0.8),
+                        fontWeight: isSelected ? FontWeight.bold : null,
                       ),
                     ),
                   );
@@ -670,7 +763,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 shrinkWrap: true,
                 itemCount: SwitchBackgroundType.values.length,
                 itemBuilder: (context, index) {
+                  final currentBg = ref.watch(switchBackgroundProvider);
                   final style = SwitchBackgroundType.values[index];
+                  final isSelected = style == currentBg;
                   return ListTile(
                     onTap: () {
                       ref
@@ -682,7 +777,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       _getSwitchBackgroundName(style),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.8),
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.white.withOpacity(0.8),
+                        fontWeight: isSelected ? FontWeight.bold : null,
                       ),
                     ),
                   );
@@ -993,6 +1091,184 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             },
           ),
           isLast: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDisplaySizeSettings(BuildContext context, WidgetRef ref) {
+    final displaySettings = ref.watch(displaySettingsProvider);
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Display Size',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                    Text(
+                      'Adjust pill & UI scaling',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: CupertinoSlidingSegmentedControl<double>(
+            backgroundColor: Colors.white.withOpacity(0.1),
+            thumbColor: theme.colorScheme.primary,
+            groupValue: displaySettings.pillScale,
+            children: {
+              0.8: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  'Small',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: displaySettings.pillScale == 0.8
+                        ? Colors.white
+                        : Colors.white70,
+                  ),
+                ),
+              ),
+              1.0: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  'Normal',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: displaySettings.pillScale == 1.0
+                        ? Colors.white
+                        : Colors.white70,
+                  ),
+                ),
+              ),
+              1.2: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  'Large',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: displaySettings.pillScale == 1.2
+                        ? Colors.white
+                        : Colors.white70,
+                  ),
+                ),
+              ),
+            },
+            onValueChanged: (value) {
+              if (value != null) {
+                ref.read(displaySettingsProvider.notifier).setPillScale(value);
+                HapticService.selection();
+              }
+            },
+          ),
+        ),
+
+        // Font Size Slider (Volume Panel Like)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Font Size',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  Text(
+                    '${(displaySettings.fontSize * 100).toInt()}%',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Icon(
+                        Icons.text_fields_rounded,
+                        size: 14,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 8,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 16,
+                          ),
+                          trackHeight: 4,
+                          activeTrackColor: theme.colorScheme.primary,
+                          inactiveTrackColor: Colors.white.withOpacity(0.1),
+                          thumbColor: Colors.white,
+                        ),
+                        child: Slider(
+                          value: displaySettings.fontSize,
+                          min: 0.8,
+                          max: 1.4,
+                          divisions: 6,
+                          onChanged: (val) {
+                            ref
+                                .read(displaySettingsProvider.notifier)
+                                .setFontSize(val);
+                          },
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Icon(
+                        Icons.text_fields_rounded,
+                        size: 20,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

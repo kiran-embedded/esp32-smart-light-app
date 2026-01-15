@@ -59,6 +59,26 @@ class PersistenceService {
   static const String _animLaunchKey = 'anim_launch_type';
   static const String _animUiKey = 'anim_ui_type';
 
+  static const String _displayPillScaleKey = 'display_pill_scale';
+  static const String _displayFontSizeKey = 'display_font_size';
+
+  static Future<void> saveDisplaySettings(
+    double pillScale,
+    double fontSize,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_displayPillScaleKey, pillScale);
+    await prefs.setDouble(_displayFontSizeKey, fontSize);
+  }
+
+  static Future<Map<String, double>> getDisplaySettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'pillScale': prefs.getDouble(_displayPillScaleKey) ?? 1.0,
+      'fontSize': prefs.getDouble(_displayFontSizeKey) ?? 1.0,
+    };
+  }
+
   static Future<void> saveAnimationSettings(
     int launchIndex,
     int uiIndex,
