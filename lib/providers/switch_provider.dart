@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/switch_device.dart';
 import '../services/firebase_switch_service.dart';
 import '../services/persistence_service.dart';
+import '../services/connectivity_service.dart';
+import '../services/local_network_service.dart';
+import '../providers/connection_settings_provider.dart';
+import '../providers/network_settings_provider.dart';
+import '../core/constants/app_constants.dart';
 
 final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
@@ -257,7 +262,36 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     ];
 
     // Non-blocking fire and forget
-    _ref.read(firebaseSwitchServiceProvider).sendCommand(id, newState ? 0 : 1);
+    final mode = _ref.read(connectivityProvider).activeMode;
+    final isLowLatency = _ref.read(lowLatencyProvider);
+
+    // Helpers to avoid code duplication
+    void sendLocal() {
+      int relayIndex = 0;
+      try {
+        final numStr = id.replaceAll(RegExp(r'[^0-9]'), '');
+        relayIndex = (int.tryParse(numStr) ?? 1) - 1;
+      } catch (_) {}
+
+      _ref
+          .read(localNetworkServiceProvider)
+          .sendLocalCommand(AppConstants.defaultDeviceId, relayIndex, newState);
+    }
+
+    void sendCloud() {
+      _ref
+          .read(firebaseSwitchServiceProvider)
+          .sendCommand(id, newState ? 0 : 1);
+    }
+
+    // DUAL PATH EXECUTION (Race for Speed)
+    if (mode == ConnectionMode.local) {
+      sendLocal();
+      if (isLowLatency) sendCloud();
+    } else {
+      sendCloud();
+      if (isLowLatency) sendLocal();
+    }
   }
 
   Future<void> updateNickname(String id, String newName) async {

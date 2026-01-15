@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+
 import 'package:flutter/services.dart';
 
 import '../../services/haptic_service.dart';
@@ -26,7 +26,6 @@ import '../../widgets/voice/voice_assistant_overlay.dart';
 import '../../widgets/common/frosted_glass.dart';
 import '../../widgets/common/pixel_led_border.dart';
 import '../../widgets/common/switch_tab_background.dart';
-import '../../widgets/common/no_internet_widget.dart';
 import '../../widgets/navigation/animated_nav_icon.dart';
 import '../../widgets/common/premium_app_bar.dart';
 import '../../core/ui/responsive_layout.dart';
@@ -47,7 +46,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
     with WidgetsBindingObserver {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  bool _ignoreOffline = false;
 
   Timer? _schedulerTimer;
   final Map<String, DateTime> _lastFiredSchedules = {};
@@ -124,16 +122,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      setState(() {
-        _ignoreOffline = true;
-      });
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _ignoreOffline = false;
-          });
-        }
-      });
+      // Logic for pre-warming connection is handled in main.dart or services
     }
   }
 
@@ -197,7 +186,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     return StreamBuilder<DatabaseEvent>(
       stream: FirebaseDatabase.instance.ref('.info/connected').onValue,
       builder: (context, snapshot) {
-        final isConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
+        // Connected status used for background sync, but UI is now non-blocking
+        // final isConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -251,20 +241,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                   ],
                 ),
               ),
-
-              // No Internet Overlay
-              if (!isConnected && !_ignoreOffline)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.8),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: NoInternetWidget(
-                        onRetry: () => HapticService.selection(),
-                      ),
-                    ),
-                  ).animate().fadeIn(duration: 300.ms),
-                ),
             ],
           ),
         );

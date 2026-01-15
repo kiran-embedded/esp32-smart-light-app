@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/display_settings_provider.dart';
-import '../../providers/esp32_status_provider.dart';
+import '../../services/connectivity_service.dart';
+import '../../providers/connection_settings_provider.dart';
 import '../../widgets/common/pixel_led_border.dart';
 import '../../core/ui/responsive_layout.dart';
 
@@ -14,7 +14,7 @@ class ConnectionStatusPill extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final esp32State = ref.watch(esp32StatusProvider);
+    final connectivity = ref.watch(connectivityProvider);
     final displaySettings = ref.watch(displaySettingsProvider);
 
     final themeColors = [
@@ -27,98 +27,119 @@ class ConnectionStatusPill extends ConsumerWidget {
     final pScale = displaySettings.pillScale;
     final fScale = displaySettings.fontSize;
 
-    return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseDatabase.instance.ref('.info/connected').onValue,
-      builder: (context, snapshot) {
-        final isAppConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
-        final isDeviceOnline = esp32State.status == Esp32Status.active;
+    // Determine Status Logic based on ConnectivityProvider
+    String statusText;
+    Color statusColor;
+    IconData statusIcon;
+    bool isConnected = false;
 
-        // Determine Status Color & Text
-        String statusText;
-        Color statusColor;
-        IconData statusIcon;
+    if (connectivity.activeMode == ConnectionMode.cloud) {
+      if (connectivity.isFirebaseConnected) {
+        statusText = "CLOUD ONLINE";
+        statusColor = Colors.greenAccent;
+        statusIcon = Icons.cloud_done_rounded;
+        isConnected = true;
+      } else {
+        statusText = "CONNECTING...";
+        statusColor = Colors.orangeAccent;
+        statusIcon = Icons.cloud_sync_rounded;
+        isConnected = false;
+      }
+    } else {
+      // Local Mode
+      if (connectivity.isEspHotspot) {
+        statusText = "HOTSPOT MODE";
+        statusColor = Colors.purpleAccent;
+        statusIcon = Icons.wifi_tethering;
+        isConnected = true;
+      } else if (connectivity.isLocalReachable) {
+        statusText = "LOCAL SYSTEM";
+        statusColor = Colors.cyanAccent;
+        statusIcon = Icons.lan;
+        isConnected = true;
+      } else {
+        // In auto mode, if we fell back to local but can't find device
+        statusText = "SEARCHING...";
+        statusColor = Colors.orangeAccent;
+        statusIcon = Icons.wifi_find_rounded;
+        isConnected = false;
+      }
+    }
 
-        if (!isAppConnected) {
-          statusText = "NETWORK ERROR";
-          statusColor = Colors.orangeAccent;
-          statusIcon = Icons.wifi_off_rounded;
-        } else if (!isDeviceOnline) {
-          statusText = "ESP32 OFFLINE";
-          statusColor = Colors.redAccent;
-          statusIcon = Icons.cloud_off_rounded;
-        } else {
-          statusText = "SYSTEM ONLINE";
-          statusColor = Colors.greenAccent;
-          statusIcon = Icons.check_circle_rounded;
-        }
+    // Override if completely disconnected (no SSID and no Firebase)
+    if (connectivity.ssid == null && !connectivity.isFirebaseConnected) {
+      statusText = "DISCONNECTED";
+      statusColor = Colors.redAccent;
+      statusIcon = Icons.signal_wifi_off;
+      isConnected = false;
+    }
 
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // DYNAMIC LED FLASH BACKGROUND
-            _buildLedGlow(statusColor, isAppConnected, isDeviceOnline, pScale),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // DYNAMIC LED FLASH BACKGROUND
+        _buildLedGlow(statusColor, isConnected, isConnected, pScale),
 
-            Container(
-              margin: EdgeInsets.only(top: (8.h * pScale).toDouble()),
-              child: PixelLedBorder(
-                borderRadius: (30 * pScale).toDouble(),
-                strokeWidth: (1.5 * pScale).toDouble(),
-                duration: const Duration(seconds: 4),
-                colors: themeColors,
-                enableInfiniteRainbow: false,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: (16.w * pScale).toDouble(),
-                    vertical: (8.h * pScale).toDouble(),
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0A0A0A),
-                    borderRadius: BorderRadius.circular(
-                      (30 * pScale).toDouble(),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // App Sync Indicator with small LED dot
-                      _buildAppSyncDot(isAppConnected, theme, pScale, fScale),
-                      SizedBox(width: (12.w * pScale).toDouble()),
+        Container(
+          margin: EdgeInsets.only(
+            top:
+                (16.h * pScale).toDouble() + MediaQuery.of(context).padding.top,
+          ),
+          child: PixelLedBorder(
+            borderRadius: (30 * pScale).toDouble(),
+            strokeWidth: (1.5 * pScale).toDouble(),
+            duration: const Duration(seconds: 4),
+            colors: themeColors,
+            enableInfiniteRainbow: false,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: (16.w * pScale).toDouble(),
+                vertical: (8.h * pScale).toDouble(),
+              ),
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular((30 * pScale).toDouble()),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // App Sync Indicator with small LED dot
+                  _buildAppSyncDot(isConnected, theme, pScale, fScale),
+                  SizedBox(width: (12.w * pScale).toDouble()),
 
-                      // Main Status Icon
-                      Icon(
-                            statusIcon,
-                            color: statusColor,
-                            size: (16.sp * fScale * pScale).toDouble(),
-                          )
-                          .animate(onPlay: (c) => c.repeat())
-                          .shimmer(
-                            duration: 2.seconds,
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-
-                      SizedBox(width: (8.w * pScale).toDouble()),
-
-                      // Status Text
-                      Text(
-                        statusText,
-                        style: GoogleFonts.outfit(
-                          fontSize: (10.sp * fScale * pScale).toDouble(),
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
-                          color: statusColor,
-                        ),
+                  // Main Status Icon
+                  Icon(
+                        statusIcon,
+                        color: statusColor,
+                        size: (16.sp * fScale * pScale).toDouble(),
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .shimmer(
+                        duration: 2.seconds,
+                        color: Colors.white.withOpacity(0.5),
                       ),
 
-                      SizedBox(width: (8.w * pScale).toDouble()),
-                      _buildStatusIndicator(statusColor, pScale),
-                    ],
+                  SizedBox(width: (8.w * pScale).toDouble()),
+
+                  // Status Text
+                  Text(
+                    statusText,
+                    style: GoogleFonts.outfit(
+                      fontSize: (10.sp * fScale * pScale).toDouble(),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                      color: statusColor,
+                    ),
                   ),
-                ),
+
+                  SizedBox(width: (8.w * pScale).toDouble()),
+                  _buildStatusIndicator(statusColor, pScale),
+                ],
               ),
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 

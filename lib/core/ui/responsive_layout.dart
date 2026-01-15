@@ -15,7 +15,11 @@ class Responsive {
   static late double scaleHeight;
   static late double scaleText;
 
-  static void init(BuildContext context) {
+  static void init(
+    BuildContext context, {
+    double scaleMultiplier = 1.0,
+    double fontMultiplier = 1.0,
+  }) {
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
     screenHeight = _mediaQueryData.size.height;
@@ -26,11 +30,11 @@ class Responsive {
     const double baseWidth = 375.0;
     const double baseHeight = 812.0;
 
-    scaleWidth = screenWidth / baseWidth;
-    scaleHeight = screenHeight / baseHeight;
+    scaleWidth = (screenWidth / baseWidth) * scaleMultiplier;
+    scaleHeight = (screenHeight / baseHeight) * scaleMultiplier;
 
     // Scale text slightly less aggressively to avoid massive font on tablets
-    scaleText = math.min(scaleWidth, scaleHeight);
+    scaleText = math.min(scaleWidth, scaleHeight) * fontMultiplier;
     if (screenWidth > 600) {
       // Tablet optimization: Don't let scale factor grow too large
       scaleText = 1.0 + (scaleText - 1.0) * 0.5;

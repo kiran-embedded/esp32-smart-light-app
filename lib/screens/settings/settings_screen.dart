@@ -13,7 +13,7 @@ import '../../providers/immersive_provider.dart';
 import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_background_provider.dart';
 import '../../providers/animation_provider.dart';
-import '../../providers/connection_settings_provider.dart';
+
 import '../../providers/sound_settings_provider.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/performance_provider.dart';
@@ -366,7 +366,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               const SizedBox(height: 40),
               Center(
                 child: Text(
-                  "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+15'}",
+                  "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+17'}",
                   style: GoogleFonts.outfit(
                     color: Colors.white.withOpacity(0.2),
                     fontSize: 12.sp,
@@ -973,18 +973,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   Widget _buildConnectionSettings(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(connectionSettingsProvider);
-    final notifier = ref.read(connectionSettingsProvider.notifier);
-
     return Column(
       children: [
-        _buildDropdownTile<ConnectionMode>(
+        _buildIosSettingTile(
           context,
           title: 'Connection Mode',
-          subtitle: 'Choose how to talk to devices',
-          value: settings.mode,
-          items: ConnectionMode.values,
-          onChanged: (val) => notifier.setMode(val!),
+          subtitle: 'Automatic (Smart Switching)',
+          trailing: Icon(Icons.auto_mode, color: Colors.white.withOpacity(0.5)),
         ),
         _buildIosSettingTile(
           context,

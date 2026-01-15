@@ -3,7 +3,7 @@ import '../services/persistence_service.dart';
 
 import 'switch_provider.dart';
 
-enum ConnectionMode { local, cloud, hybrid }
+enum ConnectionMode { local, cloud, auto }
 
 class ConnectionSettings {
   final ConnectionMode mode;
@@ -11,7 +11,7 @@ class ConnectionSettings {
   final bool isPerformanceMode;
 
   ConnectionSettings({
-    this.mode = ConnectionMode.cloud,
+    this.mode = ConnectionMode.auto,
     this.isLowDataMode = false,
     this.isPerformanceMode = false,
   });

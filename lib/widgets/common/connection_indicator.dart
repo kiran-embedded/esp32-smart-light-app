@@ -19,8 +19,8 @@ class ConnectionIndicator extends ConsumerWidget {
       label = 'LOCAL';
       color = const Color(0xFF00FFC2); // Aqua
       icon = Icons.wifi_tethering_rounded;
-    } else if (settings.mode == ConnectionMode.hybrid) {
-      label = 'HYBRID';
+    } else if (settings.mode == ConnectionMode.auto) {
+      label = 'AUTO';
       color = Colors.purpleAccent;
       icon = Icons.flash_on_rounded;
     }

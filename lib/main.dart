@@ -23,6 +23,7 @@ import 'providers/immersive_provider.dart';
 import 'providers/animation_provider.dart';
 import 'providers/sound_settings_provider.dart';
 import 'providers/voice_provider.dart';
+import 'providers/display_settings_provider.dart';
 import 'widgets/common/restart_widget.dart';
 import 'services/performance_service.dart';
 import 'core/ui/responsive_layout.dart';
@@ -197,6 +198,8 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
 
     final animSettings = ref.watch(animationSettingsProvider);
 
+    final displaySettings = ref.watch(displaySettingsProvider);
+
     return MaterialApp(
       title: 'NEBULA CORE',
       debugShowCheckedModeBanner: false,
@@ -204,17 +207,26 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
         pageTransitionsTheme: _buildPageTransitions(animSettings.uiType),
       ),
       builder: (context, child) {
-        Responsive.init(context);
+        Responsive.init(
+          context,
+          scaleMultiplier: displaySettings.displayScale,
+          fontMultiplier: displaySettings.fontSizeMultiplier,
+        );
         return Consumer(
           builder: (context, ref, _) {
             final stats = ref.watch(performanceStatsProvider);
             debugPrint('ROOT_LOG: Console Visible: ${stats.consoleVisible}');
-            return Stack(
-              children: [
-                if (child != null) child,
-                const GlobalFpsMeter(),
-                if (stats.consoleVisible) const DeveloperTestOverlay(),
-              ],
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaleFactor: displaySettings.fontSizeMultiplier),
+              child: Stack(
+                children: [
+                  if (child != null) child,
+                  const GlobalFpsMeter(),
+                  if (stats.consoleVisible) const DeveloperTestOverlay(),
+                ],
+              ),
             );
           },
         );

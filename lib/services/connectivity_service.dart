@@ -155,14 +155,14 @@ class ConnectivityNotifier extends StateNotifier<ConnectivityState> {
     ConnectionMode activeMode = settings.mode;
 
     // DYNAMIC SWITCHING LOGIC
-    if (settings.mode == ConnectionMode.hybridAuto) {
-      // Priority 1: Local (Hotspot or LAN)
-      if (newState.isEspHotspot) {
-        activeMode = ConnectionMode.local; // Or Local
-      } else if (newState.isFirebaseConnected) {
+    // DYNAMIC SWITCHING LOGIC
+    if (settings.mode == ConnectionMode.auto) {
+      // User Request: "when it have internet we use firebase cloud way when no internet in modem we use local way"
+      // Firebase Connected Status is a proxy for "Has Internet"
+      if (newState.isFirebaseConnected) {
         activeMode = ConnectionMode.cloud;
       } else {
-        // If no cloud, try local?
+        // Fallback to Local if Cloud is unreachable (No Internet / Modem Mode)
         activeMode = ConnectionMode.local;
       }
 
