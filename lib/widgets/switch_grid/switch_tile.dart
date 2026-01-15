@@ -241,50 +241,58 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                   builder: (context, child) {
                     return Transform.scale(
                       scale: 1.0 - (_pressController.value * 0.05),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          // Only show deep shadow if NOT in performance mode
-                          boxShadow: performanceMode
-                              ? []
-                              : [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                      0.8,
-                                    ), // Deep projection
-                                    blurRadius: 40,
-                                    offset: const Offset(0, 20),
-                                    spreadRadius: -15,
-                                  ),
-                                ],
-                        ),
-                        child: _buildStyleDispatcher(
-                          style,
-                          theme,
-                          displayName,
-                          uniqueColor,
-                          contentColor,
-                          iconInfo,
-                          blendingEnabled, // Pass blending flag
-                        ),
-                      )
-                      .animate(target: _isInteracted ? 1 : 0)
-                      .scale(
-                        end: const Offset(0.95, 0.95),
-                        duration: 50.ms,
-                        curve: Curves.easeOut,
-                      ) // Tap Bounce
-                      .animate(
-                        target: widget.device.isActive ? 1 : 0,
-                        onPlay: (c) => c.repeat(reverse: true),
-                      )
-                      .custom(
-                        duration: 2500.ms,
-                        builder: (context, value, child) {
-                          // Subtle Breathing when Active
-                          final scale = 1.0 + (value * 0.015);
-                          return Transform.scale(scale: scale, child: child);
-                        },
-                      ),
+                      child:
+                          Container(
+                                decoration: BoxDecoration(
+                                  // Only show deep shadow if NOT in performance mode
+                                  boxShadow: performanceMode
+                                      ? []
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.8,
+                                            ), // Deep projection
+                                            blurRadius: 40,
+                                            offset: const Offset(0, 20),
+                                            spreadRadius: -15,
+                                          ),
+                                        ],
+                                ),
+                                child: _buildStyleDispatcher(
+                                  style,
+                                  theme,
+                                  displayName,
+                                  uniqueColor,
+                                  contentColor,
+                                  iconInfo,
+                                  blendingEnabled, // Pass blending flag
+                                ),
+                              )
+                              .animate(target: _isInteracted ? 1 : 0)
+                              .scale(
+                                end: const Offset(0.95, 0.95),
+                                duration: 50.ms,
+                                curve: Curves.easeOut,
+                              ) // Tap Bounce
+                              .animate(
+                                target: widget.device.isActive ? 1 : 0,
+                                onPlay: (c) => c.repeat(reverse: true),
+                              )
+                              .custom(
+                                duration: 2500.ms,
+                                builder: (context, value, child) {
+                                  // Subtle Breathing when Active
+                                  final scale = 1.0 + (value * 0.015);
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: child,
+                                  );
+                                },
+                              ),
+                    );
+                  },
+                ),
+              ),
             ),
           );
         },

@@ -20,6 +20,7 @@ import '../../providers/network_settings_provider.dart';
 import '../../providers/haptic_provider.dart';
 import '../../providers/update_provider.dart';
 import '../../providers/live_info_provider.dart';
+import '../../providers/animation_provider.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../services/performance_monitor_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -41,6 +42,8 @@ import 'package:path_provider/path_provider.dart';
 import 'help_support_screen.dart';
 import '../../widgets/robo/robo_assistant.dart';
 import '../../widgets/common/animated_cupertino_switch.dart';
+import '../../providers/auth_provider.dart';
+import '../login/login_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -160,18 +163,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             isLast: true,
                           ),
                         ],
-                  children: [
-                    _buildIosSettingTile(
-                      context,
-                      title: 'Voice Feedback',
-                      subtitle: 'Enable AI voice responses',
-                      trailing: AnimatedCupertinoSwitch(
-                        value: voiceEnabled,
-                        onChanged: (value) async {
-                          ref
-                              .read(voiceEnabledProvider.notifier)
-                              .setVoiceEnabled(value);
-                        },
                       ),
 
                       // --- 3. SENSORY & FEEDBACK ---
@@ -757,33 +748,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               color: Color(0xFF1E1E1E),
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: SwitchStyleType.values.length,
-                itemBuilder: (context, index) {
-                  final currentStyle = ref.watch(switchStyleProvider);
-                  final style = SwitchStyleType.values[index];
-                  final isSelected = style == currentStyle;
-                  return ListTile(
-                    onTap: () {
-                      ref.read(switchStyleProvider.notifier).setStyle(style);
-                      Navigator.pop(context);
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: SwitchStyleType.values.length,
+                    itemBuilder: (context, index) {
+                      final currentStyle = ref.watch(switchStyleProvider);
+                      final style = SwitchStyleType.values[index];
+                      final isSelected = style == currentStyle;
+                      return ListTile(
+                        onTap: () {
+                          ref
+                              .read(switchStyleProvider.notifier)
+                              .setStyle(style);
+                          Navigator.pop(context);
+                        },
+                        title: Text(
+                          _getSwitchStyleName(style),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.white.withOpacity(0.8),
+                            fontWeight: isSelected ? FontWeight.bold : null,
+                          ),
+                        ),
+                      );
                     },
-                    title: Text(
-                      _getSwitchStyleName(style),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.white.withOpacity(0.8),
-                        fontWeight: isSelected ? FontWeight.bold : null,
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
           ).animate().slideY(
             begin: 1,
@@ -808,35 +806,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               color: Color(0xFF1E1E1E),
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: SwitchBackgroundType.values.length,
-                itemBuilder: (context, index) {
-                  final currentBg = ref.watch(switchBackgroundProvider);
-                  final style = SwitchBackgroundType.values[index];
-                  final isSelected = style == currentBg;
-                  return ListTile(
-                    onTap: () {
-                      ref
-                          .read(switchBackgroundProvider.notifier)
-                          .setStyle(style);
-                      Navigator.pop(context);
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: SwitchBackgroundType.values.length,
+                    itemBuilder: (context, index) {
+                      final currentBg = ref.watch(switchBackgroundProvider);
+                      final style = SwitchBackgroundType.values[index];
+                      final isSelected = style == currentBg;
+                      return ListTile(
+                        onTap: () {
+                          ref
+                              .read(switchBackgroundProvider.notifier)
+                              .setStyle(style);
+                          Navigator.pop(context);
+                        },
+                        title: Text(
+                          _getSwitchBackgroundName(style),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.white.withOpacity(0.8),
+                            fontWeight: isSelected ? FontWeight.bold : null,
+                          ),
+                        ),
+                      );
                     },
-                    title: Text(
-                      _getSwitchBackgroundName(style),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.white.withOpacity(0.8),
-                        fontWeight: isSelected ? FontWeight.bold : null,
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
           ).animate().slideY(
             begin: 1,

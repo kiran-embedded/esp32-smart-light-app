@@ -28,7 +28,6 @@ class SwitchTabBackground extends ConsumerWidget {
     Color secondaryColor = theme.colorScheme.secondary;
 
     final activeSwitches = devices.where((s) => s.isActive).toList();
-    final theme = Theme.of(context).colorScheme;
 
     if (activeSwitches.isNotEmpty) {
       // Blend theme with active switch color for "Synced but Dynamic" feel
@@ -60,8 +59,8 @@ class SwitchTabBackground extends ConsumerWidget {
       }
     } else {
       // Idle: Use theme colors
-      primaryColor = theme.primary.withOpacity(0.4);
-      secondaryColor = theme.tertiary.withOpacity(0.3);
+      primaryColor = theme.colorScheme.primary.withOpacity(0.4);
+      secondaryColor = theme.colorScheme.tertiary.withOpacity(0.3);
     }
 
     return Stack(

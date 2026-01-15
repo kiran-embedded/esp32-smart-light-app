@@ -22,7 +22,7 @@ class DisplayEngineWrapper extends ConsumerWidget {
     final userDensity = ref.watch(displaySettingsProvider);
 
     DisplayEngine.setUserScale(userScale);
-    DisplayEngine.setUserDensity(userDensity);
+    DisplayEngine.setUserDensity(userDensity.pillScale);
 
     return Stack(
       children: [
