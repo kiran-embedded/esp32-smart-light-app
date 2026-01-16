@@ -1,8 +1,8 @@
-# Release Notes - Nebula Core Restore v1.2.0+16
+# Release Notes - Nebula Core Restore v1.2.0+17
 
 ## 🚀 The "Global Synergy" Update
 
-We are proud to announce the latest release of **Nebula Core Restore**, version 1.2.0+16. This update is a major milestone in cross-device synchronization and UI refinement, bringing the app closer to a production-ready, ultra-premium experience.
+We are proud to announce the latest release of **Nebula Core Restore**, version 1.2.0+17. This update is a major milestone in cross-device synchronization and UI refinement, bringing the app closer to a production-ready, ultra-premium experience.
 
 ### 💎 New Features & Enhancements
 

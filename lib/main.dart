@@ -17,8 +17,10 @@ import 'screens/main/main_screen.dart';
 import 'services/persistence_service.dart';
 import 'services/scheduler_service.dart';
 import 'services/haptic_service.dart';
+import 'services/ble_service.dart';
 import 'providers/switch_provider.dart';
 import 'services/firebase_switch_service.dart';
+import 'services/connectivity_service.dart';
 import 'providers/immersive_provider.dart';
 import 'providers/animation_provider.dart';
 import 'providers/sound_settings_provider.dart';
@@ -163,6 +165,14 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Initialize BLE using the provider instance
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(bleServiceProvider)
+          .initBLE()
+          .catchError((e) => debugPrint("BLE Init Error: $e"));
+    });
   }
 
   @override

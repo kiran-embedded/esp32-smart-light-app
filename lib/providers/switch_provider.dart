@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/switch_device.dart';
 import '../services/firebase_switch_service.dart';
 import '../services/persistence_service.dart';
-import '../services/connectivity_service.dart';
+
 import '../services/local_network_service.dart';
 import '../providers/connection_settings_provider.dart';
-import '../providers/network_settings_provider.dart';
-import '../core/constants/app_constants.dart';
 
 final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
@@ -35,6 +33,73 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     }
     _initTelemetryListener();
     forceRefreshHardwareNames();
+    _initLocalPolling();
+  }
+
+  void _initLocalPolling() {
+    // Poll every 3 seconds to reduce load and network contention
+    Timer.periodic(const Duration(seconds: 3), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      // Don't poll if we have pending switches (User is interacting)
+      if (_pendingSwitches.isNotEmpty) return;
+
+      try {
+        final mode = _ref.read(connectionSettingsProvider).mode;
+        if (mode == ConnectionMode.local) {
+          final localService = _ref.read(localNetworkServiceProvider);
+          // We don't have the device ID handy in a clean way,
+          // but we can ask the service to fetch from *any* discovered device
+          // Or iterate known devices.
+          // For now, let's assume we want to pull status from the first available.
+          // The service's getDeviceStatus handles fallback logic.
+
+          // We can pass an empty ID or a dummy if we just want "the connected device"
+          // Let's modify service to allow fetching "any"
+
+          // Actually, let's just rely on what we have.
+          // We can try to get ALL statuses.
+
+          // Hack: Use a known ID if we have one or just rely on the service's fallback
+          final status = await localService.getDeviceStatus("any");
+          if (status != null) {
+            _updateFromLocalStatus(status);
+          }
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _updateFromLocalStatus(Map<String, dynamic> status) {
+    final mode = _ref.read(connectionSettingsProvider).mode;
+    if (mode != ConnectionMode.local) return; // double check
+
+    // Convert local status (relay1: 1) to match telemetry format
+    final Map<String, dynamic> fakeTelemetry = {};
+    if (status.containsKey('voltage'))
+      fakeTelemetry['voltage'] = status['voltage'];
+    if (status.containsKey('relay1'))
+      fakeTelemetry['relay1'] = status['relay1'];
+    if (status.containsKey('relay2'))
+      fakeTelemetry['relay2'] = status['relay2'];
+    if (status.containsKey('relay3'))
+      fakeTelemetry['relay3'] = status['relay3'];
+    if (status.containsKey('relay4'))
+      fakeTelemetry['relay4'] = status['relay4'];
+
+    // Set last seen to now to show "Connected"
+    fakeTelemetry['lastSeen'] = DateTime.now().millisecondsSinceEpoch;
+
+    _lastTelemetry = fakeTelemetry;
+
+    // We need to bypass the _mergeAndEmit strict check for this local update
+    // So we'll duplicate the logic slightly or refactor _mergeAndEmit
+    // simpler: Just temporary override the check or pass a flag
+
+    _mergeAndEmit(forceLocal: true);
   }
 
   void _applyInitialNicknames(Map<String, String> nicknames) {
@@ -141,7 +206,11 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     }
   }
 
-  void _mergeAndEmit() {
+  void _mergeAndEmit({bool forceLocal = false}) {
+    // STRICT MODE: If in Local Mode, IGNORE Firebase updates completely
+    final mode = _ref.read(connectionSettingsProvider).mode;
+    if (mode == ConnectionMode.local && !forceLocal) return;
+
     final telemetry = _lastTelemetry;
     double voltage = 0.0;
     if (telemetry.containsKey('voltage')) {
@@ -180,21 +249,21 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         final rawVal = telemetry[id];
         if (rawVal != null) {
           if (rawVal is int)
-            newIsActive = (rawVal == 0); // 0 = Active, 1 = Inactive (Inverted)
+            newIsActive = (rawVal == 1); // 1 = Active (Normalized)
           else if (rawVal is bool)
-            newIsActive = !rawVal;
+            newIsActive = rawVal;
           else
             newIsActive =
-                (rawVal.toString() == '0' || rawVal.toString() == 'false');
+                (rawVal.toString() == '1' || rawVal.toString() == 'true');
         }
       } else if (_lastCommands.containsKey(id)) {
         final rawVal = _lastCommands[id];
         if (rawVal != null) {
           if (rawVal is int)
-            newIsActive = (rawVal == 0);
+            newIsActive = (rawVal == 1);
           else
             newIsActive =
-                (rawVal.toString() == '0' || rawVal.toString() == 'false');
+                (rawVal.toString() == '1' || rawVal.toString() == 'true');
         }
       } else if (currentDeviceMap.containsKey(id)) {
         newIsActive = currentDeviceMap[id]!.isActive;
@@ -205,15 +274,18 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
+        // Increase guard time to 5s for local mode latency
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 5000) {
           final existing = currentDeviceMap[id];
           if (existing != null && newIsActive != existing.isActive) {
             newIsActive = existing.isActive;
             isPending = true;
           } else {
+            // State matched, we can clear pending
             _pendingSwitches.remove(id);
           }
         } else {
+          // Timeout expired, use telemetry
           _pendingSwitches.remove(id);
         }
       }
@@ -262,8 +334,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     ];
 
     // Non-blocking fire and forget
-    final mode = _ref.read(connectivityProvider).activeMode;
-    final isLowLatency = _ref.read(lowLatencyProvider);
+    final settingsMode = _ref.read(connectionSettingsProvider).mode;
 
     // Helpers to avoid code duplication
     void sendLocal() {
@@ -273,24 +344,35 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         relayIndex = (int.tryParse(numStr) ?? 1) - 1;
       } catch (_) {}
 
-      _ref
-          .read(localNetworkServiceProvider)
-          .sendLocalCommand(AppConstants.defaultDeviceId, relayIndex, newState);
+      final localService = _ref.read(localNetworkServiceProvider);
+      // Removed force: true to prevent UI shutter on every tap
+      // Background discovery handles IP caching
+      if (!localService.hasDiscoveredDevices) {
+        localService.startSmartDiscovery();
+      }
+
+      final targetIp = localService.anyIp;
+      if (targetIp != null) {
+        localService.sendLocalCommand(targetIp, relayIndex, newState);
+      } else {
+        // Fallback: try hotspot IP if no device discovered yet
+        localService.sendLocalCommand("192.168.4.1", relayIndex, newState);
+      }
     }
 
     void sendCloud() {
       _ref
           .read(firebaseSwitchServiceProvider)
-          .sendCommand(id, newState ? 0 : 1);
+          .sendCommand(id, newState ? 1 : 0);
     }
 
-    // DUAL PATH EXECUTION (Race for Speed)
-    if (mode == ConnectionMode.local) {
+    // STRICT MODE LOGIC
+    // STRICT MODE LOGIC (NO AUTO)
+    if (settingsMode == ConnectionMode.local) {
       sendLocal();
-      if (isLowLatency) sendCloud();
     } else {
+      // Default to Cloud for safety
       sendCloud();
-      if (isLowLatency) sendLocal();
     }
   }
 

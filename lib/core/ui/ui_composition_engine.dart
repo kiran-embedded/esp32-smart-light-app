@@ -131,7 +131,7 @@ class CopyrightFooter extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '2026 $_t • v1.2.0+13', // "2026 Kiran Embedded • v1.2.0+13"
+                    '2026 $_t • v1.2.0+17', // "2026 Kiran Embedded • v1.2.0+17"
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.7),
                       fontSize: 10,

@@ -6,19 +6,24 @@ import '../models/live_info.dart';
 import '../core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
 
+import '../services/local_network_service.dart';
+import '../services/connectivity_service.dart'; // Import this
+import '../providers/connection_settings_provider.dart'; // Import this if needed for enum
+
 final liveInfoProvider = StateNotifierProvider<LiveInfoNotifier, LiveInfo>((
   ref,
 ) {
-  return LiveInfoNotifier();
+  return LiveInfoNotifier(ref);
 });
 
 class LiveInfoNotifier extends StateNotifier<LiveInfo> {
+  final Ref ref;
   Timer? _timer;
   Timer? _weatherTimer;
   StreamSubscription<DatabaseEvent>? _sensorSubscription;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
 
-  LiveInfoNotifier()
+  LiveInfoNotifier(this.ref)
     : super(
         LiveInfo(
           currentTime: DateTime.now(),
@@ -76,7 +81,47 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       state = state.copyWith(currentTime: DateTime.now());
+      _checkLocalVoltage(); // Poll local voltage if applicable
     });
+  }
+
+  Future<void> _checkLocalVoltage() async {
+    // 1. Check if we are in Local Mode using ConnectivityProvider (or basic check)
+    // Since we don't want circular dependency, we can use Ref if possible,
+    // or just check LocalNetworkService if it has devices.
+
+    final localService = ref.read(localNetworkServiceProvider);
+    if (!localService.hasDiscoveredDevices) return;
+
+    // 2. Poll Status (Every 1s via _timer is fine)
+    // We get the first device IP
+    // 2. Poll Status (Every 1s via _timer is fine)
+    // We get the first device IP
+
+    // Quick fix: iterate values
+    // Accessing private map is not possible, so let's rely on service
+    // We need a way to get *any* IP.
+    // Let's assume setDeviceMode logic: first value.
+    // We need a public getter for IP in service.
+    // I added `getIp(deviceId)` in previous turn.
+
+    String? targetIp = localService.getIp(AppConstants.defaultDeviceId);
+
+    // If specific ID not found (maybe discovery used partial ID), try fallback?
+    // Let's stick to strict ID for now.
+
+    // Actually, localNetworkService has `_discoveredDevices` but no public list.
+    // I added `hasDiscoveredDevices`.
+
+    // Let's try to get status from the service directly if I expose a helper.
+    // Or just use the known IP if available.
+    if (targetIp != null) {
+      final data = await localService.getDeviceStatus(targetIp);
+      if (data.isNotEmpty && data.containsKey('voltage')) {
+        double voltage = double.tryParse(data['voltage'].toString()) ?? 0.0;
+        state = state.copyWith(acVoltage: voltage);
+      }
+    }
   }
 
   Future<void> _loadWeather() async {

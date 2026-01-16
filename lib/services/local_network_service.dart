@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:multicast_dns/multicast_dns.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 
 class LocalDevice {
   final String ip;
@@ -19,10 +20,24 @@ class LocalNetworkService {
   // Cache discovered devices: Map<DeviceId, IP>
   final Map<String, String> _discoveredDevices = {};
 
-  Future<void> startDiscovery() async {
+  // Persistent Client for lower latency
+  final http.Client _client = http.Client();
+
+  Future<void> startSmartDiscovery({bool force = false}) async {
+    // Prevent redundant scans if devices found or already scanning
     if (_isScanning) return;
+    if (!force && _discoveredDevices.isNotEmpty) return;
+
     _isScanning = true;
 
+    // 1. Start mDNS (Parallel)
+    _startMdnsDiscovery();
+
+    // 2. Start Subnet Scan (Parallel)
+    _startSubnetScan();
+  }
+
+  Future<void> _startMdnsDiscovery() async {
     try {
       await _mdns.start();
 
@@ -55,7 +70,21 @@ class LocalNetworkService {
     }
   }
 
-  // Fallback: Scan common subnet IPs if mDNS fails (Android often blocks mDNS)
+  Future<void> _startSubnetScan() async {
+    try {
+      final info = NetworkInfo();
+      String? wifiIp = await info.getWifiIP();
+      if (wifiIp != null) {
+        String subnet = wifiIp.substring(0, wifiIp.lastIndexOf('.'));
+        print("🔍 Scanning Subnet: $subnet.*");
+        await aggressiveSubnetScan(subnet);
+      }
+    } catch (e) {
+      print("Subnet Scan Error: $e");
+    }
+  }
+
+  // Fallback: Scan common subnet IPs
   Future<void> aggressiveSubnetScan(String subnet) async {
     // subnet example: "192.168.1"
     List<Future> futures = [];
@@ -93,59 +122,33 @@ class LocalNetworkService {
     }
   }
 
-  // Helper to send command
-  Future<bool> sendLocalCommand(
-    String deviceId,
-    int relayIndex,
-    bool state,
-  ) async {
-    String? ip = _discoveredDevices[deviceId];
-
-    // FALLBACK: If specific ID not found, use ANY discovered IP (Single Device Assumption)
-    if (ip == null && _discoveredDevices.isNotEmpty) {
-      ip = _discoveredDevices.values.first;
-      print('LocalCommand: ID $deviceId not found, using fallback IP $ip');
-    }
-
-    if (ip == null) {
-      print(
-        'LocalCommand: No IP found for $deviceId and no devices discovered.',
-      );
-      return false;
-    }
-
+  // Send Command to Local Device (Ultra Fast)
+  Future<void> sendLocalCommand(String ip, int relayIndex, bool state) async {
     try {
       final url = Uri.parse(
-        'http://$ip/set?relay=${relayIndex + 1}&state=${state ? 1 : 0}',
+        'http://$ip/relay?ch=${relayIndex + 1}&state=${state ? 1 : 0}',
       );
-      final response = await http.get(url).timeout(const Duration(seconds: 2));
-      return response.statusCode == 200;
+      // Use persistent client for warm connection
+      await _client.get(url).timeout(const Duration(milliseconds: 500));
     } catch (e) {
-      print('Local Command Failed: $e');
-      return false; // Fallback to Cloud will be handled by provider
+      print("Local Command Error: $e");
+      // If persistent client fails, it might need reset? Usually robust.
     }
   }
 
-  // Get voltage/status
-  Future<Map<String, dynamic>?> getDeviceStatus(String deviceId) async {
-    String? ip = _discoveredDevices[deviceId];
-
-    // Fallback IP for status check too
-    if (ip == null && _discoveredDevices.isNotEmpty) {
-      ip = _discoveredDevices.values.first;
-    }
-
-    if (ip == null) return null;
-
+  Future<Map<String, dynamic>> getDeviceStatus(String ip) async {
     try {
       final response = await http
           .get(Uri.parse('http://$ip/status'))
           .timeout(const Duration(seconds: 2));
+
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return json.decode(response.body) as Map<String, dynamic>;
       }
-    } catch (_) {}
-    return null;
+    } catch (e) {
+      print("Status Fetch Error: $e");
+    }
+    return {};
   }
 
   // Direct IP override for Hotspot or Fixed IP
@@ -154,6 +157,39 @@ class LocalNetworkService {
   }
 
   String? getIp(String deviceId) => _discoveredDevices[deviceId];
+
+  // Getter for the first available IP (for single-device setup)
+  String? get anyIp => _discoveredDevices.values.isNotEmpty
+      ? _discoveredDevices.values.first
+      : null;
+
+  bool get hasDiscoveredDevices => _discoveredDevices.isNotEmpty;
+
+  Future<bool> setDeviceMode(String mode) async {
+    String? ip = _discoveredDevices.values.isNotEmpty
+        ? _discoveredDevices.values.first
+        : null;
+
+    if (ip != null) {
+      try {
+        final url = Uri.parse('http://$ip/mode?value=$mode');
+        await http.get(url).timeout(const Duration(seconds: 2));
+        return true;
+      } catch (e) {
+        print("Mode Set Error: $e");
+      }
+    }
+
+    // Fallback AP IP
+    try {
+      await http
+          .get(Uri.parse('http://192.168.4.1/mode?value=$mode'))
+          .timeout(const Duration(milliseconds: 500));
+      return true;
+    } catch (_) {}
+
+    return false;
+  }
 }
 
 final localNetworkServiceProvider = Provider((ref) => LocalNetworkService());

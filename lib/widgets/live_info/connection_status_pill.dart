@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,17 +6,50 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/display_settings_provider.dart';
 import '../../services/connectivity_service.dart';
 import '../../providers/connection_settings_provider.dart';
+import '../../providers/live_info_provider.dart';
 import '../../widgets/common/pixel_led_border.dart';
 import '../../core/ui/responsive_layout.dart';
 
-class ConnectionStatusPill extends ConsumerWidget {
+class ConnectionStatusPill extends ConsumerStatefulWidget {
   const ConnectionStatusPill({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConnectionStatusPill> createState() =>
+      _ConnectionStatusPillState();
+}
+
+class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
+  int _infoIndex = 0;
+  Timer? _cycleTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startCycleTimer();
+  }
+
+  @override
+  void dispose() {
+    _cycleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCycleTimer() {
+    _cycleTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (mounted) {
+        setState(() {
+          _infoIndex = (_infoIndex + 1) % 3; // Cycle through 3 states
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final connectivity = ref.watch(connectivityProvider);
     final displaySettings = ref.watch(displaySettingsProvider);
+    final liveInfo = ref.watch(liveInfoProvider);
 
     final themeColors = [
       theme.colorScheme.primary,
@@ -28,19 +62,20 @@ class ConnectionStatusPill extends ConsumerWidget {
     final fScale = displaySettings.fontSize;
 
     // Determine Status Logic based on ConnectivityProvider
-    String statusText;
+    String modeText;
     Color statusColor;
     IconData statusIcon;
     bool isConnected = false;
+    String voltageText = "${liveInfo.acVoltage.toStringAsFixed(0)}V";
 
     if (connectivity.activeMode == ConnectionMode.cloud) {
       if (connectivity.isFirebaseConnected) {
-        statusText = "CLOUD ONLINE";
+        modeText = "CLOUD MODE";
         statusColor = Colors.greenAccent;
         statusIcon = Icons.cloud_done_rounded;
         isConnected = true;
       } else {
-        statusText = "CONNECTING...";
+        modeText = "CONNECTING...";
         statusColor = Colors.orangeAccent;
         statusIcon = Icons.cloud_sync_rounded;
         isConnected = false;
@@ -48,30 +83,52 @@ class ConnectionStatusPill extends ConsumerWidget {
     } else {
       // Local Mode
       if (connectivity.isEspHotspot) {
-        statusText = "HOTSPOT MODE";
+        modeText = "HOTSPOT MODE";
         statusColor = Colors.purpleAccent;
         statusIcon = Icons.wifi_tethering;
         isConnected = true;
       } else if (connectivity.isLocalReachable) {
-        statusText = "LOCAL SYSTEM";
-        statusColor = Colors.cyanAccent;
-        statusIcon = Icons.lan;
+        modeText = "LOCAL MODE";
+        statusColor = Colors.cyanAccent; // User requested Blueish for local
+        statusIcon = Icons.wifi;
         isConnected = true;
       } else {
-        // In auto mode, if we fell back to local but can't find device
-        statusText = "SEARCHING...";
+        // Fallback or searching in Local Mode
+        modeText = "SCANNING...";
         statusColor = Colors.orangeAccent;
-        statusIcon = Icons.wifi_find_rounded;
+        statusIcon = Icons.wifi_find;
         isConnected = false;
       }
     }
 
     // Override if completely disconnected (no SSID and no Firebase)
-    if (connectivity.ssid == null && !connectivity.isFirebaseConnected) {
-      statusText = "DISCONNECTED";
+    if (connectivity.ssid == null &&
+        !connectivity.isFirebaseConnected &&
+        !connectivity.isLocalReachable) {
+      modeText = "DISCONNECTED";
       statusColor = Colors.redAccent;
       statusIcon = Icons.signal_wifi_off;
       isConnected = false;
+    }
+
+    // Determine Display Text based on Cycle
+    String displayText;
+    if (!isConnected) {
+      displayText = modeText; // Always show error/status if not connected
+    } else {
+      switch (_infoIndex) {
+        case 0:
+          displayText = modeText;
+          break;
+        case 1:
+          displayText = "ESP32 ACTIVE";
+          break;
+        case 2:
+          displayText = isConnected ? "VOLTAGE: $voltageText" : modeText;
+          break;
+        default:
+          displayText = modeText;
+      }
     }
 
     return Stack(
@@ -121,14 +178,31 @@ class ConnectionStatusPill extends ConsumerWidget {
 
                   SizedBox(width: (8.w * pScale).toDouble()),
 
-                  // Status Text
-                  Text(
-                    statusText,
-                    style: GoogleFonts.outfit(
-                      fontSize: (10.sp * fScale * pScale).toDouble(),
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                      color: statusColor,
+                  // Status Text (Animated Switcher)
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.0, 0.2),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                    child: Text(
+                      displayText,
+                      key: ValueKey<String>(displayText),
+                      style: GoogleFonts.outfit(
+                        fontSize: (10.sp * fScale * pScale).toDouble(),
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                        color: statusColor,
+                      ),
                     ),
                   ),
 

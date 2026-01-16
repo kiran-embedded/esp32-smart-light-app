@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/voice_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/local_network_service.dart';
 import '../../providers/switch_provider.dart';
 import '../../providers/immersive_provider.dart';
 import '../../providers/switch_style_provider.dart';
@@ -18,10 +20,13 @@ import '../../providers/sound_settings_provider.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/performance_provider.dart';
 import '../../providers/network_settings_provider.dart';
+import '../../providers/connection_settings_provider.dart';
+import '../../services/ble_service.dart';
+import '../../core/ui/responsive_layout.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../providers/haptic_provider.dart';
 import '../../providers/update_provider.dart';
 import '../../providers/display_settings_provider.dart';
-import '../../core/ui/responsive_layout.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
 
@@ -234,6 +239,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     subtitle: _getThemeName(currentTheme),
                     onTap: () => _showThemePicker(context, ref, currentTheme),
                   ),
+                  _buildConnectionSettings(context, ref),
+                  const SizedBox(height: 16),
+                  _buildAnimationSettings(context, ref),
                   _buildDisplaySizeSettings(context, ref),
                   _buildFontSizeSettings(context, ref),
                   _buildIosSettingTile(
@@ -365,13 +373,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
               const SizedBox(height: 40),
               Center(
-                child: Text(
-                  "Version ${ref.watch(updateProvider).updateInfo?.latestVersion ?? '1.2.0+17'}",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.2),
-                    fontSize: 12.sp,
-                  ),
-                ),
+                child: ref
+                    .watch(currentVersionProvider)
+                    .when(
+                      data: (version) => Text(
+                        "Version $version",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white.withOpacity(0.2),
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (e, s) => Text(
+                        "Version 1.2.0+17",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white.withOpacity(0.2),
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ),
               ),
               const SizedBox(height: 10),
               Center(
@@ -972,14 +992,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
   }
 
+  // BLE Toggle Removed per User Request
+
   Widget _buildConnectionSettings(BuildContext context, WidgetRef ref) {
+    final connectionSettings = ref.watch(connectionSettingsProvider);
     return Column(
       children: [
         _buildIosSettingTile(
           context,
           title: 'Connection Mode',
-          subtitle: 'Automatic (Smart Switching)',
-          trailing: Icon(Icons.auto_mode, color: Colors.white.withOpacity(0.5)),
+          subtitle: _getConnectionModeName(connectionSettings.mode),
+          trailing: Row(
+            children: [
+              Text(
+                _getConnectionModeName(connectionSettings.mode),
+                style: GoogleFonts.outfit(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                color: Colors.white.withOpacity(0.3),
+                size: 16,
+              ),
+            ],
+          ),
+          onTap: () => _showConnectionModePicker(context, ref),
         ),
         _buildIosSettingTile(
           context,
@@ -995,6 +1035,87 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           isLast: true,
         ),
       ],
+    );
+  }
+
+  String _getConnectionModeName(ConnectionMode mode) {
+    switch (mode) {
+      case ConnectionMode.cloud:
+        return 'Cloud Only';
+      case ConnectionMode.local:
+        return 'Local Mode (WiFi)';
+    }
+  }
+
+  void _showConnectionModePicker(BuildContext context, WidgetRef ref) {
+    final currentMode = ref.watch(connectionSettingsProvider).mode;
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Connection Mode'),
+        message: const Text('Choose how commands are sent to devices.'),
+        actions: ConnectionMode.values.map((mode) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context); // Close Picker
+
+              if (mode == ConnectionMode.local) {
+                _showLocalModeWarning(context, ref);
+              } else {
+                ref.read(connectionSettingsProvider.notifier).setMode(mode);
+                HapticService.selection();
+                // Force active scan if switching to local (though this block is else/cloud, safe to ignore or ensure clean state)
+                if (mode == ConnectionMode.local) {
+                  ref
+                      .read(localNetworkServiceProvider)
+                      .startSmartDiscovery(force: true);
+                }
+                // Instant switch, no dialogs
+              }
+            },
+            child: Text(
+              _getConnectionModeName(mode),
+              style: TextStyle(
+                fontWeight: mode == currentMode
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
+            ),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          isDestructiveAction: true,
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
+  void _showLocalModeWarning(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _LocalModeWarningDialog(
+        onConfirm: () async {
+          Navigator.pop(context); // Close Warning Dialog
+
+          // Perform Switch
+          ref
+              .read(connectionSettingsProvider.notifier)
+              .setMode(ConnectionMode.local);
+          HapticService.selection();
+
+          // Instant Transition - No Waiting, No Dialogs
+          // The warning dialog is already closed by the first pop.
+          // Do NOT call pop again.
+
+          // Force active scan immediately
+          ref
+              .read(localNetworkServiceProvider)
+              .startSmartDiscovery(force: true);
+        },
+      ),
     );
   }
 
@@ -1380,6 +1501,74 @@ class _ScannerLineAnimationState extends State<_ScannerLineAnimation>
           ],
         );
       },
+    );
+  }
+}
+
+class _LocalModeWarningDialog extends StatefulWidget {
+  final VoidCallback onConfirm;
+  const _LocalModeWarningDialog({required this.onConfirm});
+
+  @override
+  State<_LocalModeWarningDialog> createState() =>
+      _LocalModeWarningDialogState();
+}
+
+class _LocalModeWarningDialogState extends State<_LocalModeWarningDialog> {
+  int _secondsRemaining = 3;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_secondsRemaining > 0) {
+            _secondsRemaining--;
+          } else {
+            timer.cancel();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.grey[900],
+      title: const Text(
+        'Location Warning',
+        style: TextStyle(color: Colors.white),
+      ),
+      content: const Text(
+        'You MUST be at the device location to use Local Mode.\n\n'
+        'Commands are sent directly via WiFi. Cloud features will be disabled.',
+        style: TextStyle(color: Colors.white70),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+        ),
+        TextButton(
+          onPressed: _secondsRemaining == 0 ? widget.onConfirm : null,
+          child: Text(
+            _secondsRemaining > 0 ? 'Wait $_secondsRemaining s' : 'Confirm',
+            style: TextStyle(
+              color: _secondsRemaining == 0 ? Colors.cyanAccent : Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

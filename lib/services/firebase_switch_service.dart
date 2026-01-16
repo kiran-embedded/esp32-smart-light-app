@@ -171,4 +171,13 @@ class FirebaseSwitchService {
       print('Failed to set persistence (might be already set): $e');
     }
   }
+
+  Future<bool> get isConnected async {
+    try {
+      final snapshot = await _database.child('.info/connected').get();
+      return snapshot.exists && (snapshot.value == true);
+    } catch (_) {
+      return false;
+    }
+  }
 }
