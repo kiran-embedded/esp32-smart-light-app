@@ -1,37 +1,94 @@
-# Release Notes - Nebula Core Restore v1.2.0+17
+# Release Notes - Nebula Core v1.2.0+17
 
-## 🚀 The "Global Synergy" Update
+## 🚀 Hybrid Connection Architecture
 
-We are proud to announce the latest release of **Nebula Core Restore**, version 1.2.0+17. This update is a major milestone in cross-device synchronization and UI refinement, bringing the app closer to a production-ready, ultra-premium experience.
+This release implements a robust, manual-mode switching architecture that ensures 100% control reliability whether internet is available or not.
 
-### 💎 New Features & Enhancements
-
-#### 📡 Global Voltage Synchronization
-- **Intelligent Offset Sharing**: Voltage calibration data is now fully synchronized via Firebase. Calibrate your sensor once, and every device on your account will reflect the exact same precision instantly.
-- **Real-Time Consistency**: No more manual adjustments on multiple phones. Your "Source of Truth" is now global.
-
-#### 🌌 Reimagined Grid Aesthetics
-- **Visual Depth Engine**: Added a sophisticated radial vignette to the switch grid, creating a stunning "depth-of-field" effect that makes your controls look more immersive.
-- **Premium Noise Texture**: Integrated a subtle, high-end grain layer across the background to eliminate flat color banding and provide an analog, tactile feel.
-- **Dynamic Theme Blending**: The background now intelligently syncs with your active theme colors even when devices are idle, ensuring a cohesive look at all times.
-
-#### ⚖️ Performance Scaling 2.0
-- **Adaptive Micro-Animations**: Continuous UI loops (like the Help icon breathing) now intelligently pause when **Performance Mode** is enabled or during intensive transitions.
-- **Shadow & Glow Optimization**: High-cost visual effects are dynamically stripped in performance mode to ensure a flat 120FPS on all modern hardware.
-
-#### 🛡️ Professional Foundation
-- **Legal Compliance**: Integrated professional, detailed **Privacy Policy** and **Terms of Service** directly into the ecosystem.
-- **Maintenance Overhaul**: Fully functional **Clear Cache** and **Factory Reset** tools, complete with safety confirmation dialogs to protect your data.
-
-### 🛠️ Bug Fixes & Stability
-- **Link Resolution**: Fixed non-functional external links in the Support & Identity section.
-- **Memory Management**: Optimized background paint cycles to reduce RAM overhead during long sessions.
-- **Footer Polish**: Cleaned up version tracking and copyright information for a more professional presentation.
-
-### 📦 Installation
-1. Download the `app-release.apk` from the assets section.
-2. Install on your Android device.
-3. Enjoy the next generation of smart control.
+### � CORE IDEA
+• Same Wi-Fi router always  
+• WAN (internet) may be ON or OFF  
+• **LOCAL mode** → direct ESP32 IP (HTTP/MQTT)  
+• **CLOUD mode** → Firebase only  
+• **ONLY ONE MODE ACTIVE** (manual selection)  
+• No auto switching between modes  
 
 ---
-*Built with passion by Kiran Embedded.*
+
+### 📱 START APP Logic
+**MODE** = CLOUD (User selectable)  
+**INTERNET** = FALSE  
+**FIREBASE** = FALSE  
+
+**LOOP FOREVER:**
+1. **CHECK INTERNET (WAN):** Detects if global internet is reachable.
+2. **CHECK FIREBASE:** Detects if cloud database is connected.
+3. **MODE VALIDATION:**
+   - IF **MODE == CLOUD**: If Firebase is unavailable, block commands and notify user.
+   - IF **MODE == LOCAL**: Disable all Firebase listeners to save battery and data.
+4. **USER COMMAND:**
+   - IF **MODE == CLOUD**: Send relay state → **Firebase**
+   - IF **MODE == LOCAL**: Send relay state → **ESP32 LOCAL IP**
+
+---
+
+### 🔹 MODE SELECTION (MANUAL ONLY)
+**USER IS BOSS.** Select mode from Settings.
+
+- **IF user selects LOCAL:**
+  - `MODE = LOCAL`
+  - DISABLE Firebase completely.
+- **IF user selects CLOUD:**
+  - IF Internet & Firebase are UP:
+    - `MODE = CLOUD`
+    - ENABLE Firebase & SYNC ESP32 → Firebase.
+  - ELSE: Show "No Internet / Firebase".
+
+---
+
+### ⚠️ NO AUTO MODE CHANGE
+The app will never switch modes automatically to prevent "ghost control" or unexpected relay flips.
+
+---
+
+### � START ESP32 Logic
+**MODE** = LOCAL (Safe default)  
+**WIFI** = DISCONNECTED  
+
+**LOOP FOREVER:**
+1. **WIFI CHECK:** Ensure persistent router connection.
+2. **MODE CHECK:**
+   - IF **MODE == LOCAL**: Handle local HTTP commands, **IGNORE** Firebase.
+   - IF **MODE == CLOUD**: Reconnect Firebase if needed, read and apply states.
+
+---
+
+### � LOCAL MODE (NO INTERNET NEEDED)
+**Phone ──WiFi── Router ──WiFi── ESP32**
+- ❌ WAN / ❌ Firebase
+- ✅ Works 100%
+- *Example:* `http://192.168.1.50/relay?ch=1&state=1`
+
+### 🔹 CLOUD MODE (INTERNET REQUIRED)
+**Phone → Firebase → ESP32**
+- ✅ WAN REQUIRED
+
+---
+
+### 🔹 RECONNECTION TRUTH (IMPORTANT)
+1. **WAN lost:** Firebase stops → CLOUD mode unusable → **USER switches to LOCAL** → Control continues.
+2. **WAN returns:** Firebase reconnects → **USER switches back to CLOUD** → App syncs ESP32 state.
+
+---
+
+### � GOLDEN RULES
+1. **ONE MODE AT A TIME**
+2. **NO BLE** (Fully removed for stability)
+3. **SAME WIFI FOR LOCAL**
+4. **ABSOLUTE ON / OFF ONLY**
+5. **APP DECIDES MODE** (ESP32 never decides)
+6. **CLOUD & LOCAL NEVER RUN TOGETHER**
+
+---
+
+### 🔹 ONE-LINE MEMORY
+**Manual LOCAL** → No Internet needed | **Manual CLOUD** → Firebase only
