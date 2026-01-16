@@ -27,17 +27,15 @@
 #include "addons/TokenHelper.h"
 
 /* ================= CONFIGURATION ================= */
-#define WIFI_SSID "Kerala_Vision"
-#define WIFI_PASS "chandrasekharan0039"
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#define WIFI_PASS "YOUR_WIFI_PASSWORD"
 
 // OTA Credentials
 #define OTA_HOSTNAME "Nebula-Core-ESP32"
-#define OTA_PASSWORD "nebula2024"
+#define OTA_PASSWORD "YOUR_OTA_PASSWORD"
 
-#define API_KEY "AIzaSyA9zs6xhRcEwwGLO6cI417b2FO52PiXaxs"
-#define DATABASE_URL                                                           \
-  "https://"                                                                   \
-  "nebula-smartpowergrid-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define API_KEY "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL "https://YOUR_PROJECT_ID-default-rtdb.firebasedatabase.app"
 
 /* ================= PIN DEFINITIONS ================= */
 // Power Control

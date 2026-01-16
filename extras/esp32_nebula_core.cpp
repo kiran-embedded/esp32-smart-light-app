@@ -8,32 +8,32 @@
  * 4. WiFi / MQTT / Firebase Auto-Reconnect
  */
 
-#include <WiFi.h>
-#include <PubSubClient.h>
-#include <Firebase_ESP_Client.h>
 #include <ArduinoJson.h>
+#include <Firebase_ESP_Client.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
 
 // Helpers for Firebase
-#include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
+#include "addons/TokenHelper.h"
 
 // --- CONFIGURATION ---
-const char* ssid = "Kerala_Vision";
-const char* password = "chandrasekharan0039";
+const char *ssid = "YOUR_WIFI_SSID";
+const char *password = "YOUR_WIFI_PASSWORD";
 
 // MQTT Settings (matches app defaults)
-const char* mqtt_server = "broker.emqx.io"; // Example broker
+const char *mqtt_server = "broker.emqx.io"; // Example broker
 const int mqtt_port = 1883;
-const char* mqtt_topic_set = "nebula/switch/1/set";
-const char* mqtt_topic_state = "nebula/switch/1/state";
+const char *mqtt_topic_set = "nebula/switch/1/set";
+const char *mqtt_topic_state = "nebula/switch/1/state";
 
 // Firebase Credentials
-#define API_KEY "AIzaSyA9zs6xhRcEwwGLO6cI417b2FO52PiXaxs"
-#define DATABASE_URL "https://nebula-smartpowergrid-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define API_KEY "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL "https://YOUR_PROJECT_ID-default-rtdb.firebasedatabase.app"
 
 // Hardware Pins
-#define RELAY_PIN 2            // Integrated LED / First Relay
-#define VOLTAGE_SENSOR_PIN 34  // Analog Input (Connect ZMPT101B Out)
+#define RELAY_PIN 2           // Integrated LED / First Relay
+#define VOLTAGE_SENSOR_PIN 34 // Analog Input (Connect ZMPT101B Out)
 
 // --- OBJECTS ---
 WiFiClient espClient;
@@ -51,30 +51,35 @@ float getACVoltage() {
   int sensorValue = 0;
   long sum = 0;
   int samples = 500;
-  
+
   // Basic Peak-to-Peak calculation
   int minVal = 4095;
   int maxVal = 0;
-  
+
   for (int i = 0; i < samples; i++) {
     sensorValue = analogRead(VOLTAGE_SENSOR_PIN);
-    if (sensorValue > maxVal) maxVal = sensorValue;
-    if (sensorValue < minVal) minVal = sensorValue;
+    if (sensorValue > maxVal)
+      maxVal = sensorValue;
+    if (sensorValue < minVal)
+      minVal = sensorValue;
     delayMicroseconds(100);
   }
-  
+
   // Convert to Voltage (Calibration required for your specific sensor)
   float peakToPeak = (maxVal - minVal) * (3.3 / 4095.0);
-  float rmsVoltage = (peakToPeak / 2.0) * 0.707 * 100.0; // Scaled for 230V range
-  
-  if (rmsVoltage < 10.0) rmsVoltage = 0; // Filter noise
+  float rmsVoltage =
+      (peakToPeak / 2.0) * 0.707 * 100.0; // Scaled for 230V range
+
+  if (rmsVoltage < 10.0)
+    rmsVoltage = 0; // Filter noise
   return rmsVoltage;
 }
 
 // --- MQTT CALLBACK ---
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char *topic, byte *payload, unsigned int length) {
   String message = "";
-  for (int i = 0; i < length; i++) message += (char)payload[i];
+  for (int i = 0; i < length; i++)
+    message += (char)payload[i];
 
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -110,7 +115,7 @@ void reconnect() {
 
 void setup() {
   Serial.begin(115200);
-  
+
   // GPIO Setup
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
@@ -140,13 +145,14 @@ void setup() {
 }
 
 void loop() {
-  if (!mqttClient.connected()) reconnect();
+  if (!mqttClient.connected())
+    reconnect();
   mqttClient.loop();
 
   // Telemetry Loop
   if (millis() - lastTelemetryMillis > telemetryInterval) {
     lastTelemetryMillis = millis();
-    
+
     float voltage = getACVoltage();
     float current = random(50, 200) / 100.0; // Simulated Current
 
@@ -154,7 +160,7 @@ void loop() {
     FirebaseJson json;
     json.set("voltage", voltage);
     json.set("current_amp", current);
-    
+
     if (Firebase.ready()) {
       Serial.print("Sending telemetry... ");
       if (Firebase.RTDB.setJSON(&fbdo, "sensors", &json)) {
