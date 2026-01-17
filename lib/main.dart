@@ -79,6 +79,7 @@ void main() async {
   // Load Animation Settings
   final animLaunchIdx = prefs.getInt('anim_launch_type') ?? 0;
   final animUiIdx = prefs.getInt('anim_ui_type') ?? 0;
+  final animEnabled = prefs.getBool('animations_enabled') ?? true;
 
   final soundSettings = SoundSettings(
     masterSound: masterSound,
@@ -103,6 +104,7 @@ void main() async {
             return AnimationSettingsNotifier(
               initialLaunch: AppLaunchAnimation.values[animLaunchIdx],
               initialUi: UiTransitionAnimation.values[animUiIdx],
+              initialEnabled: animEnabled,
             );
           }),
         ],

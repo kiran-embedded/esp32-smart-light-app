@@ -58,21 +58,25 @@ class PersistenceService {
 
   static const String _animLaunchKey = 'anim_launch_type';
   static const String _animUiKey = 'anim_ui_type';
+  static const String _animEnabledKey = 'animations_enabled';
 
   static Future<void> saveAnimationSettings(
     int launchIndex,
     int uiIndex,
+    bool enabled,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_animLaunchKey, launchIndex);
     await prefs.setInt(_animUiKey, uiIndex);
+    await prefs.setBool(_animEnabledKey, enabled);
   }
 
-  static Future<Map<String, int>> getAnimationSettings() async {
+  static Future<Map<String, dynamic>> getAnimationSettings() async {
     final prefs = await SharedPreferences.getInstance();
     return {
       'launch': prefs.getInt(_animLaunchKey) ?? 0, // Default 0 (iPhoneBlend)
       'ui': prefs.getInt(_animUiKey) ?? 0, // Default 0 (iOSSlide)
+      'enabled': prefs.getBool(_animEnabledKey) ?? true,
     };
   }
 

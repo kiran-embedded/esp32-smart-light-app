@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/display_settings_provider.dart';
 import '../../providers/performance_provider.dart';
 import 'dart:math' as math;
 
@@ -9,23 +10,16 @@ class PixelLedBorder extends ConsumerStatefulWidget {
   final double strokeWidth;
   final List<Color> colors;
   final Duration duration;
-  final bool isStatic;
-  final bool enableInfiniteRainbow;
+  final NeonAnimationMode? mode;
 
   const PixelLedBorder({
     super.key,
     required this.child,
-    this.borderRadius = 20,
+    this.borderRadius = 0,
     this.strokeWidth = 2.0,
-    this.colors = const [
-      Color(0xFF00E676), // Neon Green
-      Color(0xFF00BCD4), // Cyan
-      Color(0xFFD500F9), // Violet
-      Colors.white, // W (RGBW)
-    ],
-    this.duration = const Duration(seconds: 3),
-    this.isStatic = false,
-    this.enableInfiniteRainbow = false,
+    this.colors = const [Colors.blue, Colors.purple, Colors.red],
+    this.duration = const Duration(seconds: 2),
+    this.mode,
   });
 
   @override
@@ -39,23 +33,16 @@ class _PixelLedBorderState extends ConsumerState<PixelLedBorder>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration);
-    _checkAnimation();
-  }
-
-  void _checkAnimation() {
-    final performanceMode = ref.read(performanceProvider);
-    if (!widget.isStatic && !performanceMode) {
-      if (!_controller.isAnimating) _controller.repeat();
-    } else {
-      _controller.stop();
-    }
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..repeat();
   }
 
   @override
   void didUpdateWidget(PixelLedBorder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _checkAnimation();
+    if (widget.duration != oldWidget.duration) {
+      _controller.duration = widget.duration;
+    }
   }
 
   @override
@@ -66,28 +53,31 @@ class _PixelLedBorderState extends ConsumerState<PixelLedBorder>
 
   @override
   Widget build(BuildContext context) {
-    // If rainbow enabled, override colors with full spectrum + wrap
-    final effectiveColors = widget.enableInfiniteRainbow
-        ? const [
-            Color(0xFFFF0000), // Red
-            Color(0xFFFF7F00), // Orange
-            Color(0xFFFFFF00), // Yellow
-            Color(0xFF00FF00), // Green
-            Color(0xFF0000FF), // Blue
-            Color(0xFF4B0082), // Indigo
-            Color(0xFF9400D3), // Violet
-            Color(0xFFFF0000), // Red (Wrap)
-          ]
-        : widget.colors;
+    final performanceMode = ref.watch(performanceProvider);
+    final displaySettings = ref.watch(displaySettingsProvider);
+    final activeMode = widget.mode ?? displaySettings.neonAnimationMode;
+
+    if (performanceMode) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          border: Border.all(
+            color: widget.colors.first.withOpacity(0.5),
+            width: widget.strokeWidth,
+          ),
+        ),
+        child: widget.child,
+      );
+    }
 
     return RepaintBoundary(
       child: CustomPaint(
         painter: _PixelLedPainter(
           animation: _controller,
-          borderRadius: widget.borderRadius,
+          colors: widget.colors,
           strokeWidth: widget.strokeWidth,
-          colors: effectiveColors,
-          isRainbow: widget.enableInfiniteRainbow,
+          borderRadius: widget.borderRadius,
+          mode: activeMode,
         ),
         child: widget.child,
       ),
@@ -97,76 +87,209 @@ class _PixelLedBorderState extends ConsumerState<PixelLedBorder>
 
 class _PixelLedPainter extends CustomPainter {
   final Animation<double> animation;
-  final double borderRadius;
-  final double strokeWidth;
   final List<Color> colors;
-  final bool isRainbow;
+  final double strokeWidth;
+  final double borderRadius;
+  final NeonAnimationMode mode;
 
   _PixelLedPainter({
     required this.animation,
-    required this.borderRadius,
-    required this.strokeWidth,
     required this.colors,
-    this.isRainbow = false,
+    required this.strokeWidth,
+    required this.borderRadius,
+    required this.mode,
   }) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
+    final path = Path()..addRRect(rrect);
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round; // Ensure smooth endings if segmented
+      ..strokeCap = StrokeCap.round;
 
-    // Industry Level: SweepGradient for "Running LED" effect
-    paint.shader = SweepGradient(
-      colors: isRainbow
-          ? colors
-          : [...colors, colors.first], // Ensure wrap for custom colors too
-      stops: isRainbow
-          ? null
-          : List.generate(colors.length + 1, (i) => i / colors.length),
-      transform: GradientRotation(animation.value * 2 * math.pi),
-    ).createShader(rect);
-
-    // Subtle Glow Layer
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
-      // For rainbow: smoother, tighter glow. custom: existing logic
-      ..strokeWidth = isRainbow ? strokeWidth + 2.0 : strokeWidth * 2
-      // For rainbow: less blur for "tube" definition
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isRainbow ? 3.0 : 4.0);
+      ..strokeWidth = strokeWidth * 2.5
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-    // If rainbow, reduce opacity of the glow to prevent "whiteout"
-    if (isRainbow) {
-      glowPaint.color = Colors.white.withOpacity(0.4);
-      // We can't apply shader on top of color easily with standard Paint,
-      // but applying the SAME shader to glow works well for neon.
-      glowPaint.shader = paint.shader;
-      // Use alpha composite to soften? Standard draw is fine.
-    } else {
-      glowPaint.shader = paint.shader;
+    switch (mode) {
+      case NeonAnimationMode.sweep:
+        _paintSweep(canvas, path, paint, glowPaint, size);
+        break;
+      case NeonAnimationMode.dotRunner:
+        _paintDotRunner(canvas, path, paint, glowPaint, size);
+        break;
+      case NeonAnimationMode.comet:
+        _paintComet(canvas, path, paint, glowPaint, size);
+        break;
+      case NeonAnimationMode.pulse:
+        _paintPulse(canvas, path, paint, glowPaint, size);
+        break;
+      case NeonAnimationMode.strobe:
+        _paintStrobe(canvas, path, paint, glowPaint, size);
+        break;
+      case NeonAnimationMode.rainbow:
+        _paintRainbow(canvas, path, paint, glowPaint, size);
+        break;
+      case NeonAnimationMode.autoChange:
+        _paintAutoChange(canvas, path, paint, glowPaint, size);
+        break;
     }
+  }
 
-    // Draw Glow first
-    // Save layer to apply opacity to the glow if needed?
-    // For performance, simple draw is better.
-    if (isRainbow) {
-      // Reduce intensity by drawing with a slightly transparent layer if needed,
-      // or just rely on the stroke width difference.
-      // Let's just draw.
-      canvas.drawRRect(rrect, glowPaint);
-    } else {
-      canvas.drawRRect(rrect, glowPaint);
+  void _paintSweep(
+    Canvas canvas,
+    Path path,
+    Paint paint,
+    Paint glowPaint,
+    Size size,
+  ) {
+    final gradient = SweepGradient(
+      colors: colors,
+      stops: List.generate(colors.length, (i) => i / (colors.length - 1)),
+      transform: GradientRotation(animation.value * 2 * math.pi),
+    );
+
+    paint.shader = gradient.createShader(Offset.zero & size);
+    glowPaint.shader = gradient.createShader(Offset.zero & size);
+
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, paint);
+  }
+
+  void _paintDotRunner(
+    Canvas canvas,
+    Path path,
+    Paint paint,
+    Paint glowPaint,
+    Size size,
+  ) {
+    final pathMetric = path.computeMetrics().first;
+    final length = pathMetric.length;
+    final dotPos = animation.value * length;
+
+    for (int i = 0; i < 3; i++) {
+      final offset = (i * length / 3 + dotPos) % length;
+      final extractPath = pathMetric.extractPath(offset - 20, offset + 20);
+
+      paint.color = colors[i % colors.length];
+      glowPaint.color = colors[i % colors.length].withOpacity(0.5);
+
+      canvas.drawPath(extractPath, glowPaint);
+      canvas.drawPath(extractPath, paint);
     }
+  }
 
-    canvas.drawRRect(rrect, paint);
+  void _paintComet(
+    Canvas canvas,
+    Path path,
+    Paint paint,
+    Paint glowPaint,
+    Size size,
+  ) {
+    final pathMetric = path.computeMetrics().first;
+    final length = pathMetric.length;
+    final pos = animation.value * length;
+
+    final extractPath = pathMetric.extractPath(pos - 60, pos);
+    final cometPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = LinearGradient(
+        colors: [colors.first.withOpacity(0), colors.first],
+      ).createShader(Offset.zero & size);
+
+    canvas.drawPath(extractPath, cometPaint);
+  }
+
+  void _paintPulse(
+    Canvas canvas,
+    Path path,
+    Paint paint,
+    Paint glowPaint,
+    Size size,
+  ) {
+    final pulse = 0.5 + (math.sin(animation.value * 2 * math.pi) * 0.5);
+    paint.color = colors.first.withOpacity(pulse);
+    glowPaint.color = colors.first.withOpacity(pulse * 0.5);
+
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, paint);
+  }
+
+  void _paintStrobe(
+    Canvas canvas,
+    Path path,
+    Paint paint,
+    Paint glowPaint,
+    Size size,
+  ) {
+    if ((animation.value * 10).floor() % 2 == 0) {
+      paint.color = colors.first;
+      glowPaint.color = colors.first.withOpacity(0.5);
+      canvas.drawPath(path, glowPaint);
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  void _paintRainbow(
+    Canvas canvas,
+    Path path,
+    Paint paint,
+    Paint glowPaint,
+    Size size,
+  ) {
+    final rainbowColors = [
+      Colors.red,
+      Colors.orange,
+      Colors.yellow,
+      Colors.green,
+      Colors.blue,
+      Colors.indigo,
+      Colors.purple,
+    ];
+    final gradient = SweepGradient(
+      colors: rainbowColors,
+      transform: GradientRotation(animation.value * 2 * math.pi),
+    );
+    paint.shader = gradient.createShader(Offset.zero & size);
+    canvas.drawPath(path, paint);
+  }
+
+  void _paintAutoChange(
+    Canvas canvas,
+    Path path,
+    Paint paint,
+    Paint glowPaint,
+    Size size,
+  ) {
+    final modeIndex = (animation.value * 6).floor() % 6;
+    switch (modeIndex) {
+      case 0:
+        _paintSweep(canvas, path, paint, glowPaint, size);
+        break;
+      case 1:
+        _paintDotRunner(canvas, path, paint, glowPaint, size);
+        break;
+      case 2:
+        _paintComet(canvas, path, paint, glowPaint, size);
+        break;
+      case 3:
+        _paintPulse(canvas, path, paint, glowPaint, size);
+        break;
+      case 4:
+        _paintStrobe(canvas, path, paint, glowPaint, size);
+        break;
+      case 5:
+        _paintRainbow(canvas, path, paint, glowPaint, size);
+        break;
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _PixelLedPainter oldDelegate) =>
-      oldDelegate.animation.value != animation.value ||
-      oldDelegate.colors != colors;
+  bool shouldRepaint(covariant _PixelLedPainter oldDelegate) => true;
 }

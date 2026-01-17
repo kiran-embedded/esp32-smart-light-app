@@ -168,6 +168,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
           curve = Curves.elasticOut;
           duration = const Duration(milliseconds: 600);
           break;
+        case UiTransitionAnimation.springRebounce:
+          curve = Curves.fastLinearToSlowEaseIn; // Dynamic spring-like
+          duration = const Duration(milliseconds: 700);
+          // We can use a different curve for more "rebounce"
+          curve = Curves.elasticOut;
+          break;
         case UiTransitionAnimation.fluidFade:
           curve = Curves.easeOutQuad;
           break;
@@ -626,8 +632,6 @@ class _GlassButtonState extends State<_GlassButton> {
             ],
           ),
           child: PixelLedBorder(
-            isStatic: false, // ALWAYS MOVING "Timely change"
-            enableInfiniteRainbow: false, // BLENDED with Theme
             colors: themeColors,
             borderRadius: 28,
             strokeWidth: 1.5, // Thinner liquid border

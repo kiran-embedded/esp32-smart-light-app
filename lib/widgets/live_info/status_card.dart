@@ -139,7 +139,6 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                   theme.colorScheme.tertiary,
                   theme.colorScheme.primary, // Wrap
                 ],
-                enableInfiniteRainbow: false,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
                   child: Container(

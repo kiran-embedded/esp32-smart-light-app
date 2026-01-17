@@ -9,27 +9,25 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/voice_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/local_network_service.dart';
 import '../../providers/switch_provider.dart';
 import '../../providers/immersive_provider.dart';
+import '../../providers/google_home_provider.dart';
 import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_background_provider.dart';
-import '../../providers/animation_provider.dart';
 
 import '../../providers/sound_settings_provider.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/performance_provider.dart';
-import '../../providers/network_settings_provider.dart';
-import '../../providers/connection_settings_provider.dart';
-import '../../services/ble_service.dart';
 import '../../core/ui/responsive_layout.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../providers/haptic_provider.dart';
 import '../../providers/update_provider.dart';
 import '../../providers/display_settings_provider.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
 
+import '../../providers/ai_settings_provider.dart';
+import '../../providers/animation_provider.dart';
+import '../../widgets/ai/ai_assistant_dialog.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/esp32_code_generator.dart';
@@ -81,18 +79,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             physics: const BouncingScrollPhysics(),
             children: [
               // --- UPDATES ---
-              const _IosSectionHeader(title: 'Updates'),
+              const _PremiumSectionHeader(title: 'Updates'),
               _buildUpdateTile(context, ref),
 
               // --- 1. CORE SYSTEM ---
-              const _IosSectionHeader(title: 'Core System'),
-              _IosGroupedContainer(
+              const _PremiumSectionHeader(title: 'Core System'),
+              _PremiumGroupedContainer(
                 children: [
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Fullscreen Mode',
                     subtitle: 'Hide status and navigation bars',
-                    trailing: CupertinoSwitch(
+                    leading: _buildPremiumIcon(
+                      Icons.fullscreen,
+                      Colors.blueAccent,
+                    ),
+                    trailing: _BreathingToggle(
                       value: ref.watch(immersiveModeProvider),
                       onChanged: (value) async {
                         ref
@@ -101,25 +103,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       },
                     ),
                   ),
-                  _buildAnimationSettings(context, ref),
+                  _buildPremiumSettingTile(
+                    context,
+                    title: 'Animations',
+                    subtitle: 'System micro-interactions',
+                    leading: _buildPremiumIcon(
+                      Icons.animation,
+                      Colors.purpleAccent,
+                    ),
+                    trailing: _BreathingToggle(
+                      value: ref
+                          .watch(animationSettingsProvider)
+                          .animationsEnabled,
+                      onChanged: (val) => ref
+                          .read(animationSettingsProvider.notifier)
+                          .setAnimationsEnabled(val),
+                    ),
+                  ),
                 ],
               ),
 
-              // --- 2. CONNECTIVITY ---
-              const _IosSectionHeader(title: 'Connectivity'),
-              _IosGroupedContainer(
-                children: [_buildConnectionSettings(context, ref)],
-              ),
-
               // --- 3. SENSORY & FEEDBACK ---
-              const _IosSectionHeader(title: 'Sensory & Feedback'),
-              _IosGroupedContainer(
+              const _PremiumSectionHeader(title: 'Sensory & Feedback'),
+              _PremiumGroupedContainer(
                 children: [
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Voice Feedback',
                     subtitle: 'Enable AI voice responses',
-                    trailing: CupertinoSwitch(
+                    leading: _buildPremiumIcon(Icons.mic, Colors.redAccent),
+                    trailing: _BreathingToggle(
                       value: voiceEnabled,
                       onChanged: (value) async {
                         ref
@@ -128,16 +141,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       },
                     ),
                   ),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Master Sound',
                     subtitle: 'Enable all app sounds',
-                    trailing: CupertinoSwitch(
+                    leading: _buildPremiumIcon(
+                      Icons.volume_up,
+                      Colors.pinkAccent,
+                    ),
+                    trailing: _BreathingToggle(
                       value: ref.watch(soundSettingsProvider).masterSound,
                       onChanged: (val) => ref
                           .read(soundSettingsProvider.notifier)
                           .setMasterSound(val),
                     ),
+                    isLast: !ref.watch(soundSettingsProvider).masterSound,
                   ),
                   if (ref.watch(soundSettingsProvider).masterSound) ...[
                     Padding(
@@ -166,11 +184,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         ],
                       ),
                     ),
-                    _buildIosSettingTile(
+                    _buildPremiumSettingTile(
                       context,
                       title: 'Switch Sounds',
                       subtitle: 'Click sound when toggling',
-                      trailing: CupertinoSwitch(
+                      leading: _buildPremiumIcon(
+                        Icons.touch_app,
+                        Colors.blueGrey,
+                      ),
+                      trailing: _BreathingToggle(
                         value: ref.watch(soundSettingsProvider).switchSound,
                         onChanged: (val) => ref
                             .read(soundSettingsProvider.notifier)
@@ -179,13 +201,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     ),
                   ],
                   if (voiceEnabled) ...[
-                    _buildIosSettingTile(
+                    _buildPremiumSettingTile(
                       context,
                       title: 'Voice Engine',
                       subtitle: ref.watch(voiceEngineProvider) ?? 'Default',
-                      trailing: Icon(
+                      leading: _buildPremiumIcon(
                         Icons.record_voice_over,
-                        color: Colors.white.withOpacity(0.3),
+                        Colors.teal,
                       ),
                       onTap: () async {
                         final service = ref.read(voiceServiceProvider);
@@ -193,14 +215,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       },
                     ),
                   ],
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Haptic Feedback',
                     subtitle: _getHapticName(ref.watch(hapticStyleProvider)),
-                    trailing: Icon(
-                      Icons.vibration,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
+                    leading: _buildPremiumIcon(Icons.vibration, Colors.blue),
                     onTap: () => _showHapticPicker(context, ref),
                     isLast: true,
                   ),
@@ -208,16 +227,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ),
 
               // --- 3.5. PERFORMANCE ---
-              const _IosSectionHeader(title: 'Performance'),
-              _IosGroupedContainer(
+              const _PremiumSectionHeader(title: 'Performance'),
+              _PremiumGroupedContainer(
                 children: [
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Performance Mode',
                     subtitle: ref.watch(performanceProvider)
                         ? 'Optimized (Fast, No Blur)'
                         : 'High Quality (Blur, Animations)',
-                    trailing: CupertinoSwitch(
+                    leading: _buildPremiumIcon(Icons.speed, Colors.orange),
+                    trailing: _BreathingToggle(
                       value: ref.watch(performanceProvider),
                       activeColor: Colors.amberAccent,
                       onChanged: (val) {
@@ -230,41 +250,122 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ),
 
               // --- 4. APPEARANCE & STYLE ---
-              const _IosSectionHeader(title: 'Appearance'),
-              _IosGroupedContainer(
+              const _PremiumSectionHeader(title: 'Appearance'),
+              _PremiumGroupedContainer(
                 children: [
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Theme',
                     subtitle: _getThemeName(currentTheme),
+                    leading: _buildPremiumIcon(
+                      Icons.palette,
+                      Colors.indigoAccent,
+                    ),
                     onTap: () => _showThemePicker(context, ref, currentTheme),
                   ),
-                  _buildConnectionSettings(context, ref),
-                  const SizedBox(height: 16),
-                  _buildAnimationSettings(context, ref),
-                  _buildDisplaySizeSettings(context, ref),
-                  _buildFontSizeSettings(context, ref),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
+                    context,
+                    title: 'Display Size',
+                    subtitle: _getDisplaySizeName(
+                      ref.watch(displaySettingsProvider).displaySize,
+                    ),
+                    leading: _buildPremiumIcon(Icons.aspect_ratio, Colors.cyan),
+                    onTap: () => _showDisplaySizePicker(context, ref),
+                  ),
+                  _buildPremiumSettingTile(
+                    context,
+                    title: 'Font Scale',
+                    subtitle:
+                        '${((ref.watch(displaySettingsProvider).fontScale * 100).toInt())}%',
+                    leading: _buildPremiumIcon(Icons.text_fields, Colors.brown),
+                    onTap: () => _showFontSizePicker(context, ref),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(68, 8, 28, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Glow Intensity',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              '${(ref.watch(displaySettingsProvider).glowIntensity * 100).toInt()}%',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Slider(
+                          value: ref
+                              .watch(displaySettingsProvider)
+                              .glowIntensity,
+                          activeColor: theme.colorScheme.primary,
+                          inactiveColor: Colors.white.withOpacity(0.05),
+                          onChanged: (val) => ref
+                              .read(displaySettingsProvider.notifier)
+                              .setGlowIntensity(val),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildPremiumSettingTile(
+                          context,
+                          title: 'Neon Animation',
+                          subtitle: ref
+                              .watch(displaySettingsProvider)
+                              .neonAnimationMode
+                              .name
+                              .toUpperCase(),
+                          leading: _buildPremiumIcon(
+                            Icons.animation_rounded,
+                            Colors.purpleAccent,
+                          ),
+                          onTap: () => _showNeonModePicker(context, ref),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Switch Style',
                     subtitle: _getSwitchStyleName(
                       ref.watch(switchStyleProvider),
                     ),
+                    leading: _buildPremiumIcon(
+                      Icons.dashboard_customize,
+                      Colors.lightGreen,
+                    ),
                     onTap: () => _showSwitchStylePicker(context, ref),
                   ),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Tab Background',
                     subtitle: _getSwitchBackgroundName(
                       ref.watch(switchBackgroundProvider),
                     ),
+                    leading: _buildPremiumIcon(
+                      Icons.wallpaper,
+                      Colors.blueGrey,
+                    ),
                     onTap: () => _showBackgroundPicker(context, ref),
                   ),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Glass Blur Effects',
-                    subtitle: 'Frosted glass visuals (GPU heavy)',
-                    trailing: CupertinoSwitch(
+                    subtitle: 'Frosted glass visuals',
+                    leading: _buildPremiumIcon(
+                      Icons.blur_on,
+                      Colors.blueAccent,
+                    ),
+                    trailing: _BreathingToggle(
                       value: ref
                           .watch(switchSettingsProvider)
                           .blurEffectsEnabled,
@@ -273,20 +374,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                           .setBlurEffects(val),
                     ),
                   ),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Dynamic Blending',
                     subtitle: ref.watch(performanceProvider)
-                        ? 'Disabled by Performance Mode'
+                        ? 'Disabled for Performance'
                         : 'Glass transparency effect',
-                    trailing: CupertinoSwitch(
+                    leading: _buildPremiumIcon(
+                      Icons.opacity,
+                      Colors.deepPurpleAccent,
+                    ),
+                    trailing: _BreathingToggle(
                       value: ref.watch(switchSettingsProvider).dynamicBlending,
                       onChanged: ref.watch(performanceProvider)
-                          ? null
+                          ? (val) {} // Do nothing if disabled
                           : (val) => ref
                                 .read(switchSettingsProvider.notifier)
                                 .setDynamicBlending(val),
                     ),
+                    isLast: true,
+                  ),
+                ],
+              ),
+
+              // --- AI ASSISTANT ---
+              const _PremiumSectionHeader(title: 'AI Assistant'),
+              _PremiumGroupedContainer(
+                children: [
+                  _buildPremiumSettingTile(
+                    context,
+                    title: 'Nebula AI Assistant',
+                    subtitle: 'Smart voice & text control',
+                    leading: _buildPremiumIcon(
+                      Icons.auto_awesome,
+                      Colors.deepPurpleAccent,
+                    ),
+                    trailing: _BreathingToggle(
+                      value: ref.watch(aiSettingsProvider).assistantEnabled,
+                      onChanged: (val) => ref
+                          .read(aiSettingsProvider.notifier)
+                          .toggleAssistant(val),
+                    ),
+                  ),
+                  _buildPremiumSettingTile(
+                    context,
+                    title: 'Gemini API Key',
+                    subtitle: ref.watch(aiSettingsProvider).apiKey.isEmpty
+                        ? 'Not Set (Required)'
+                        : '••••••••••••${ref.watch(aiSettingsProvider).apiKey.substring(ref.watch(aiSettingsProvider).apiKey.length - 4)}',
+                    leading: _buildPremiumIcon(Icons.vpn_key, Colors.grey),
+                    onTap: () => _showApiKeyDialog(context, ref),
                     isLast: true,
                   ),
                 ],
@@ -301,34 +438,116 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       .read(performanceStatsProvider.notifier)
                       .toggleConsole(true);
                 },
-                child: const _IosSectionHeader(title: 'Advanced Tools'),
+                child: const _PremiumSectionHeader(title: 'Advanced Tools'),
               ),
-              _IosGroupedContainer(
+              _PremiumGroupedContainer(
                 children: [
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'ESP32 Firmware',
                     subtitle: 'Generate C++ controller code',
+                    leading: _buildPremiumIcon(Icons.terminal, Colors.grey),
                     onTap: () => _showEsp32FirmwareDialog(context, ref),
                   ),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
-                    title: 'Unlink Google',
-                    subtitle: 'Disconnect from Cloud services',
-                    onTap: () {},
+                    title: 'Force Sync',
+                    subtitle: 'Refresh hardware names',
+                    leading: _buildPremiumIcon(Icons.sync, Colors.green),
+                    onTap: () async {
+                      HapticService.selection();
+                      final result = await ref
+                          .read(switchDevicesProvider.notifier)
+                          .forceRefreshHardwareNames();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result),
+                            backgroundColor: result.contains('Error')
+                                ? Colors.redAccent
+                                : Colors.green.withOpacity(0.8),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+
+              // --- 5. GOOGLE HOME ---
+              const _PremiumSectionHeader(title: 'Google Home'),
+              _PremiumGroupedContainer(
+                children: [
+                  _buildPremiumSettingTile(
+                    context,
+                    title: 'Link Status',
+                    subtitle: 'Sync with Google Assistant',
+                    leading: _buildPremiumIcon(Icons.home_rounded, Colors.blue),
+                    trailing: _BreathingToggle(
+                      value:
+                          ref.watch(googleHomeLinkedProvider).valueOrNull ??
+                          false,
+                      onChanged: (val) {
+                        final service = ref.read(googleHomeServiceProvider);
+                        if (val) {
+                          service.linkGoogleHome();
+                        } else {
+                          service.unlinkGoogleHome();
+                        }
+                      },
+                    ),
+                  ),
+                  _buildPremiumSettingTile(
+                    context,
+                    title: 'Force Cloud Sync',
+                    subtitle: 'Update Google HomeGraph',
+                    leading: _buildPremiumIcon(
+                      Icons.cloud_sync,
+                      Colors.lightBlue,
+                    ),
+                    onTap: () async {
+                      HapticService.selection();
+                      final devices = ref.read(switchDevicesProvider);
+                      final service = ref.read(googleHomeServiceProvider);
+                      try {
+                        await service.syncAllDevices(devices);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Synced to Google HomeGraph'),
+                              backgroundColor: Colors.blueAccent,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Sync Failed: $e'),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
                     isLast: true,
                   ),
                 ],
               ),
 
               // --- 6. SUPPORT & IDENTITY ---
-              const _IosSectionHeader(title: 'Support & Identity'),
-              _IosGroupedContainer(
+              const _PremiumSectionHeader(title: 'Support & Identity'),
+              _PremiumGroupedContainer(
                 children: [
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Help Center',
                     subtitle: 'FAQ and troubleshooting',
+                    leading: _buildPremiumIcon(Icons.help, Colors.blue),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -338,10 +557,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       );
                     },
                   ),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Source Code',
                     subtitle: 'github.com/kiran-embedded',
+                    leading: _buildPremiumIcon(Icons.code, Colors.purple),
                     onTap: () {
                       launchUrl(
                         Uri.parse(
@@ -351,10 +571,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       );
                     },
                   ),
-                  _buildIosSettingTile(
+                  _buildPremiumSettingTile(
                     context,
                     title: 'Logout',
                     subtitle: 'Sign out from Nebula',
+                    leading: _buildPremiumIcon(Icons.logout, Colors.red),
                     onTap: () async {
                       await ref.read(authProvider.notifier).signOut();
                       if (context.mounted) {
@@ -416,10 +637,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             scale: 0.65, // Small and cute
             child: RoboAssistant(
               onActionStarted: () {
-                setState(() => _isScanning = true);
-                Future.delayed(const Duration(milliseconds: 1500), () {
-                  if (mounted) setState(() => _isScanning = false);
-                });
+                // Trigger AI Dialog as requested
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const AiAssistantDialog(),
+                );
               },
             ),
           ),
@@ -431,66 +655,77 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
   }
 
-  Widget _buildIosSettingTile(
+  Widget _buildPremiumSettingTile(
     BuildContext context, {
     required String title,
     required String subtitle,
+    Widget? leading,
     Widget? trailing,
     VoidCallback? onTap,
     bool isLast = false,
   }) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withOpacity(0.9),
-                        ),
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: theme.colorScheme.primary.withOpacity(0.1),
+        highlightColor: theme.colorScheme.primary.withOpacity(0.05),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              if (leading != null) ...[leading, const SizedBox(width: 16)],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withOpacity(0.95),
+                        letterSpacing: 0.3,
                       ),
-                      const SizedBox(height: 2),
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: GoogleFonts.outfit(
-                          fontSize: 12,
+                          fontSize: 12.sp,
                           color: Colors.white.withOpacity(0.4),
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
-                if (trailing != null) trailing,
-                if (onTap != null && trailing == null)
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: Colors.white.withOpacity(0.2),
-                  ),
-              ],
-            ),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 12), trailing],
+              if (onTap != null && trailing == null)
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Colors.white.withOpacity(0.15),
+                ),
+            ],
           ),
         ),
-        if (!isLast)
-          Padding(
-            padding: const EdgeInsets.only(left: 20),
-            child: Divider(
-              height: 1,
-              thickness: 0.5,
-              color: Colors.white.withOpacity(0.05),
-            ),
-          ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumIcon(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: Icon(icon, size: 20, color: color),
     );
   }
 
@@ -498,9 +733,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final updateState = ref.watch(updateProvider);
     final hasUpdate = updateState.updateInfo?.hasUpdate ?? false;
 
-    return _IosGroupedContainer(
+    return _PremiumGroupedContainer(
       children: [
-        _buildIosSettingTile(
+        _buildPremiumSettingTile(
           context,
           title: 'Software Update',
           subtitle: hasUpdate
@@ -994,241 +1229,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
   // BLE Toggle Removed per User Request
 
-  Widget _buildConnectionSettings(BuildContext context, WidgetRef ref) {
-    final connectionSettings = ref.watch(connectionSettingsProvider);
-    return Column(
-      children: [
-        _buildIosSettingTile(
-          context,
-          title: 'Connection Mode',
-          subtitle: _getConnectionModeName(connectionSettings.mode),
-          trailing: Row(
-            children: [
-              Text(
-                _getConnectionModeName(connectionSettings.mode),
-                style: GoogleFonts.outfit(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right,
-                color: Colors.white.withOpacity(0.3),
-                size: 16,
-              ),
-            ],
-          ),
-          onTap: () => _showConnectionModePicker(context, ref),
-        ),
-        _buildIosSettingTile(
-          context,
-          title: 'Ultra Low Latency',
-          subtitle: '1ms Target (Best for fast switches)',
-          trailing: CupertinoSwitch(
-            value: ref.watch(lowLatencyProvider),
-            activeColor: Colors.redAccent,
-            onChanged: (val) {
-              ref.read(lowLatencyProvider.notifier).toggle(val);
-            },
-          ),
-          isLast: true,
-        ),
-      ],
-    );
-  }
+  // Unused container removed
 
-  String _getConnectionModeName(ConnectionMode mode) {
-    switch (mode) {
-      case ConnectionMode.cloud:
-        return 'Cloud Only';
-      case ConnectionMode.local:
-        return 'Local Mode (WiFi)';
-    }
-  }
+  // Unused container removed
 
-  void _showConnectionModePicker(BuildContext context, WidgetRef ref) {
-    final currentMode = ref.watch(connectionSettingsProvider).mode;
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: const Text('Connection Mode'),
-        message: const Text('Choose how commands are sent to devices.'),
-        actions: ConnectionMode.values.map((mode) {
-          return CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context); // Close Picker
+  // Unused container removed
 
-              if (mode == ConnectionMode.local) {
-                _showLocalModeWarning(context, ref);
-              } else {
-                ref.read(connectionSettingsProvider.notifier).setMode(mode);
-                HapticService.selection();
-                // Force active scan if switching to local (though this block is else/cloud, safe to ignore or ensure clean state)
-                if (mode == ConnectionMode.local) {
-                  ref
-                      .read(localNetworkServiceProvider)
-                      .startSmartDiscovery(force: true);
-                }
-                // Instant switch, no dialogs
-              }
-            },
-            child: Text(
-              _getConnectionModeName(mode),
-              style: TextStyle(
-                fontWeight: mode == currentMode
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-              ),
-            ),
-          );
-        }).toList(),
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          isDestructiveAction: true,
-          child: const Text('Cancel'),
-        ),
-      ),
-    );
-  }
-
-  void _showLocalModeWarning(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _LocalModeWarningDialog(
-        onConfirm: () async {
-          Navigator.pop(context); // Close Warning Dialog
-
-          // Perform Switch
-          ref
-              .read(connectionSettingsProvider.notifier)
-              .setMode(ConnectionMode.local);
-          HapticService.selection();
-
-          // Instant Transition - No Waiting, No Dialogs
-          // The warning dialog is already closed by the first pop.
-          // Do NOT call pop again.
-
-          // Force active scan immediately
-          ref
-              .read(localNetworkServiceProvider)
-              .startSmartDiscovery(force: true);
-        },
-      ),
-    );
-  }
-
-  Widget _buildAnimationSettings(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(animationSettingsProvider);
-    final notifier = ref.read(animationSettingsProvider.notifier);
-
-    return Column(
-      children: [
-        _buildDropdownTile<AppLaunchAnimation>(
-          context,
-          title: 'Startup Energy',
-          subtitle: 'Choose how the app awakens',
-          value: settings.launchType,
-          items: AppLaunchAnimation.values,
-          onChanged: (val) {
-            notifier.setLaunchAnimation(val!);
-            HapticService.heavy();
-          },
-        ),
-        _buildDropdownTile<UiTransitionAnimation>(
-          context,
-          title: 'Fluidity Style',
-          subtitle: 'Navigation & touch physics',
-          value: settings.uiType,
-          items: UiTransitionAnimation.values,
-          onChanged: (val) {
-            notifier.setUiAnimation(val!);
-            HapticService.selection();
-          },
-          isLast: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDisplaySizeSettings(BuildContext context, WidgetRef ref) {
-    final displaySettings = ref.watch(displaySettingsProvider);
-    final notifier = ref.read(displaySettingsProvider.notifier);
-
-    return Column(
-      children: [
-        _buildIosSettingTile(
-          context,
-          title: 'Display Size',
-          subtitle: _getDisplaySizeName(displaySettings.displaySize),
-          onTap: () => _showDisplaySizePicker(context, ref),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFontSizeSettings(BuildContext context, WidgetRef ref) {
-    final displaySettings = ref.watch(displaySettingsProvider);
-    final notifier = ref.read(displaySettingsProvider.notifier);
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Font Size',
-                style: GoogleFonts.outfit(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-              Text(
-                '${((displaySettings.fontScale * 100).toInt())}%',
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Slider(
-            value: displaySettings.fontScale,
-            activeColor: theme.colorScheme.primary,
-            inactiveColor: Colors.white.withOpacity(0.1),
-            onChanged: (val) => notifier.setFontScale(val),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Small',
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  color: Colors.white.withOpacity(0.4),
-                ),
-              ),
-              Text(
-                'Large',
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  color: Colors.white.withOpacity(0.4),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // Unused container removed
 
   String _getDisplaySizeName(DisplaySize size) {
     switch (size) {
@@ -1273,64 +1280,192 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
   }
 
-  Widget _buildDropdownTile<T>(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required T value,
-    required List<T> items,
-    required ValueChanged<T?> onChanged,
-    bool isLast = false,
-  }) {
-    final theme = Theme.of(context);
-    return _buildIosSettingTile(
-      context,
-      title: title,
-      subtitle: subtitle,
-      isLast: isLast,
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: value,
-            dropdownColor: const Color(0xFF1E1E1E),
-            isDense: true,
-            icon: Icon(
-              Icons.arrow_drop_down_rounded,
-              color: theme.colorScheme.primary,
+  void _showFontSizePicker(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A1A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Consumer(
+        builder: (context, ref, _) {
+          final displaySettings = ref.watch(displaySettingsProvider);
+          final theme = Theme.of(context);
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.of(context).padding.bottom + 40,
             ),
-            items: items.map((item) {
-              return DropdownMenuItem<T>(
-                value: item,
-                child: Text(
-                  item
-                      .toString()
-                      .split('.')
-                      .last
-                      .replaceAllMapped(
-                        RegExp(r'([A-Z])'),
-                        (Match m) => ' ${m[1]}',
-                      )
-                      .trim(), // "iPhoneBlend" -> "iPhone Blend"
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Font Scale',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-              );
-            }).toList(),
-            onChanged: onChanged,
-          ),
-        ),
+                const SizedBox(height: 30),
+                // REAL-TIME PREVIEW CARD
+                Container(
+                  width: double.maxFinite,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.06),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        "Aa",
+                        style: GoogleFonts.outfit(
+                          fontSize: 48 * displaySettings.fontScale,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Nebula Smart Light Control",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          fontSize: 16 * displaySettings.fontScale,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'A',
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.4),
+                      ),
+                    ),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: theme.colorScheme.primary,
+                          inactiveTrackColor: Colors.white.withOpacity(0.1),
+                          thumbColor: Colors.white,
+                          overlayColor: theme.colorScheme.primary.withOpacity(
+                            0.2,
+                          ),
+                          trackHeight: 4,
+                        ),
+                        child: Slider(
+                          value: displaySettings.fontScale,
+                          min: 0.7,
+                          max: 1.3,
+                          onChanged: (val) {
+                            ref
+                                .read(displaySettingsProvider.notifier)
+                                .setFontScale(val);
+                            HapticService.selection();
+                          },
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'A',
+                      style: GoogleFonts.outfit(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "${(displaySettings.fontScale * 100).toInt()}% Scale",
+                  style: GoogleFonts.outfit(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
+
+  void _showApiKeyDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController(
+      text: ref.read(aiSettingsProvider).apiKey,
+    );
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Gemini API Key'),
+        content: Column(
+          children: [
+            const SizedBox(height: 12),
+            const Text(
+              'Enter your free Gemini API key from Google AI Studio to enable the assistant.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            CupertinoTextField(
+              controller: controller,
+              placeholder: 'Paste API Key here',
+              style: const TextStyle(color: Colors.white),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              ref
+                  .read(aiSettingsProvider.notifier)
+                  .setApiKey(controller.text.trim());
+              Navigator.pop(context);
+              HapticService.heavy();
+            },
+            isDefaultAction: true,
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Unused method removed
 
   Future<void> _checkForUpdates(BuildContext context, WidgetRef ref) async {
     showCupertinoDialog(
@@ -1399,44 +1534,208 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       );
     }
   }
-}
 
-class _IosSectionHeader extends StatelessWidget {
-  final String title;
-  const _IosSectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 24, 16, 8),
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.outfit(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.2,
-          color: Colors.white.withOpacity(0.3),
+  void _showNeonModePicker(BuildContext context, WidgetRef ref) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Neon Animation Mode'),
+        message: const Text('Choose your preferred neon border effect'),
+        actions: NeonAnimationMode.values.map((mode) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              ref
+                  .read(displaySettingsProvider.notifier)
+                  .setNeonAnimationMode(mode);
+              Navigator.pop(context);
+            },
+            child: Text(mode.name.toUpperCase()),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
         ),
       ),
     );
   }
 }
 
-class _IosGroupedContainer extends StatelessWidget {
-  final List<Widget> children;
-  const _IosGroupedContainer({required this.children});
+class _PremiumSectionHeader extends StatelessWidget {
+  final String title;
+  const _PremiumSectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05), width: 0.5),
-        ),
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 32, 28, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(2),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.5),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.outfit(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w900,
+              color: Colors.white.withOpacity(0.5),
+              letterSpacing: 2.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumGroupedContainer extends ConsumerWidget {
+  final List<Widget> children;
+
+  const _PremiumGroupedContainer({required this.children});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final glowIntensity = ref.watch(displaySettingsProvider).glowIntensity;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.1 * glowIntensity),
+            blurRadius: 30 * glowIntensity,
+            spreadRadius: -10,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
         child: Column(children: children),
+      ),
+    );
+  }
+}
+
+class _BreathingToggle extends StatefulWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color? activeColor;
+
+  const _BreathingToggle({
+    required this.value,
+    required this.onChanged,
+    this.activeColor,
+  });
+
+  @override
+  _BreathingToggleState createState() => _BreathingToggleState();
+}
+
+class _BreathingToggleState extends State<_BreathingToggle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    if (widget.value) {
+      _pulseController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(_BreathingToggle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value && !_pulseController.isAnimating) {
+      _pulseController.repeat(reverse: true);
+    } else if (!widget.value && _pulseController.isAnimating) {
+      _pulseController.stop();
+      _pulseController.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final activeColor = widget.activeColor ?? theme.colorScheme.primary;
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        widget.onChanged(!widget.value);
+      },
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return Container(
+            padding: const EdgeInsets.all(4),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (widget.value)
+                  Container(
+                    width: 44,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: activeColor.withOpacity(
+                            0.3 * (_pulseAnimation.value - 0.5),
+                          ),
+                          blurRadius: 10 * _pulseAnimation.value,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                CupertinoSwitch(
+                  value: widget.value,
+                  activeColor: activeColor,
+                  onChanged: (val) {
+                    HapticService.selection();
+                    widget.onChanged(val);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -1501,74 +1800,6 @@ class _ScannerLineAnimationState extends State<_ScannerLineAnimation>
           ],
         );
       },
-    );
-  }
-}
-
-class _LocalModeWarningDialog extends StatefulWidget {
-  final VoidCallback onConfirm;
-  const _LocalModeWarningDialog({required this.onConfirm});
-
-  @override
-  State<_LocalModeWarningDialog> createState() =>
-      _LocalModeWarningDialogState();
-}
-
-class _LocalModeWarningDialogState extends State<_LocalModeWarningDialog> {
-  int _secondsRemaining = 3;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          if (_secondsRemaining > 0) {
-            _secondsRemaining--;
-          } else {
-            timer.cancel();
-          }
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: Colors.grey[900],
-      title: const Text(
-        'Location Warning',
-        style: TextStyle(color: Colors.white),
-      ),
-      content: const Text(
-        'You MUST be at the device location to use Local Mode.\n\n'
-        'Commands are sent directly via WiFi. Cloud features will be disabled.',
-        style: TextStyle(color: Colors.white70),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-        ),
-        TextButton(
-          onPressed: _secondsRemaining == 0 ? widget.onConfirm : null,
-          child: Text(
-            _secondsRemaining > 0 ? 'Wait $_secondsRemaining s' : 'Confirm',
-            style: TextStyle(
-              color: _secondsRemaining == 0 ? Colors.cyanAccent : Colors.grey,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

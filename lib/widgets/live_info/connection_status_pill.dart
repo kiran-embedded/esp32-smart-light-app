@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/display_settings_provider.dart';
+import '../../providers/animation_provider.dart';
 import '../../services/connectivity_service.dart';
 import '../../providers/connection_settings_provider.dart';
 import '../../providers/live_info_provider.dart';
@@ -50,6 +51,8 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     final connectivity = ref.watch(connectivityProvider);
     final displaySettings = ref.watch(displaySettingsProvider);
     final liveInfo = ref.watch(liveInfoProvider);
+    final animations = ref.watch(animationSettingsProvider);
+    final animationsEnabled = animations.animationsEnabled;
 
     final themeColors = [
       theme.colorScheme.primary,
@@ -135,7 +138,13 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
       alignment: Alignment.center,
       children: [
         // DYNAMIC LED FLASH BACKGROUND
-        _buildLedGlow(statusColor, isConnected, isConnected, pScale),
+        _buildLedGlow(
+          statusColor,
+          isConnected,
+          isConnected,
+          pScale,
+          animationsEnabled,
+        ),
 
         Container(
           margin: EdgeInsets.only(
@@ -147,7 +156,6 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
             strokeWidth: (1.5 * pScale).toDouble(),
             duration: const Duration(seconds: 4),
             colors: themeColors,
-            enableInfiniteRainbow: false,
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: (16.w * pScale).toDouble(),
@@ -161,7 +169,13 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // App Sync Indicator with small LED dot
-                  _buildAppSyncDot(isConnected, theme, pScale, fScale),
+                  _buildAppSyncDot(
+                    isConnected,
+                    theme,
+                    pScale,
+                    fScale,
+                    animationsEnabled,
+                  ),
                   SizedBox(width: (12.w * pScale).toDouble()),
 
                   // Main Status Icon
@@ -170,7 +184,10 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                         color: statusColor,
                         size: (16.sp * fScale * pScale).toDouble(),
                       )
-                      .animate(onPlay: (c) => c.repeat())
+                      .animate(
+                        onPlay: (c) => c.repeat(),
+                        autoPlay: animationsEnabled,
+                      )
                       .shimmer(
                         duration: 2.seconds,
                         color: Colors.white.withOpacity(0.5),
@@ -207,7 +224,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                   ),
 
                   SizedBox(width: (8.w * pScale).toDouble()),
-                  _buildStatusIndicator(statusColor, pScale),
+                  _buildStatusIndicator(statusColor, pScale, animationsEnabled),
                 ],
               ),
             ),
@@ -217,7 +234,13 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     );
   }
 
-  Widget _buildLedGlow(Color color, bool appOk, bool devOk, double scale) {
+  Widget _buildLedGlow(
+    Color color,
+    bool appOk,
+    bool devOk,
+    double scale,
+    bool animationsEnabled,
+  ) {
     return Positioned(
       child:
           Container(
@@ -234,7 +257,10 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                   ],
                 ),
               )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .animate(
+                onPlay: (c) => c.repeat(reverse: true),
+                autoPlay: animationsEnabled,
+              )
               .scale(
                 begin: const Offset(0.95, 0.95),
                 end: const Offset(1.05, 1.05),
@@ -245,7 +271,11 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     );
   }
 
-  Widget _buildStatusIndicator(Color color, double scale) {
+  Widget _buildStatusIndicator(
+    Color color,
+    double scale,
+    bool animationsEnabled,
+  ) {
     return Container(
           width: (5.w * scale).toDouble(),
           height: (5.w * scale).toDouble(),
@@ -261,7 +291,10 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
             ],
           ),
         )
-        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .animate(
+          onPlay: (c) => c.repeat(reverse: true),
+          autoPlay: animationsEnabled,
+        )
         .fade(begin: 0.3, end: 1.0, duration: 800.ms);
   }
 
@@ -270,6 +303,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     ThemeData theme,
     double pScale,
     double fScale,
+    bool animationsEnabled,
   ) {
     return Container(
       padding: EdgeInsets.all((4.w * pScale).toDouble()),

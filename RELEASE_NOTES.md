@@ -1,4 +1,28 @@
-# 🌌 NEBULA CORE — Version 1.2.0+17
+# 🌌 NEBULA CORE — Version 1.2.0+20
+### *The "Industrial Power" Stability Update*
+
+This release represents a significant shift towards industrial-grade stability. We have refined the "Server Rack Edition" firmware as the primary stable branch and introduced mission-critical safety features.
+
+---
+
+## ⚡ Technical Manifest (V1.2.0+20)
+
+### 🧠 Industrial Stability Update
+- **Local Mode Suspension**: Local hotspot/direct mode has been temporarily disabled to ensure 100% stable execution via the **Server Rack Edition** Cloud architecture.
+- **Deadman Safety Engine**: High-end firmware safety that automatically trips relays to OFF if total network isolation is detected for more than 60 seconds.
+
+### 🎨 Visual & UI Overhaul
+- **7-Mode Neon Engine**: Action pills now feature 7 selectable animation modes (Sweep, Dot Runner, Comet, Pulse, Strobe, Rainbow, Auto-Change).
+- **Hyper-Premium Settings**: Redesigned Appearance and Help screens with dynamic glow intensity and refined typography.
+
+### 🔋 "Server Rack Edition" Firmware
+- Optimized FreeRTOS tasking for connectivity and telemetry.
+- Reduced CPU footprint by removing legacy web server logic.
+- Hardened AC Voltage sampling with smooth RMS filtering.
+
+---
+
+# 🌌 NEBULA CORE — Version 1.2.0+19
 ### *The "Hybrid Synergy" Architecture Update*
 
 We are proud to introduce a revolutionary update to the Nebula Core ecosystem. This release marks the transition from cloud-dependent control to a sophisticated **Hybrid Connection Engine**, giving you absolute sovereignty over your smart environment.

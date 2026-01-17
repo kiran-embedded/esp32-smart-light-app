@@ -41,6 +41,27 @@ class FirebaseSwitchService {
     });
   }
 
+  /// Listen reactively to hardware name changes
+  Stream<Map<String, String>> listenToHardwareNames({String? deviceId}) {
+    final id = deviceId ?? AppConstants.defaultDeviceId;
+    final path = '${AppConstants.firebaseDevicesPath}/$id/relayNames';
+
+    try {
+      _database.child(path).keepSynced(true);
+    } catch (_) {}
+
+    return _database.child(path).onValue.map((event) {
+      final data = event.snapshot.value;
+      if (data == null || data is! Map) return {};
+      final rawMap = Map<String, dynamic>.from(data);
+      final safeMap = <String, String>{};
+      rawMap.forEach((key, value) {
+        safeMap[key.toString()] = value.toString();
+      });
+      return safeMap;
+    });
+  }
+
   /// Write a command strictly to /devices/{deviceId}/commands/{relayKey}
   /// value: 0 = OFF, 1 = ON
   /// Uses update() to avoid overwriting other keys.

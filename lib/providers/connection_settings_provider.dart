@@ -2,9 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/persistence_service.dart';
 
 import 'switch_provider.dart';
-import '../services/local_network_service.dart';
 
-enum ConnectionMode { local, cloud }
+enum ConnectionMode { cloud }
 
 class ConnectionSettings {
   final ConnectionMode mode;
@@ -59,17 +58,6 @@ class ConnectionSettingsNotifier extends StateNotifier<ConnectionSettings> {
   Future<void> setMode(ConnectionMode mode) async {
     state = state.copyWith(mode: mode);
     _save();
-
-    // SYNC TO ESP32 (Strict Mode Enforcement)
-    final modeStr = (mode == ConnectionMode.cloud) ? 'CLOUD' : 'LOCAL';
-    final networkService = _ref.read(localNetworkServiceProvider);
-
-    // Trigger discovery immediately if switching to Local
-    if (mode == ConnectionMode.local) {
-      networkService.startSmartDiscovery();
-    }
-
-    networkService.setDeviceMode(modeStr);
   }
 
   Future<void> setLowDataMode(bool enabled) async {

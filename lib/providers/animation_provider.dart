@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/persistence_service.dart';
 
@@ -38,25 +37,30 @@ enum UiTransitionAnimation {
   cosmicEcho,
   liquidMorph,
   deepScan,
+  springRebounce,
 }
 
 // State class
 class AnimationSettings {
   final AppLaunchAnimation launchType;
   final UiTransitionAnimation uiType;
+  final bool animationsEnabled;
 
   const AnimationSettings({
     this.launchType = AppLaunchAnimation.neonPulse,
     this.uiType = UiTransitionAnimation.zeroLatency,
+    this.animationsEnabled = true,
   });
 
   AnimationSettings copyWith({
     AppLaunchAnimation? launchType,
     UiTransitionAnimation? uiType,
+    bool? animationsEnabled,
   }) {
     return AnimationSettings(
       launchType: launchType ?? this.launchType,
       uiType: uiType ?? this.uiType,
+      animationsEnabled: animationsEnabled ?? this.animationsEnabled,
     );
   }
 }
@@ -66,30 +70,40 @@ class AnimationSettingsNotifier extends StateNotifier<AnimationSettings> {
   AnimationSettingsNotifier({
     AppLaunchAnimation initialLaunch = AppLaunchAnimation.neonPulse,
     UiTransitionAnimation initialUi = UiTransitionAnimation.zeroLatency,
-  }) : super(AnimationSettings(launchType: initialLaunch, uiType: initialUi));
-
-  // Async load is no longer needed inside the notifier as we inject it
-  // But we keep the setter methods which save to persistence.
+    bool initialEnabled = true,
+  }) : super(
+         AnimationSettings(
+           launchType: initialLaunch,
+           uiType: initialUi,
+           animationsEnabled: initialEnabled,
+         ),
+       );
 
   void setLaunchAnimation(AppLaunchAnimation type) {
     state = state.copyWith(launchType: type);
-    PersistenceService.saveAnimationSettings(
-      state.launchType.index,
-      state.uiType.index,
-    );
+    _save();
   }
 
   void setUiAnimation(UiTransitionAnimation type) {
     state = state.copyWith(uiType: type);
+    _save();
+  }
+
+  void setAnimationsEnabled(bool enabled) {
+    state = state.copyWith(animationsEnabled: enabled);
+    _save();
+  }
+
+  void _save() {
     PersistenceService.saveAnimationSettings(
       state.launchType.index,
       state.uiType.index,
+      state.animationsEnabled,
     );
   }
 }
 
 final animationSettingsProvider =
     StateNotifierProvider<AnimationSettingsNotifier, AnimationSettings>((ref) {
-      // Default fallback if not overridden
       return AnimationSettingsNotifier();
     });

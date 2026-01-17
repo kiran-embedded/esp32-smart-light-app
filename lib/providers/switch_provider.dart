@@ -4,8 +4,7 @@ import '../models/switch_device.dart';
 import '../services/firebase_switch_service.dart';
 import '../services/persistence_service.dart';
 
-import '../services/local_network_service.dart';
-import '../providers/connection_settings_provider.dart';
+import '../providers/google_home_provider.dart';
 
 final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
@@ -33,73 +32,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     }
     _initTelemetryListener();
     forceRefreshHardwareNames();
-    _initLocalPolling();
-  }
-
-  void _initLocalPolling() {
-    // Poll every 3 seconds to reduce load and network contention
-    Timer.periodic(const Duration(seconds: 3), (timer) async {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-
-      // Don't poll if we have pending switches (User is interacting)
-      if (_pendingSwitches.isNotEmpty) return;
-
-      try {
-        final mode = _ref.read(connectionSettingsProvider).mode;
-        if (mode == ConnectionMode.local) {
-          final localService = _ref.read(localNetworkServiceProvider);
-          // We don't have the device ID handy in a clean way,
-          // but we can ask the service to fetch from *any* discovered device
-          // Or iterate known devices.
-          // For now, let's assume we want to pull status from the first available.
-          // The service's getDeviceStatus handles fallback logic.
-
-          // We can pass an empty ID or a dummy if we just want "the connected device"
-          // Let's modify service to allow fetching "any"
-
-          // Actually, let's just rely on what we have.
-          // We can try to get ALL statuses.
-
-          // Hack: Use a known ID if we have one or just rely on the service's fallback
-          final status = await localService.getDeviceStatus("any");
-          if (status != null) {
-            _updateFromLocalStatus(status);
-          }
-        }
-      } catch (_) {}
-    });
-  }
-
-  void _updateFromLocalStatus(Map<String, dynamic> status) {
-    final mode = _ref.read(connectionSettingsProvider).mode;
-    if (mode != ConnectionMode.local) return; // double check
-
-    // Convert local status (relay1: 1) to match telemetry format
-    final Map<String, dynamic> fakeTelemetry = {};
-    if (status.containsKey('voltage'))
-      fakeTelemetry['voltage'] = status['voltage'];
-    if (status.containsKey('relay1'))
-      fakeTelemetry['relay1'] = status['relay1'];
-    if (status.containsKey('relay2'))
-      fakeTelemetry['relay2'] = status['relay2'];
-    if (status.containsKey('relay3'))
-      fakeTelemetry['relay3'] = status['relay3'];
-    if (status.containsKey('relay4'))
-      fakeTelemetry['relay4'] = status['relay4'];
-
-    // Set last seen to now to show "Connected"
-    fakeTelemetry['lastSeen'] = DateTime.now().millisecondsSinceEpoch;
-
-    _lastTelemetry = fakeTelemetry;
-
-    // We need to bypass the _mergeAndEmit strict check for this local update
-    // So we'll duplicate the logic slightly or refactor _mergeAndEmit
-    // simpler: Just temporary override the check or pass a flag
-
-    _mergeAndEmit(forceLocal: true);
   }
 
   void _applyInitialNicknames(Map<String, String> nicknames) {
@@ -130,25 +62,28 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (hardwareNames.isNotEmpty) {
         final Map<String, SwitchDevice> updatedDevices = {
-          for (var device in state)
-            device.id: device.copyWith(
-              name: hardwareNames[device.id] ?? device.name,
-            ),
+          for (var device in state) device.id: device,
         };
 
-        for (final key in hardwareNames.keys) {
-          if (!updatedDevices.containsKey(key) && key.startsWith("relay")) {
+        hardwareNames.forEach((key, value) {
+          // VALIDATION: Ignore common "buggy" names or empty strings
+          if (value.toLowerCase().contains("node") || value.trim().isEmpty) {
+            return; // Skip this one
+          }
+
+          if (updatedDevices.containsKey(key)) {
+            updatedDevices[key] = updatedDevices[key]!.copyWith(name: value);
+          } else if (key.startsWith("relay")) {
             updatedDevices[key] = SwitchDevice(
               id: key,
-              name:
-                  hardwareNames[key] ?? 'Switch ${key.replaceAll("relay", "")}',
+              name: value,
               isActive: false,
               icon: 'power',
               gpioPin: 0,
               mqttTopic: 'generic/switch/$key',
             );
           }
-        }
+        });
 
         final List<SwitchDevice> newList = updatedDevices.values.toList();
         newList.sort((a, b) {
@@ -183,6 +118,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Map<String, dynamic> _lastTelemetry = {};
   Map<String, dynamic> _lastCommands = {};
   StreamSubscription<Map<String, dynamic>>? _commandsSubscription;
+  StreamSubscription<Map<String, String>>? _namesSubscription;
 
   void _initTelemetryListener() {
     try {
@@ -201,15 +137,64 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         _lastCommands = commands;
         _mergeAndEmit();
       });
+
+      _namesSubscription = firebaseService.listenToHardwareNames().listen((
+        names,
+      ) {
+        _updateHardwareNamesFromStream(names);
+      });
     } catch (e) {
       print('Error initializing telemetry sync: $e');
     }
   }
 
-  void _mergeAndEmit({bool forceLocal = false}) {
-    // STRICT MODE: If in Local Mode, IGNORE Firebase updates completely
-    final mode = _ref.read(connectionSettingsProvider).mode;
-    if (mode == ConnectionMode.local && !forceLocal) return;
+  void _updateHardwareNamesFromStream(Map<String, String> names) {
+    if (names.isEmpty) return;
+
+    final updatedDevices = {for (var device in state) device.id: device};
+    bool changed = false;
+
+    names.forEach((key, value) {
+      // Same validation as forceRefresh
+      if (value.toLowerCase().contains("node") || value.trim().isEmpty) {
+        return;
+      }
+
+      if (updatedDevices.containsKey(key)) {
+        if (updatedDevices[key]!.name != value) {
+          updatedDevices[key] = updatedDevices[key]!.copyWith(name: value);
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) {
+      state = updatedDevices.values.toList();
+      // No need to sort here if we trust the initial state order,
+      // but let's be safe.
+      state.sort((a, b) {
+        int? nA = int.tryParse(a.id.replaceAll(RegExp(r'[^0-9]'), ''));
+        int? nB = int.tryParse(b.id.replaceAll(RegExp(r'[^0-9]'), ''));
+        if (nA != null && nB != null) return nA.compareTo(nB);
+        return a.id.compareTo(b.id);
+      });
+    }
+  }
+
+  Future<void> _syncToCloud(SwitchDevice device) async {
+    try {
+      final googleHomeLinked =
+          _ref.read(googleHomeLinkedProvider).valueOrNull ?? false;
+      if (googleHomeLinked) {
+        await _ref.read(googleHomeServiceProvider).syncDeviceToCloud(device);
+      }
+    } catch (e) {
+      print('Google Home Sync Error: $e');
+    }
+  }
+
+  void _mergeAndEmit() {
+    // Cloud-only mode: No strictly enforced local mode override
 
     final telemetry = _lastTelemetry;
     double voltage = 0.0;
@@ -291,17 +276,27 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       }
 
       if (currentDeviceMap.containsKey(id)) {
-        return currentDeviceMap[id]!.copyWith(
+        final updated = currentDeviceMap[id]!.copyWith(
           isActive: newIsActive,
           isPending: isPending,
           isConnected: isConnected,
           voltage: voltage,
         );
+
+        // Sync to cloud if state changed physically and not pending
+        if (updated.isActive != currentDeviceMap[id]!.isActive && !isPending) {
+          _syncToCloud(updated);
+        }
+
+        return updated;
       } else {
-        return _createDefaultDevice(
+        final device = _createDefaultDevice(
           id,
           'Switch ${id.replaceAll("relay", "")}',
         ).copyWith(isActive: newIsActive, isConnected: isConnected);
+
+        _syncToCloud(device); // Sync new discovered devices
+        return device;
       }
     }).toList();
   }
@@ -322,10 +317,13 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Future<void> toggleSwitch(String id) async {
     final deviceIndex = state.indexWhere((d) => d.id == id);
     if (deviceIndex == -1) return;
-
     final device = state[deviceIndex];
-    final bool previousState = device.isActive;
-    final bool newState = !previousState;
+    await setSwitchState(id, !device.isActive);
+  }
+
+  Future<void> setSwitchState(String id, bool newState) async {
+    final deviceIndex = state.indexWhere((d) => d.id == id);
+    if (deviceIndex == -1) return;
 
     _pendingSwitches[id] = DateTime.now();
     state = [
@@ -333,47 +331,10 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         if (d.id == id) d.copyWith(isActive: newState, isPending: true) else d,
     ];
 
-    // Non-blocking fire and forget
-    final settingsMode = _ref.read(connectionSettingsProvider).mode;
+    _ref.read(firebaseSwitchServiceProvider).sendCommand(id, newState ? 1 : 0);
 
-    // Helpers to avoid code duplication
-    void sendLocal() {
-      int relayIndex = 0;
-      try {
-        final numStr = id.replaceAll(RegExp(r'[^0-9]'), '');
-        relayIndex = (int.tryParse(numStr) ?? 1) - 1;
-      } catch (_) {}
-
-      final localService = _ref.read(localNetworkServiceProvider);
-      // Removed force: true to prevent UI shutter on every tap
-      // Background discovery handles IP caching
-      if (!localService.hasDiscoveredDevices) {
-        localService.startSmartDiscovery();
-      }
-
-      final targetIp = localService.anyIp;
-      if (targetIp != null) {
-        localService.sendLocalCommand(targetIp, relayIndex, newState);
-      } else {
-        // Fallback: try hotspot IP if no device discovered yet
-        localService.sendLocalCommand("192.168.4.1", relayIndex, newState);
-      }
-    }
-
-    void sendCloud() {
-      _ref
-          .read(firebaseSwitchServiceProvider)
-          .sendCommand(id, newState ? 1 : 0);
-    }
-
-    // STRICT MODE LOGIC
-    // STRICT MODE LOGIC (NO AUTO)
-    if (settingsMode == ConnectionMode.local) {
-      sendLocal();
-    } else {
-      // Default to Cloud for safety
-      sendCloud();
-    }
+    // Immediate sync for execution intent (ensures Home Graph matches execution)
+    _syncToCloud(state[deviceIndex].copyWith(isActive: newState));
   }
 
   Future<void> updateNickname(String id, String newName) async {
@@ -406,6 +367,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   void dispose() {
     _telemetrySubscription?.cancel();
     _commandsSubscription?.cancel();
+    _namesSubscription?.cancel();
     super.dispose();
   }
 }

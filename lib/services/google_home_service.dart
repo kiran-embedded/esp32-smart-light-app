@@ -86,10 +86,9 @@ class GoogleHomeService {
       await batch.commit();
 
       // Option 2: Just mark as unlinked (preserve data)
-      // await _firestore
-      //     .collection('users')
-      //     .doc(user.uid)
-      //     .update({'googleHomeLinked': false});
+      await _firestore.collection('users').doc(user.uid).update({
+        'googleHomeLinked': false,
+      });
     } catch (e) {
       throw Exception('Failed to unlink Google Home: $e');
     }

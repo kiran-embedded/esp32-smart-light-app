@@ -1,7 +1,7 @@
 {
-  "version": "1.2.0+17",
+  "version": "1.2.0+20",
   "download_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/app-release.apk",
-  "release_notes": "Performance Optimization: Instant local response, persistent HTTP, and reduced UI friction.",
+  "release_notes": "Industrial Stability: Server Rack Edition firmware, 7 Neon animation modes, and industrial-grade safety switch.",
   "ota_version": "1.2.0",
   "ota_url": "https://github.com/kiran-embedded/esp32-smart-light-app/releases/latest/download/firmware.bin"
 }

@@ -2,24 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../providers/connection_settings_provider.dart';
 
 class ConnectionIndicator extends ConsumerWidget {
   const ConnectionIndicator({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(connectionSettingsProvider);
-
     String label = 'CLOUD';
     Color color = const Color(0xFF00C2FF); // Sky Blue
     IconData icon = Icons.cloud_queue_rounded;
-
-    if (settings.mode == ConnectionMode.local) {
-      label = 'LOCAL';
-      color = const Color(0xFF00FFC2); // Aqua
-      icon = Icons.wifi_tethering_rounded;
-    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

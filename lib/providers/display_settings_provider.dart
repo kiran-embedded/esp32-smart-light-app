@@ -3,19 +3,40 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum DisplaySize { small, medium, large }
 
+enum NeonAnimationMode {
+  sweep,
+  dotRunner,
+  comet,
+  pulse,
+  strobe,
+  rainbow,
+  autoChange,
+}
+
 class DisplaySettings {
   final DisplaySize displaySize;
   final double fontScale; // 0.0 to 1.0
+  final double glowIntensity; // 0.0 to 1.0
+  final NeonAnimationMode neonAnimationMode;
 
   DisplaySettings({
     this.displaySize = DisplaySize.medium,
-    this.fontScale = 0.5, // Default middle
+    this.fontScale = 1.0, // Default scale
+    this.glowIntensity = 0.5, // Default intensity
+    this.neonAnimationMode = NeonAnimationMode.sweep,
   });
 
-  DisplaySettings copyWith({DisplaySize? displaySize, double? fontScale}) {
+  DisplaySettings copyWith({
+    DisplaySize? displaySize,
+    double? fontScale,
+    double? glowIntensity,
+    NeonAnimationMode? neonAnimationMode,
+  }) {
     return DisplaySettings(
       displaySize: displaySize ?? this.displaySize,
       fontScale: fontScale ?? this.fontScale,
+      glowIntensity: glowIntensity ?? this.glowIntensity,
+      neonAnimationMode: neonAnimationMode ?? this.neonAnimationMode,
     );
   }
 
@@ -31,10 +52,8 @@ class DisplaySettings {
     }
   }
 
-  // Get font size multiplier (0.0 = smallest, 1.0 = largest)
-  double get fontSizeMultiplier {
-    return 0.7 + (fontScale * 0.6); // Range: 0.7 to 1.3
-  }
+  // Get font size multiplier
+  double get fontSizeMultiplier => fontScale;
 
   // Compatibility aliases for v1.2.0+22 widgets
   double get pillScale => displayScale;
@@ -54,11 +73,18 @@ class DisplaySettingsNotifier extends StateNotifier<DisplaySettings> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final sizeIndex = prefs.getInt('display_size') ?? 1; // Default medium
-    final fontScale = prefs.getDouble('font_scale') ?? 0.5;
+    final fontScale = prefs.getDouble('font_scale') ?? 1.0;
+    final glowIntensity = prefs.getDouble('glow_intensity') ?? 0.5;
+    final neonModeName = prefs.getString('neon_animation_mode') ?? 'sweep';
 
     state = DisplaySettings(
       displaySize: DisplaySize.values[sizeIndex.clamp(0, 2)],
       fontScale: fontScale.clamp(0.0, 1.0),
+      glowIntensity: glowIntensity.clamp(0.0, 1.0),
+      neonAnimationMode: NeonAnimationMode.values.firstWhere(
+        (e) => e.name == neonModeName,
+        orElse: () => NeonAnimationMode.sweep,
+      ),
     );
   }
 
@@ -72,5 +98,17 @@ class DisplaySettingsNotifier extends StateNotifier<DisplaySettings> {
     state = state.copyWith(fontScale: scale.clamp(0.0, 1.0));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('font_scale', state.fontScale);
+  }
+
+  Future<void> setGlowIntensity(double intensity) async {
+    state = state.copyWith(glowIntensity: intensity.clamp(0.0, 1.0));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('glow_intensity', state.glowIntensity);
+  }
+
+  Future<void> setNeonAnimationMode(NeonAnimationMode mode) async {
+    state = state.copyWith(neonAnimationMode: mode);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('neon_animation_mode', mode.name);
   }
 }
