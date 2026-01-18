@@ -1,3 +1,23 @@
+# 🌌 NEBULA CORE — Version 1.2.0+21
+### *The "High-Frequency Performance" Update*
+
+This release focuses on maximizing UI hardware acceleration. We've optimized the Settings architecture to target a constant 90FPS, ensuring perfectly smooth interactions even on high-refresh rate displays.
+
+---
+
+## ⚡ Technical Manifest (V1.2.0+21)
+
+### 🚀 Performance Mastery
+- **Constant 90FPS Settings**: Redesigned the Settings screen with `RepaintBoundary` isolation and localized `Consumer` rebuilds. Input latency is now near-zero.
+- **Picker Refinement**: Optimized Theme, Background, and Switch Style pickers by removing redundant animations and simplifying layout trees.
+- **Shadow Purge**: Removed animated GPU-heavy shadows in favor of high-performance color transitions.
+
+### 🧠 Functional Polish
+- **Production-Ready Optimization**: The Cinematic Optimization sequence now performs real Auth validation and Hardware Sync checks.
+- **AI Assistant Tuning**: Optimized assistant response handling and state management for faster voice control.
+
+---
+
 # 🌌 NEBULA CORE — Version 1.2.0+20
 ### *The "Industrial Power" Stability Update*
 
