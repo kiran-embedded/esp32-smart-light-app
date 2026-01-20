@@ -1,47 +1,35 @@
-# Nebula Core v1.2.0+26 (INTUITION & FLUIDITY)
+# Nebula Core v1.2.0+27 (OLED MASTERY)
 
 **Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-26`
-**Update Size:** MAJOR INTERACTION & OPTIMIZATION
-**Priority:** RECOMMENDED
+**Build ID:** `NC-ANDROID-REL-27`
+**Update Size:** UI OVEDRHAUL & CRITICAL FIXES
+**Priority:** MANDATORY
 
 ---
 
-## 🚀 WHAT'S NEW: THE INTUITION UPDATE
-This release transforms how you interact with your home automation by introducing contextual controls and extreme performance optimizations for high-refresh-rate displays.
+## 🚀 WHAT'S NEW: THE OLED UPDATE
+This update brings a complete visual overhaul to the Scheduler Hub, specifically designed for OLED displays, and restores critical functionality.
 
-### 🧠 Contextual Scheduling (Long-Press)
-*   **Intuitive Entry**: Removed the global clock icon from the main screen. Now, simply **long-press** any switch tile to open its specific scheduling hub.
-*   **Smart Pre-selection**: When you open the scheduler via long-press, the corresponding switch is automatically pre-selected in the "Add Schedule" flow, saving you time and taps.
+### 🖤 "Super Smooth" OLED Black UI
+*   **True Black Background**: The scheduling hub now uses a pure black (`#000000`) background for infinite contrast.
+*   **Performance Boost**: Removed all heavy frosted glass blurs, resulting in rock-solid **90FPS** scrolling performance.
+*   **Premium Detailing**: New neon red accents and high-contrast borders replace the old glass effect.
 
-### 🕒 12-Hour Clock Support
-*   **Format Upgrade**: All time displays in the Automation Hub now follow the standard 12-hour format (AM/PM).
-*   **Seamless Selection**: The time picker has been updated to support the 12-hour format for a more natural scheduling experience.
+### 🏷️ Restore: Rename Functionality
+*   **Edit Directly**: You can now rename any switch directly from the Hub header.
+*   **Cloud Sync**: Renaming immediately syncs with the Firebase backend to update across all devices.
 
-### ⚡ 90FPS Fluidity & Breathing UI
-*   **Buttery Smooth Scrolling**: Integrated `RepaintBoundary` and optimized `ListView` caching to ensure zero-lag scrolling at 90fps, even with multiple active schedules.
-*   **Breathing Animations**:
-    *   **Hub Indicator**: A subtle, pulsing neon glow in the header indicates active automation.
-    *   **Breathing Button**: The "Create New Schedule" button now features a continuous LED breathing pulse and moving shimmer effect.
-    *   **Glassmorphism Polish**: Enhanced Frosted Glass effects across the entire scheduler interface.
-
-### 🛠️ Core Improvements
-*   **Code Optimization**: Removed legacy unused widgets and simplified the interaction logic in the Control View.
-*   **Resource Management**: Minimized background repaints to further improve battery efficiency.
-
----
-
-## 📸 THE NEW STANDARD
-The Nebula Core UI now feels more alive than ever, responding to every gesture with fluid transitions and vibrant, theme-aware feedback.
+### 🛡️ Critical Fixes
+*   **Crash Resolution**: Fixed the **"Nebula Core stopping"** crash issue by hardening the background `NativeAlarmService`.
+*   **WakeLock Optimization**: Improved background execution reliability.
 
 ---
 
 ## 📋 TECHNICAL CHANGELOG
-*   `[UI]` **Interaction**: Implemented long-press trigger on `SwitchTile` for scheduler entry.
-*   `[UI]` **Scheduler**: Updated `_buildPremiumScheduleItem` and `_AddScheduleSheet` to 12-hour format.
-*   `[UI]` **Performance**: Strategic `RepaintBoundary` placement for high-refresh-rate optimization.
-*   `[UI]` **Animation**: Added custom breathing and shimmer loops using `flutter_animate`.
-*   `[CORE]` **Versioning**: Bumped version to `v1.2.0+26`.
+*   `[UI]` **Overhaul**: Switched Scheduler UI to non-blurred OLED Black theme.
+*   `[FEAT]` **Restore**: Re-implemented switch renaming logic with `SwitchDevicesNotifier` sync.
+*   `[FIX]` **Crash**: Wrapped `NativeAlarmService.onStartCommand` in try-catch to prevent ANR/Crash.
+*   `[CORE]` **Versioning**: Bumped version to `v1.2.0+27`.
 
 ---
 

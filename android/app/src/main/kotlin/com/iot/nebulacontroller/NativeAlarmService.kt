@@ -25,36 +25,42 @@ class NativeAlarmService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val node = intent?.getStringExtra("targetNode")
-        val state = intent?.getBooleanExtra("targetState", false) ?: false
-        val deviceId = intent?.getStringExtra("deviceId") ?: "esp32_001"
-        val isGeofence = intent?.getBooleanExtra("isGeofence", false) ?: false
-        val retryCount = intent?.getIntExtra("retryCount", 0) ?: 0
+        try {
+            val node = intent?.getStringExtra("targetNode")
+            val state = intent?.getBooleanExtra("targetState", false) ?: false
+            val deviceId = intent?.getStringExtra("deviceId") ?: "esp32_001"
+            val isGeofence = intent?.getBooleanExtra("isGeofence", false) ?: false
+            val retryCount = intent?.getIntExtra("retryCount", 0) ?: 0
 
-        if (node == null) {
-            stopSelf()
-            return START_NOT_STICKY
-        }
-
-        startForegroundServiceNotification()
-
-        // Acquire WakeLock immediately
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nebula:NativeServiceWakelock")
-        wakeLock?.acquire(10 * 1000L) // 10s strict timeout
-        Log.d("NativeService", "WakeLock Acquired (10s limit)")
-
-        // 4. Network Readiness Check
-        if (!isNetworkAvailable()) {
-            Log.w("NativeService", "No Network! Retry Count: $retryCount")
-            if (retryCount < 2) {
-                scheduleRetry(node, state, deviceId, isGeofence, retryCount + 1)
+            if (node == null) {
+                stopSelf()
+                return START_NOT_STICKY
             }
-            stopSelf()
-            return START_NOT_STICKY
-        }
 
-        performUpdate(deviceId, node, state)
+            startForegroundServiceNotification()
+
+            // Acquire WakeLock immediately
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nebula:NativeServiceWakelock")
+            wakeLock?.acquire(10 * 1000L) // 10s strict timeout
+            Log.d("NativeService", "WakeLock Acquired (10s limit)")
+
+            // 4. Network Readiness Check
+            if (!isNetworkAvailable()) {
+                Log.w("NativeService", "No Network! Retry Count: $retryCount")
+                if (retryCount < 2) {
+                    scheduleRetry(node, state, deviceId, isGeofence, retryCount + 1)
+                }
+                stopSelf()
+                return START_NOT_STICKY
+            }
+
+            performUpdate(deviceId, node, state)
+
+        } catch (e: Exception) {
+            Log.e("NativeService", "CRITICAL ERROR: ${e.message}", e)
+            stopSelf()
+        }
 
         return START_NOT_STICKY
     }

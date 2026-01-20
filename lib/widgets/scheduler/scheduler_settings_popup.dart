@@ -13,7 +13,7 @@ import '../../services/scheduler_service.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/animation_provider.dart';
-import '../common/frosted_glass.dart';
+// import '../common/frosted_glass.dart'; // Removed
 import '../common/pixel_led_border.dart';
 
 class SchedulerSettingsPopup extends ConsumerStatefulWidget {
@@ -66,12 +66,12 @@ class _SchedulerSettingsPopupState
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
-          color: const Color(0xFF0B0F14), // High-Performance Neon Base
+          color: const Color(0xFF000000), // Pure OLED Black
           borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
-          border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
+          border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black,
               blurRadius: 40,
               spreadRadius: 5,
             ),
@@ -192,6 +192,15 @@ class _SchedulerSettingsPopupState
           ),
           Row(
             children: [
+              // Rename Button (Restored)
+              IconButton(
+                icon: const Icon(
+                  Icons.edit_rounded,
+                  color: Colors.white70,
+                  size: 22,
+                ),
+                onPressed: _showRenameDialog,
+              ),
               IconButton(
                     icon: const Icon(
                       Icons.help_outline_rounded,
@@ -253,6 +262,70 @@ class _SchedulerSettingsPopupState
     );
   }
 
+  void _showRenameDialog() {
+    HapticService.selection();
+    if (widget.initialDeviceId == null) return;
+
+    final deviceId = widget.initialDeviceId!;
+    final switches = ref.read(switchDevicesProvider);
+    final device = switches.firstWhere(
+      (d) => d.id == deviceId,
+      orElse: () => switches.first,
+    );
+    final controller = TextEditingController(text: device.name);
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: const Color(0xFF111111),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: Colors.white12),
+            ),
+            title: Text(
+              'Rename Device',
+              style: GoogleFonts.outfit(color: Colors.white),
+            ),
+            content: TextField(
+              controller: controller,
+              style: GoogleFonts.outfit(color: Colors.white),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                hintText: 'Enter new name',
+                hintStyle: TextStyle(color: Colors.white38),
+              ),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  if (controller.text.isNotEmpty) {
+                    await ref
+                        .read(switchDevicesProvider.notifier)
+                        .updateHardwareName(deviceId, controller.text.trim());
+                    if (mounted) Navigator.pop(context);
+                  }
+                },
+                child: const Text(
+                  'Save',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
   Widget _buildSchedulesList() {
     final schedules = ref.watch(switchScheduleProvider);
     if (schedules.isEmpty) {
@@ -289,9 +362,6 @@ class _SchedulerSettingsPopupState
     final theme = Theme.of(context);
     final primaryColor = theme.primaryColor;
 
-    // Copying _PremiumGroupedContainer style logic
-    final blurEnabled = ref.watch(switchSettingsProvider).blurEffectsEnabled;
-
     // 12-hour format logic
     final hourInt = s.hour > 12 ? s.hour - 12 : (s.hour == 0 ? 12 : s.hour);
     final amPm = s.hour >= 12 ? 'PM' : 'AM';
@@ -306,16 +376,18 @@ class _SchedulerSettingsPopupState
             : () => _showAddScheduleDialog(existingSchedule: s),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: FrostedGlass(
-            radius: BorderRadius.circular(24),
-            blur: blurEnabled ? 15 : 0,
-            opacity: isSelected ? 0.25 : 0.12,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? primaryColor.withOpacity(0.15)
+                : const Color(0xFF0A0A0A), // Solid OLED dark
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: isSelected ? primaryColor : Colors.white.withOpacity(0.08),
+              color: isSelected ? primaryColor : Colors.white.withOpacity(0.12),
               width: 1.5,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
+          ),
+          child: Row(
               children: [
                 // Icon Container
                 Container(
