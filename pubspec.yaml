@@ -2,7 +2,7 @@ name: nebula_core
 description: "Ultra-Advanced Smart Switch Control App - NEBULA CORE"
 publish_to: 'none'
 
-version: 1.2.0+21
+version: 1.2.0+22
 
 environment:
   sdk: ^3.10.4
@@ -45,11 +45,11 @@ dependencies:
   audioplayers: ^6.0.0
 
   # Utilities
-  shared_preferences: ^2.3.2
-  intl: ^0.19.0
-  path_provider: ^2.1.4
-  permission_handler: ^11.3.1
-  geolocator: ^12.0.0
+  shared_preferences: ^2.5.4
+  intl: ^0.20.2
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  geolocator: ^14.0.2
   file_picker: ^8.1.2
   package_info_plus: ^9.0.0
 
@@ -62,10 +62,14 @@ dependencies:
   flutter_displaymode: ^0.7.0
   flutter_soloud: ^3.4.7
   sensors_plus: ^7.0.0
-  android_alarm_manager_plus: ^5.0.0
   network_info_plus: ^6.1.0
   multicast_dns: ^0.3.2
   flutter_blue_plus: ^1.31.0
+  flutter_local_notifications: ^19.5.0
+  geofence_service: ^6.0.0+1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  android_intent_plus: ^6.0.0
 
 dev_dependencies:
   flutter_test:

@@ -7,6 +7,7 @@ class SwitchSchedule {
   final int minute;
   final List<int> days; // 1 = Mon, 7 = Sun
   final bool targetState;
+  final String targetNode; // 'relay1', 'relay2', 'relay3', 'relay4', 'ecoMode'
   final bool isEnabled;
 
   SwitchSchedule({
@@ -16,6 +17,7 @@ class SwitchSchedule {
     required this.minute,
     required this.days,
     required this.targetState,
+    this.targetNode = 'relay1',
     this.isEnabled = true,
   });
 
@@ -26,6 +28,7 @@ class SwitchSchedule {
     int? minute,
     List<int>? days,
     bool? targetState,
+    String? targetNode,
     bool? isEnabled,
   }) {
     return SwitchSchedule(
@@ -35,6 +38,7 @@ class SwitchSchedule {
       minute: minute ?? this.minute,
       days: days ?? this.days,
       targetState: targetState ?? this.targetState,
+      targetNode: targetNode ?? this.targetNode,
       isEnabled: isEnabled ?? this.isEnabled,
     );
   }
@@ -47,6 +51,7 @@ class SwitchSchedule {
       'minute': minute,
       'days': days,
       'targetState': targetState,
+      'targetNode': targetNode,
       'isEnabled': isEnabled,
     };
   }
@@ -59,6 +64,10 @@ class SwitchSchedule {
       minute: (json['minute'] as num).toInt(),
       days: List<int>.from(json['days'] ?? []),
       targetState: json['targetState'] as bool,
+      targetNode:
+          json['targetNode'] as String? ??
+          json['relayId'] as String? ??
+          'relay1',
       isEnabled: json['isEnabled'] as bool? ?? true,
     );
   }

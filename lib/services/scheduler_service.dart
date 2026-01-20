@@ -1,9 +1,11 @@
 import 'dart:developer';
-import 'package:flutter/material.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'dart:io';
+
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import '../core/constants/app_constants.dart';
 import '../models/switch_schedule.dart';
 import 'persistence_service.dart';
@@ -11,9 +13,82 @@ import 'persistence_service.dart';
 class SchedulerService {
   static const int _baseAlarmId = 1000;
 
-  /// Initialize the Alarm Manager service
+  static const _platform = MethodChannel(
+    'com.iot.nebulacontroller/native_scheduler',
+  );
+
+  /// Initialize the Scheduler service
   static Future<void> init() async {
-    await AndroidAlarmManager.initialize();
+    // No specific initialization needed for native calls,
+    // but we re-register to be safe.
+    await reRegisterAll();
+  }
+
+  static Future<bool> requestPermissions() async {
+    // 1. Exact Alarms (Android 12+) - MANUALLY OPEN SYSTEM SETTINGS
+    if (Platform.isAndroid) {
+      final status = await Permission.scheduleExactAlarm.status;
+      log('SCHEDULER: Exact Alarm Status: ${status.name}');
+      if (status != PermissionStatus.granted) {
+        log(
+          'SCHEDULER: Missing Exact Alarm permission. Launching System Intent...',
+        );
+        try {
+          // ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+          const intent = AndroidIntent(
+            action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
+            data: 'package:com.iot.nebulacontroller',
+            flags: [Flag.FLAG_ACTIVITY_NEW_TASK],
+          );
+          await intent.launch();
+        } catch (e) {
+          log('SCHEDULER: Failed to launch intent: $e');
+          // Fallback to standard request
+          await Permission.scheduleExactAlarm.request();
+        }
+      }
+    }
+
+    // 2. Notifications (Android 13+) - So user knows it fired
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+
+    // 3. Battery Optimizations (Optional - Removed for Play Store Safety)
+
+    return true;
+  }
+
+  static Future<PermissionStatus> checkExactAlarmPermission() async {
+    if (!Platform.isAndroid) return PermissionStatus.granted;
+    return await Permission.scheduleExactAlarm.status;
+  }
+
+  static Future<void> openAlarmSettings() async {
+    if (!Platform.isAndroid) return;
+    try {
+      const intent = AndroidIntent(
+        action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
+        data: 'package:com.iot.nebulacontroller',
+        flags: [Flag.FLAG_ACTIVITY_NEW_TASK],
+      );
+      await intent.launch();
+    } catch (e) {
+      log('SCHEDULER: Failed to launch manual intent: $e');
+      await openAppSettings();
+    }
+  }
+
+  /// Re-register all enabled schedules (useful on boot/startup)
+  static Future<void> reRegisterAll() async {
+    final savedSchedules = await PersistenceService.getSchedules();
+    for (var data in savedSchedules) {
+      final schedule = SwitchSchedule.fromJson(data);
+      if (schedule.isEnabled) {
+        await scheduleEvent(schedule);
+      }
+    }
+    log('Re-registered ${savedSchedules.length} schedules on startup');
   }
 
   /// Schedule an alarm for a specific switch event
@@ -30,97 +105,48 @@ class SchedulerService {
     // Use hashCode of ID as alarm ID to be unique & reproducible
     final alarmId = schedule.id.hashCode;
 
-    // Retrieve Custom Firebase Config (if any)
-    final fbConfig = await PersistenceService.getFirebaseConfig();
+    log('Scheduling alarm #$alarmId for ${schedule.targetNode} at $nextTime');
 
-    log('Scheduling alarm #$alarmId for ${schedule.relayId} at $nextTime');
+    // Pass data to native Android scheduler
+    // The native receiver will handle Firebase logic directly.
+    try {
+      final String? deviceId = await PersistenceService.getDeviceId();
 
-    await AndroidAlarmManager.oneShotAt(
-      nextTime,
-      alarmId,
-      _alarmCallback,
-      exact: true,
-      wakeup: true,
-      params: {
-        'relayId': schedule.relayId,
+      await _platform.invokeMethod('schedule', {
+        'id': alarmId,
+        'time': nextTime.millisecondsSinceEpoch,
+        'targetNode': schedule.targetNode,
         'targetState': schedule.targetState,
-        'firebaseConfig': fbConfig, // Pass config to isolate
-      },
-    );
+        'deviceId': deviceId ?? AppConstants.defaultDeviceId,
+      });
+      log('SCHEDULER: Native Alarm Set Success');
+    } catch (e) {
+      log('SCHEDULER: Native Scheduling Failed: $e');
+    }
   }
 
   static Future<void> cancelEvent(String scheduleId) async {
     final alarmId = scheduleId.hashCode;
-    await AndroidAlarmManager.cancel(alarmId);
+    try {
+      await _platform.invokeMethod('cancel', {'id': alarmId});
+    } catch (e) {
+      log('SCHEDULER: Failed to cancel native alarm: $e');
+    }
   }
 
-  /// The static callback that runs in the background isolate
-  @pragma('vm:entry-point')
-  static void _alarmCallback(int id, Map<String, dynamic> params) async {
-    // CRITICAL: Ensure binding is initialized in the background isolate
-    WidgetsFlutterBinding.ensureInitialized();
-    log('Alarm #$id fired! Params: $params');
-
+  /// Execute an immediate command using the Native Foreground Service
+  /// Used by Geofencing and other critical triggers.
+  static Future<void> executeNativeCommand(String node, bool state) async {
     try {
-      if (Firebase.apps.isEmpty) {
-        // We MUST re-initialize everything in the background isolate
-        try {
-          final config = params['firebaseConfig'] as Map<dynamic, dynamic>?;
-
-          if (config != null) {
-            // Custom Initialization
-            await Firebase.initializeApp(
-              options: FirebaseOptions(
-                apiKey: config['apiKey'],
-                appId: config['appId'],
-                messagingSenderId: config['messagingSenderId'],
-                projectId: config['projectId'],
-                databaseURL: config['databaseURL'],
-              ),
-            );
-          } else {
-            // Default Initialization (fallback)
-            await Firebase.initializeApp();
-          }
-        } catch (e) {
-          log('Background Firebase init failed: $e');
-        }
-      }
-
-      // 2. Authenticate (Mimic User Action / "Key Press")
-      // Without this, database writes fail if rules require auth != null
-      final auth = FirebaseAuth.instance;
-      if (auth.currentUser == null) {
-        try {
-          await auth.signInAnonymously();
-          log(
-            'Background Auth: Signed in anonymously as ${auth.currentUser?.uid}',
-          );
-        } catch (e) {
-          log('Background Auth Error: $e');
-        }
-      }
-
-      final String relayId = params['relayId'];
-      final bool targetState = params['targetState'];
-
-      // Write to Firebase
-      // Path: devices/{deviceId}/commands/{relayId}
-      // Protocol: 0 = ON (Active), 1 = OFF (Inactive) - Active Low
-      final ref = FirebaseDatabase.instance.ref();
-      final path =
-          '${AppConstants.firebaseDevicesPath}/${AppConstants.defaultDeviceId}/commands';
-
-      // Convert boolean active state to Active-Low integer
-      final int commandValue = targetState ? 0 : 1;
-
-      // Update the specific relay key under commands
-      await ref.child(path).update({relayId: commandValue});
-      log(
-        'Successfully updated $relayId to $targetState (Command: $commandValue)',
-      );
+      final String? deviceId = await PersistenceService.getDeviceId();
+      await _platform.invokeMethod('executeAction', {
+        'targetNode': node,
+        'targetState': state,
+        'deviceId': deviceId ?? AppConstants.defaultDeviceId,
+      });
+      log('SCHEDULER: Native Action Executed -> $node: $state');
     } catch (e) {
-      log('SCHEDULER ERROR: $e');
+      log('SCHEDULER: Native Action Failed: $e');
     }
   }
 
@@ -134,17 +160,12 @@ class SchedulerService {
       schedule.minute,
     );
 
-    // If time has passed today, move to tomorrow
     if (next.isBefore(now)) {
       next = next.add(const Duration(days: 1));
     }
 
-    // If specific days are selected, find the next matching day
-    // Days format: 1=Mon, ..., 7=Sun
     if (schedule.days.isNotEmpty) {
-      // Limit search to 14 days to prevent infinite loops
       for (int i = 0; i < 14; i++) {
-        // weekday is 1-7 (Mon-Sun)
         if (schedule.days.contains(next.weekday)) {
           return next;
         }
@@ -153,7 +174,6 @@ class SchedulerService {
       return null;
     }
 
-    // If no days specified (daily), just return the calculated next time
     return next;
   }
 }

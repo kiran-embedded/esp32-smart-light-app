@@ -1029,6 +1029,43 @@ class AppTheme {
     bodyMedium: TextStyle(color: Color(0xFF424242), fontSize: 14),
     bodySmall: TextStyle(color: Color(0xFF757575), fontSize: 12),
   );
+
+  static double getThemeGlowIntensity(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.darkNeon:
+      case AppThemeMode.cyberNeon:
+      case AppThemeMode.neonTokyo:
+      case AppThemeMode.synthwave:
+      case AppThemeMode.solarFlare:
+      case AppThemeMode.magmaCore:
+      case AppThemeMode.cyberBloom:
+        return 1.2;
+      case AppThemeMode.amoledCyberpunk:
+      case AppThemeMode.darkSpace:
+      case AppThemeMode.phantomVelvet:
+      case AppThemeMode.crimsonVampire:
+        return 1.0;
+      case AppThemeMode.raindrop:
+      case AppThemeMode.deepOcean:
+      case AppThemeMode.starlightEcho:
+      case AppThemeMode.electricTundra:
+        return 0.7;
+      case AppThemeMode.softDark:
+      case AppThemeMode.kaliLinux:
+      case AppThemeMode.nothingDot:
+      case AppThemeMode.nanoCatalyst:
+      case AppThemeMode.prismFractal:
+      case AppThemeMode.voidRift:
+      case AppThemeMode.aeroStream:
+        return 0.4;
+      case AppThemeMode.light:
+      case AppThemeMode.liquidGlass:
+      case AppThemeMode.appleGlass:
+        return 0.2;
+      default:
+        return 0.5;
+    }
+  }
 }
 
 // Glassmorphic decoration helper

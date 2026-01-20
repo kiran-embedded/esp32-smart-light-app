@@ -101,6 +101,21 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
     await _database.child(path).remove();
   }
 
+  Future<void> deleteSchedules(List<String> ids) async {
+    // Optimistic Update
+    state = state.where((s) => !ids.contains(s.id)).toList();
+    PersistenceService.saveSchedules(state.map((e) => e.toJson()).toList());
+
+    for (final id in ids) {
+      // Cancel Background Job
+      await SchedulerService.cancelEvent(id);
+
+      final path =
+          '${AppConstants.firebaseDevicesPath}/${AppConstants.defaultDeviceId}/schedules/$id';
+      await _database.child(path).remove();
+    }
+  }
+
   @override
   void dispose() {
     _subscription?.cancel();

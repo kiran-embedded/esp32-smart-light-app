@@ -16,11 +16,12 @@ import 'providers/auth_provider.dart';
 import 'screens/main/main_screen.dart';
 import 'services/persistence_service.dart';
 import 'services/scheduler_service.dart';
+import 'services/notification_service.dart';
 import 'services/haptic_service.dart';
 import 'services/ble_service.dart';
+import 'services/geofence_service.dart';
 import 'providers/switch_provider.dart';
 import 'services/firebase_switch_service.dart';
-import 'services/connectivity_service.dart';
 import 'providers/immersive_provider.dart';
 import 'providers/animation_provider.dart';
 import 'providers/sound_settings_provider.dart';
@@ -60,8 +61,14 @@ void main() async {
     debugPrint("Firebase Init Error: $e");
   }
 
-  // Initialize Background Scheduler
   await SchedulerService.init();
+  await NotificationService.init();
+  await NebulaGeofenceService.init();
+
+  // Request critical permissions on startup
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    SchedulerService.requestPermissions();
+  });
 
   // Kick off background initializations without awaiting (Zero-Block)
   _initBackgroundSystems(prefs);

@@ -114,6 +114,8 @@ class PersistenceService {
 
   // Schedule Persistence
   static const String _schedulesKey = 'switch_schedules';
+  static const String _deviceIdKey = 'esp32_device_id';
+  static const String _geofenceKey = 'geofence_rules';
 
   static Future<void> saveSchedules(
     List<Map<String, dynamic>> schedules,
@@ -125,6 +127,36 @@ class PersistenceService {
   static Future<List<Map<String, dynamic>>> getSchedules() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString(_schedulesKey);
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<void> saveDeviceId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_deviceIdKey, id);
+  }
+
+  static Future<String?> getDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_deviceIdKey);
+  }
+
+  static Future<void> saveGeofenceRules(
+    List<Map<String, dynamic>> rules,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_geofenceKey, jsonEncode(rules));
+  }
+
+  static Future<List<Map<String, dynamic>>> getGeofenceRules() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_geofenceKey);
     if (data == null) return [];
 
     try {

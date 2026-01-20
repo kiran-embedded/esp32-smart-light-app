@@ -6,7 +6,18 @@ class AnimationEngine {
   // --- CURVES ---
 
   // iPhone-like: Fast start, slow ease out
-  static const Curve appleEase = Cubic(0.25, 0.1, 0.25, 1.0);
+  static const Curve appleEase = Cubic(0.23, 1.0, 0.32, 1.0);
+
+  // iOS Spring: Natural, no bounce, soft settle
+  static const Curve iosSpring = Cubic(
+    0.175,
+    0.885,
+    0.32,
+    1.1,
+  ); // Slightly bouncy but calm
+
+  // Interactive Smooth: Response to touch
+  static const Curve interactiveOut = Cubic(0.15, 0, 0, 1);
 
   // Butter: Smooth, consistent, no harsh stops
   static const Curve butter = Cubic(0.4, 0.0, 0.2, 1.0);

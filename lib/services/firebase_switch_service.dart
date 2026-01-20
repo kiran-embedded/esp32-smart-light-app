@@ -201,4 +201,21 @@ class FirebaseSwitchService {
       return false;
     }
   }
+
+  Future<void> applyLatencySettings(bool lowLatency) async {
+    final id = AppConstants.defaultDeviceId;
+    final telePath = '${AppConstants.firebaseDevicesPath}/$id/telemetry';
+    final cmdPath = '${AppConstants.firebaseDevicesPath}/$id/commands';
+
+    try {
+      if (lowLatency) {
+        // Force high priority sync
+        await _database.child(telePath).keepSynced(true);
+        await _database.child(cmdPath).keepSynced(true);
+      } else {
+        // Standard sync
+        await _database.child(telePath).keepSynced(true);
+      }
+    } catch (_) {}
+  }
 }

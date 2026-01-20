@@ -9,19 +9,23 @@ final switchSettingsProvider =
 class SwitchSettingsState {
   final bool dynamicBlending;
   final bool blurEffectsEnabled;
+  final bool lowLatencyMode;
 
   SwitchSettingsState({
     this.dynamicBlending = false,
     this.blurEffectsEnabled = true,
+    this.lowLatencyMode = false,
   });
 
   SwitchSettingsState copyWith({
     bool? dynamicBlending,
     bool? blurEffectsEnabled,
+    bool? lowLatencyMode,
   }) {
     return SwitchSettingsState(
       dynamicBlending: dynamicBlending ?? this.dynamicBlending,
       blurEffectsEnabled: blurEffectsEnabled ?? this.blurEffectsEnabled,
+      lowLatencyMode: lowLatencyMode ?? this.lowLatencyMode,
     );
   }
 }
@@ -35,7 +39,12 @@ class SwitchSettingsNotifier extends StateNotifier<SwitchSettingsState> {
     final prefs = await SharedPreferences.getInstance();
     final blending = prefs.getBool('dynamic_switch_blending') ?? false;
     final blur = prefs.getBool('blur_effects_enabled') ?? true;
-    state = state.copyWith(dynamicBlending: blending, blurEffectsEnabled: blur);
+    final latency = prefs.getBool('low_latency_mode') ?? false;
+    state = state.copyWith(
+      dynamicBlending: blending,
+      blurEffectsEnabled: blur,
+      lowLatencyMode: latency,
+    );
   }
 
   Future<void> setDynamicBlending(bool value) async {
@@ -48,5 +57,11 @@ class SwitchSettingsNotifier extends StateNotifier<SwitchSettingsState> {
     state = state.copyWith(blurEffectsEnabled: value);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('blur_effects_enabled', value);
+  }
+
+  Future<void> setLowLatencyMode(bool value) async {
+    state = state.copyWith(lowLatencyMode: value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('low_latency_mode', value);
   }
 }

@@ -174,15 +174,23 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     Color uniqueColor;
     final themePrimary = theme.colorScheme.primary;
     final themeSecondary = theme.colorScheme.secondary;
-    
+
     if (widget.device.id.toLowerCase().contains('relay1')) {
-      uniqueColor = Color.lerp(const Color(0xFF00FFFF), themePrimary, 0.3) ?? const Color(0xFF00FFFF);
+      uniqueColor =
+          Color.lerp(const Color(0xFF00FFFF), themePrimary, 0.3) ??
+          const Color(0xFF00FFFF);
     } else if (widget.device.id.toLowerCase().contains('relay2')) {
-      uniqueColor = Color.lerp(const Color(0xFFFF00FF), themePrimary, 0.3) ?? const Color(0xFFFF00FF);
+      uniqueColor =
+          Color.lerp(const Color(0xFFFF00FF), themePrimary, 0.3) ??
+          const Color(0xFFFF00FF);
     } else if (widget.device.id.toLowerCase().contains('relay3')) {
-      uniqueColor = Color.lerp(const Color(0xFF00FF00), themeSecondary, 0.3) ?? const Color(0xFF00FF00);
+      uniqueColor =
+          Color.lerp(const Color(0xFF00FF00), themeSecondary, 0.3) ??
+          const Color(0xFF00FF00);
     } else if (widget.device.id.toLowerCase().contains('relay4')) {
-      uniqueColor = Color.lerp(const Color(0xFFFFCC00), themePrimary, 0.3) ?? const Color(0xFFFFCC00);
+      uniqueColor =
+          Color.lerp(const Color(0xFFFFCC00), themePrimary, 0.3) ??
+          const Color(0xFFFFCC00);
     } else {
       final int hueSeed = (widget.device.id.hashCode * 1337) ^ 0xDEADBEEF;
       final HSVColor uniqueHsv = HSVColor.fromAHSV(
@@ -217,12 +225,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                   widget.onLongPress();
                 },
                 child: AnimatedBuilder(
-                  animation: Listenable.merge([
-                    _pressController,
-                    _iconAnimController,
-                    _rippleController,
-                    _parallaxController,
-                  ]),
+                  animation: _pressController,
                   builder: (context, child) {
                     return Transform.scale(
                       scale: 1.0 - (_pressController.value * 0.05),
@@ -2683,12 +2686,12 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     Widget icon = Icon(
       isActive ? iconInfo.iconOn : iconInfo.iconOff,
       color: !isConnected
-          ? Colors.orange.withOpacity(0.6)
+          ? Colors.orange.withOpacity(0.7)
           : (isActive
                 ? contentColor // ADAPTIVE COLOR
                 : Colors.white.withOpacity(
-                    0.4,
-                  )), // Boosted OFF visibility to 0.4
+                    0.5,
+                  )), // Boosted OFF visibility to 0.5 (from 0.4)
       size: 32.r,
     );
 

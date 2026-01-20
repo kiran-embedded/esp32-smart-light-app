@@ -21,9 +21,10 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.READ_MEDIA_FILES" android:minSdkVersion="33"/>
     
-    <!-- Location (optional, for weather API) -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:required="false"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:required="false"/>
+    <!-- Location (Required for Geofencing) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     
     <!-- Background Operations -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
@@ -32,6 +33,10 @@
     <!-- Required to reschedule alarms after reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     
     <!-- Vibration (for haptic feedback) -->
     <uses-permission android:name="android.permission.VIBRATE"/>
@@ -43,6 +48,17 @@
         android:label="nebula_core"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+        <receiver android:name=".NativeAlarmReceiver" android:exported="false" />
+        <receiver android:name=".GeofenceReceiver" android:exported="false" />
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <service 
+            android:name=".NativeAlarmService" 
+            android:exported="false" 
+            android:foregroundServiceType="dataSync" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -66,20 +82,14 @@
             </intent-filter>
         </activity>
         <service
-            android:name="dev.fluttercommunity.plus.androidalarmmanager.AlarmService"
+            android:name="com.pravera.geofence_service.service.GeofenceForegroundService"
+            android:foregroundServiceType="location"
             android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="false"/>
-        <receiver
-            android:name="dev.fluttercommunity.plus.androidalarmmanager.AlarmBroadcastReceiver"
-            android:exported="false"/>
-        <receiver
-            android:name="dev.fluttercommunity.plus.androidalarmmanager.RebootBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
+            android:exported="false" />
+
+
+
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

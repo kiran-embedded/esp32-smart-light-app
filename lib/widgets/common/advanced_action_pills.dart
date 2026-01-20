@@ -10,7 +10,7 @@ import '../../providers/switch_schedule_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../common/pixel_led_border.dart';
-import '../scheduling/scheduling_sheet.dart';
+import '../scheduler/scheduler_settings_popup.dart';
 import '../ai/ai_assistant_dialog.dart';
 import '../common/frosted_glass.dart';
 import '../../providers/google_home_provider.dart';
@@ -241,7 +241,7 @@ class _SuperSegmentSchedule extends ConsumerWidget {
           context: context,
           backgroundColor: Colors.transparent,
           isScrollControlled: true,
-          builder: (context) => const SchedulingSheet(),
+          builder: (context) => const SchedulerSettingsPopup(),
         ),
         child: Container(
           width: double.infinity,

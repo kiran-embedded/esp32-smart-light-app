@@ -28,6 +28,8 @@ import '../../widgets/common/pixel_led_border.dart';
 import '../../widgets/common/switch_tab_background.dart';
 import '../../widgets/navigation/animated_nav_icon.dart';
 import '../../widgets/common/premium_app_bar.dart';
+import '../../widgets/scheduler/scheduler_gear_icon.dart';
+import '../../widgets/scheduler/scheduler_settings_popup.dart';
 import '../../core/ui/responsive_layout.dart';
 
 import '../../providers/google_home_provider.dart';
@@ -759,6 +761,16 @@ class _ControlViewState extends ConsumerState<ControlView> {
                   ],
                 ),
               ),
+            ),
+            trailing: SchedulerGearIcon(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const SchedulerSettingsPopup(),
+                );
+              },
             ),
           ),
         ),

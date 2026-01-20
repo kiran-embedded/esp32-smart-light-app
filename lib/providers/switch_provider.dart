@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/switch_device.dart';
 import '../services/firebase_switch_service.dart';
 import '../services/persistence_service.dart';
-
 import '../providers/google_home_provider.dart';
+import '../core/constants/app_constants.dart';
 
 final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
@@ -18,7 +18,19 @@ final switchDevicesProvider =
 class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _telemetrySubscription;
+  StreamSubscription<Map<String, dynamic>>? _commandsSubscription;
+  StreamSubscription<Map<String, String>>? _namesSubscription;
   final Map<String, DateTime> _pendingSwitches = {};
+  String _deviceId = AppConstants.defaultDeviceId;
+  Map<String, dynamic> _lastTelemetry = {};
+  Map<String, dynamic> _lastCommands = {};
+
+  bool get isEcoMode {
+    final ecoVal = _lastTelemetry['ecoMode'] ?? _lastCommands['ecoMode'];
+    return ecoVal == 1 || ecoVal == true;
+  }
+
+  String get currentDeviceId => _deviceId;
 
   SwitchDevicesNotifier(this._ref, {Map<String, String>? initialNicknames})
     : super([
@@ -30,6 +42,23 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     if (initialNicknames != null) {
       _applyInitialNicknames(initialNicknames);
     }
+    _loadDeviceId();
+    _initTelemetryListener();
+    forceRefreshHardwareNames();
+  }
+
+  Future<void> _loadDeviceId() async {
+    final savedId = await PersistenceService.getDeviceId();
+    if (savedId != null && savedId.isNotEmpty) {
+      _deviceId = savedId;
+      _initTelemetryListener(); // Re-init with new ID
+    }
+  }
+
+  Future<void> updateDeviceId(String newId) async {
+    if (newId.isEmpty) return;
+    _deviceId = newId;
+    await PersistenceService.saveDeviceId(newId);
     _initTelemetryListener();
     forceRefreshHardwareNames();
   }
@@ -58,7 +87,9 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Future<String> forceRefreshHardwareNames() async {
     try {
       final firebaseService = _ref.read(firebaseSwitchServiceProvider);
-      final hardwareNames = await firebaseService.getHardwareNames();
+      final hardwareNames = await firebaseService.getHardwareNames(
+        deviceId: _deviceId,
+      );
 
       if (hardwareNames.isNotEmpty) {
         final Map<String, SwitchDevice> updatedDevices = {
@@ -66,9 +97,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         };
 
         hardwareNames.forEach((key, value) {
-          // VALIDATION: Ignore common "buggy" names or empty strings
           if (value.toLowerCase().contains("node") || value.trim().isEmpty) {
-            return; // Skip this one
+            return;
           }
 
           if (updatedDevices.containsKey(key)) {
@@ -115,34 +145,33 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     );
   }
 
-  Map<String, dynamic> _lastTelemetry = {};
-  Map<String, dynamic> _lastCommands = {};
-  StreamSubscription<Map<String, dynamic>>? _commandsSubscription;
-  StreamSubscription<Map<String, String>>? _namesSubscription;
-
   void _initTelemetryListener() {
     try {
       final firebaseService = _ref.read(firebaseSwitchServiceProvider);
 
-      _telemetrySubscription = firebaseService.listenToTelemetry().listen((
-        telemetry,
-      ) {
-        _lastTelemetry = telemetry;
-        _mergeAndEmit();
-      });
+      _telemetrySubscription?.cancel();
+      _commandsSubscription?.cancel();
+      _namesSubscription?.cancel();
 
-      _commandsSubscription = firebaseService.listenToCommands().listen((
-        commands,
-      ) {
-        _lastCommands = commands;
-        _mergeAndEmit();
-      });
+      _telemetrySubscription = firebaseService
+          .listenToTelemetry(deviceId: _deviceId)
+          .listen((telemetry) {
+            _lastTelemetry = telemetry;
+            _mergeAndEmit();
+          });
 
-      _namesSubscription = firebaseService.listenToHardwareNames().listen((
-        names,
-      ) {
-        _updateHardwareNamesFromStream(names);
-      });
+      _commandsSubscription = firebaseService
+          .listenToCommands(deviceId: _deviceId)
+          .listen((commands) {
+            _lastCommands = commands;
+            _mergeAndEmit();
+          });
+
+      _namesSubscription = firebaseService
+          .listenToHardwareNames(deviceId: _deviceId)
+          .listen((names) {
+            _updateHardwareNamesFromStream(names);
+          });
     } catch (e) {
       print('Error initializing telemetry sync: $e');
     }
@@ -155,7 +184,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     bool changed = false;
 
     names.forEach((key, value) {
-      // Same validation as forceRefresh
       if (value.toLowerCase().contains("node") || value.trim().isEmpty) {
         return;
       }
@@ -169,15 +197,14 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     });
 
     if (changed) {
-      state = updatedDevices.values.toList();
-      // No need to sort here if we trust the initial state order,
-      // but let's be safe.
-      state.sort((a, b) {
+      final newList = updatedDevices.values.toList();
+      newList.sort((a, b) {
         int? nA = int.tryParse(a.id.replaceAll(RegExp(r'[^0-9]'), ''));
         int? nB = int.tryParse(b.id.replaceAll(RegExp(r'[^0-9]'), ''));
         if (nA != null && nB != null) return nA.compareTo(nB);
         return a.id.compareTo(b.id);
       });
+      state = newList;
     }
   }
 
@@ -194,8 +221,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   }
 
   void _mergeAndEmit() {
-    // Cloud-only mode: No strictly enforced local mode override
-
     final telemetry = _lastTelemetry;
     double voltage = 0.0;
     if (telemetry.containsKey('voltage')) {
@@ -234,7 +259,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         final rawVal = telemetry[id];
         if (rawVal != null) {
           if (rawVal is int)
-            newIsActive = (rawVal == 1); // 1 = Active (Normalized)
+            newIsActive = (rawVal == 1);
           else if (rawVal is bool)
             newIsActive = rawVal;
           else
@@ -246,6 +271,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         if (rawVal != null) {
           if (rawVal is int)
             newIsActive = (rawVal == 1);
+          else if (rawVal is bool)
+            newIsActive = rawVal;
           else
             newIsActive =
                 (rawVal.toString() == '1' || rawVal.toString() == 'true');
@@ -259,18 +286,15 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        // Increase guard time to 5s for local mode latency
         if (DateTime.now().difference(pendingTime).inMilliseconds < 5000) {
           final existing = currentDeviceMap[id];
           if (existing != null && newIsActive != existing.isActive) {
             newIsActive = existing.isActive;
             isPending = true;
           } else {
-            // State matched, we can clear pending
             _pendingSwitches.remove(id);
           }
         } else {
-          // Timeout expired, use telemetry
           _pendingSwitches.remove(id);
         }
       }
@@ -283,7 +307,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           voltage: voltage,
         );
 
-        // Sync to cloud if state changed physically and not pending
         if (updated.isActive != currentDeviceMap[id]!.isActive && !isPending) {
           _syncToCloud(updated);
         }
@@ -295,7 +318,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           'Switch ${id.replaceAll("relay", "")}',
         ).copyWith(isActive: newIsActive, isConnected: isConnected);
 
-        _syncToCloud(device); // Sync new discovered devices
+        _syncToCloud(device);
         return device;
       }
     }).toList();
@@ -331,9 +354,10 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         if (d.id == id) d.copyWith(isActive: newState, isPending: true) else d,
     ];
 
-    _ref.read(firebaseSwitchServiceProvider).sendCommand(id, newState ? 1 : 0);
+    _ref
+        .read(firebaseSwitchServiceProvider)
+        .sendCommand(id, newState ? 1 : 0, deviceId: _deviceId);
 
-    // Immediate sync for execution intent (ensures Home Graph matches execution)
     _syncToCloud(state[deviceIndex].copyWith(isActive: newState));
   }
 
@@ -355,7 +379,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     try {
       await _ref
           .read(firebaseSwitchServiceProvider)
-          .updateHardwareName(id, newName);
+          .updateHardwareName(id, newName, deviceId: _deviceId);
       _saveNicknames();
     } catch (e) {
       state = previousList;

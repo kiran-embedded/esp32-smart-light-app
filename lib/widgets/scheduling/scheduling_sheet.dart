@@ -433,6 +433,8 @@ class _SchedulingSheetState extends ConsumerState<SchedulingSheet> {
                 final schedule = SwitchSchedule(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   relayId: selectedRelay,
+                  targetNode:
+                      selectedRelay, // Sync targetNode with selectedRelay
                   hour: selectedTime.hour,
                   minute: selectedTime.minute,
                   days: selectedDays..sort(),
