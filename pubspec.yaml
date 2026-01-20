@@ -2,7 +2,7 @@ name: nebula_core
 description: "Ultra-Advanced Smart Switch Control App - NEBULA CORE"
 publish_to: 'none'
 
-version: 1.2.0+27
+version: 1.2.0+24
 
 environment:
   sdk: ^3.10.4

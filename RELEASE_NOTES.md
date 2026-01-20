@@ -1,35 +1,51 @@
-# Nebula Core v1.2.0+27 (OLED MASTERY)
+# Nebula Core v1.2.0+24 (OLED PERFECTION)
 
 **Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-27`
-**Update Size:** UI OVEDRHAUL & CRITICAL FIXES
-**Priority:** MANDATORY
+**Build ID:** `NC-ANDROID-REL-24`
+**Update Size:** UI REFINEMENT & VISIBILITY OVERHAUL
+**Priority:** RECOMMENDED
 
 ---
 
-## 🚀 WHAT'S NEW: THE OLED UPDATE
-This update brings a complete visual overhaul to the Scheduler Hub, specifically designed for OLED displays, and restores critical functionality.
+## 🚀 WHAT'S NEW: THE VISIBILITY UPDATE
+This release brings the Automation Hub to perfection with OLED-optimized visuals, enhanced visibility, and unique visual identifiers for each schedule.
 
-### 🖤 "Super Smooth" OLED Black UI
-*   **True Black Background**: The scheduling hub now uses a pure black (`#000000`) background for infinite contrast.
-*   **Performance Boost**: Removed all heavy frosted glass blurs, resulting in rock-solid **90FPS** scrolling performance.
-*   **Premium Detailing**: New neon red accents and high-contrast borders replace the old glass effect.
+### 🖤 OLED Black UI (Hardcoded)
+*   **Pure Black Background**: Hardcoded `Colors.black` - no longer affected by theme changes
+*   **Zero Blur**: Removed all blur effects for rock-solid 90FPS performance
+*   **Premium Contrast**: High-contrast borders and text for maximum readability
 
-### 🏷️ Restore: Rename Functionality
-*   **Edit Directly**: You can now rename any switch directly from the Hub header.
-*   **Cloud Sync**: Renaming immediately syncs with the Firebase backend to update across all devices.
+### 🏷️ Device Rename Functionality
+*   **Edit from Hub**: Tap the Edit icon in the Automation Hub header to rename any device
+*   **Firebase Sync**: Name changes instantly sync across all devices via Firebase
+*   **Persistent**: Renamed devices maintain their custom names across app restarts
 
-### 🛡️ Critical Fixes
-*   **Crash Resolution**: Fixed the **"Nebula Core stopping"** crash issue by hardening the background `NativeAlarmService`.
-*   **WakeLock Optimization**: Improved background execution reliability.
+### 🎨 Unique Clock Colors
+*   **Visual Identity**: Each schedule now has a unique vibrant clock icon color
+*   **Color Hash**: Colors are deterministically generated from schedule ID
+*   **Easy Recognition**: Quickly identify schedules at a glance by their color
+
+### ⚪ Enhanced Visibility
+*   **Bright AM/PM**: Changed from grey to white for better readability
+*   **High-Contrast Pills**: ON pills now use white, OFF pills use red
+*   **Monochrome Border**: Create Schedule button features elegant white/grey dot-moving animation
+
+### 🛡️ Stability Improvements
+*   **Crash Fix**: Hardened `NativeAlarmService` with comprehensive error handling
+*   **WakeLock Optimization**: Improved background task reliability
 
 ---
 
 ## 📋 TECHNICAL CHANGELOG
-*   `[UI]` **Overhaul**: Switched Scheduler UI to non-blurred OLED Black theme.
-*   `[FEAT]` **Restore**: Re-implemented switch renaming logic with `SwitchDevicesNotifier` sync.
-*   `[FIX]` **Crash**: Wrapped `NativeAlarmService.onStartCommand` in try-catch to prevent ANR/Crash.
-*   `[CORE]` **Versioning**: Bumped version to `v1.2.0+27`.
+*   `[UI]` **Background**: Hardcoded OLED black background (no theme dependency)
+*   `[UI]` **Clock Icons**: Unique HSV-based color per schedule ID
+*   `[UI]` **Text**: Brightened AM/PM text from grey to white
+*   `[UI]` **Pills**: Changed ON/OFF pills to white/red for better contrast
+*   `[UI]` **Border**: Updated Create Schedule button to white/grey gradient
+*   `[FEAT]` **Rename**: Restored device renaming with Firebase sync
+*   `[FIX]` **Crash**: Added try-catch wrapper in `NativeAlarmService.onStartCommand`
+*   `[PERF]` **Blur**: Removed all blur effects for 90FPS smoothness
+*   `[CORE]` **Version**: Bumped to `v1.2.0+24`
 
 ---
 

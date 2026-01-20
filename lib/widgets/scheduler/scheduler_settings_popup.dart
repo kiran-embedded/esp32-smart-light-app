@@ -66,15 +66,11 @@ class _SchedulerSettingsPopupState
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
-          color: const Color(0xFF000000), // Pure OLED Black
+          color: Colors.black, // Pure OLED Black
           borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
           border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black,
-              blurRadius: 40,
-              spreadRadius: 5,
-            ),
+            BoxShadow(color: Colors.black, blurRadius: 40, spreadRadius: 5),
           ],
         ),
         child: Column(
@@ -276,53 +272,52 @@ class _SchedulerSettingsPopupState
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: const Color(0xFF111111),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Colors.white12),
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white12),
+        ),
+        title: Text(
+          'Rename Device',
+          style: GoogleFonts.outfit(color: Colors.white),
+        ),
+        content: TextField(
+          controller: controller,
+          style: GoogleFonts.outfit(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.05),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
             ),
-            title: Text(
-              'Rename Device',
-              style: GoogleFonts.outfit(color: Colors.white),
-            ),
-            content: TextField(
-              controller: controller,
-              style: GoogleFonts.outfit(color: Colors.white),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                hintText: 'Enter new name',
-                hintStyle: TextStyle(color: Colors.white38),
-              ),
-              autofocus: true,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  if (controller.text.isNotEmpty) {
-                    await ref
-                        .read(switchDevicesProvider.notifier)
-                        .updateHardwareName(deviceId, controller.text.trim());
-                    if (mounted) Navigator.pop(context);
-                  }
-                },
-                child: const Text(
-                  'Save',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+            hintText: 'Enter new name',
+            hintStyle: TextStyle(color: Colors.white38),
           ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (controller.text.isNotEmpty) {
+                await ref
+                    .read(switchDevicesProvider.notifier)
+                    .updateHardwareName(deviceId, controller.text.trim());
+                if (mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text(
+              'Save',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -362,6 +357,11 @@ class _SchedulerSettingsPopupState
     final theme = Theme.of(context);
     final primaryColor = theme.primaryColor;
 
+    // Unique color for each schedule
+    final colorHash = s.id.hashCode;
+    final hue = (colorHash.abs() % 360).toDouble();
+    final scheduleColor = HSVColor.fromAHSV(1.0, hue, 0.8, 1.0).toColor();
+
     // 12-hour format logic
     final hourInt = s.hour > 12 ? s.hour - 12 : (s.hour == 0 ? 12 : s.hour);
     final amPm = s.hour >= 12 ? 'PM' : 'AM';
@@ -388,121 +388,120 @@ class _SchedulerSettingsPopupState
             ),
           ),
           child: Row(
-              children: [
-                // Icon Container
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: primaryColor.withOpacity(0.2)),
-                  ),
-                  child: Icon(
-                    FontAwesomeIcons.clock,
-                    color: primaryColor,
-                    size: 20,
-                  ),
+            children: [
+              // Icon Container
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: primaryColor.withOpacity(0.2)),
                 ),
-                const SizedBox(width: 20),
+                child: Icon(
+                  FontAwesomeIcons.clock,
+                  color: scheduleColor, // Unique color per schedule
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 20),
 
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          ShaderMask(
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: [
-                                Colors.white,
-                                Colors.white.withOpacity(0.7),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ).createShader(bounds),
-                            child: Text(
-                              timeStr,
-                              style: GoogleFonts.outfit(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: s.isEnabled
-                                    ? Colors.white
-                                    : Colors.white54,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            amPm,
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [
+                              Colors.white,
+                              Colors.white.withOpacity(0.7),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ).createShader(bounds),
+                          child: Text(
+                            timeStr,
                             style: GoogleFonts.outfit(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: primaryColor.withOpacity(0.8),
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: s.isEnabled
+                                  ? Colors.white
+                                  : Colors.white54,
+                              letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  (s.targetState
-                                          ? primaryColor
-                                          : Colors.redAccent)
-                                      .withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              s.targetState ? 'ON' : 'OFF',
-                              style: GoogleFonts.outfit(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: s.targetState
-                                    ? primaryColor
-                                    : Colors.redAccent,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_getNodeFriendlyName(s.targetNode)} • ${_getDaySummaryText(s.days)}',
-                        style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          color: Colors.white.withOpacity(0.5),
-                          fontWeight: FontWeight.w500,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 6),
+                        Text(
+                          amPm,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white, // Bright AM/PM
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                (s.targetState
+                                        ? Colors.white
+                                        : Colors.redAccent)
+                                    .withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            s.targetState ? 'ON' : 'OFF',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: s.targetState
+                                  ? Colors.white
+                                  : Colors.redAccent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_getNodeFriendlyName(s.targetNode)} • ${_getDaySummaryText(s.days)}',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.5),
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
-                  ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
+              ),
 
-                const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-                // Action
-                if (_isMultiSelectMode)
-                  _buildSelectionCheck(isSelected)
-                else
-                  _BreathingToggle(
-                    value: s.isEnabled,
-                    onChanged: (v) {
-                      ref
-                          .read(switchScheduleProvider.notifier)
-                          .updateSchedule(s.copyWith(isEnabled: v));
-                    },
-                  ),
-              ],
-            ),
+              // Action
+              if (_isMultiSelectMode)
+                _buildSelectionCheck(isSelected)
+              else
+                _BreathingToggle(
+                  value: s.isEnabled,
+                  onChanged: (v) {
+                    ref
+                        .read(switchScheduleProvider.notifier)
+                        .updateSchedule(s.copyWith(isEnabled: v));
+                  },
+                ),
+            ],
           ),
         ),
       ),
@@ -604,10 +603,10 @@ class _SchedulerSettingsPopupState
                     child:
                         PixelLedBorder(
                               colors: [
-                                Theme.of(context).primaryColor,
-                                Theme.of(context).colorScheme.secondary,
-                                Theme.of(context).colorScheme.tertiary,
-                                Theme.of(context).primaryColor,
+                                Colors.white,
+                                Colors.grey.shade400,
+                                Colors.grey.shade600,
+                                Colors.white,
                               ],
                               borderRadius: 20,
                               strokeWidth: 2,
