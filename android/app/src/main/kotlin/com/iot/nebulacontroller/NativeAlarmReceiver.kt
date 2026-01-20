@@ -10,15 +10,21 @@ import com.google.firebase.database.FirebaseDatabase
 class NativeAlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val serviceIntent = Intent(context, NativeAlarmService::class.java)
-        serviceIntent.putExtras(intent)
+        val pendingResult = goAsync()
         
-        Log.d("NativeReceiver", "Forwarding intent to NativeAlarmService")
-        
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+        try {
+            val serviceIntent = Intent(context, NativeAlarmService::class.java)
+            serviceIntent.putExtras(intent)
+            
+            Log.d("NativeReceiver", "Forwarding intent to NativeAlarmService")
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        } finally {
+            pendingResult.finish()
         }
     }
 }

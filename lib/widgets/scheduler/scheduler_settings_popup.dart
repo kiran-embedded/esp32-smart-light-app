@@ -17,7 +17,6 @@ import '../../services/haptic_service.dart';
 import '../../services/geofence_service.dart';
 import '../../services/scheduler_service.dart';
 import '../../core/ui/responsive_layout.dart';
-import '../../core/ui/animation_engine.dart';
 
 class SchedulerSettingsPopup extends ConsumerStatefulWidget {
   const SchedulerSettingsPopup({super.key});
@@ -87,9 +86,16 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
-          color: const Color(0xFF0A0A0A),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
+          color: const Color(0xFF1E1E22), // More Visible Graphite
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
+          border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 40,
+              spreadRadius: 5,
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -126,193 +132,236 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
   Widget _buildHeader() {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 20, 20, 5),
+      padding: const EdgeInsets.fromLTRB(28, 20, 16, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
               Container(
-                width: 4,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: _isMultiSelectMode
-                      ? Colors.redAccent
-                      : theme.primaryColor,
-                  borderRadius: BorderRadius.circular(2),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
+                    width: 4,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          _isMultiSelectMode
+                              ? Colors.redAccent
+                              : theme.primaryColor,
                           (_isMultiSelectMode
                                   ? Colors.redAccent
                                   : theme.primaryColor)
-                              .withOpacity(0.5),
-                      blurRadius: 10,
+                              .withOpacity(0.3),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              (_isMultiSelectMode
+                                      ? Colors.redAccent
+                                      : theme.primaryColor)
+                                  .withOpacity(0.3),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Row(
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .shimmer(duration: 2.seconds, color: Colors.white24),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _isMultiSelectMode
                         ? '${_selectedScheduleIds.length + _selectedGeofenceIds.length} SELECTED'
-                        : 'AUTOMATION HUB',
+                        : 'Automation Hub',
                     style: GoogleFonts.outfit(
-                      fontSize: 18,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
+                      letterSpacing: -0.2,
                       color: Colors.white,
                     ),
                   ),
-                  if (!_isMultiSelectMode) ...[
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.redAccent.withOpacity(0.5),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        "BETA TEST",
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
+                  Text(
+                    _isMultiSelectMode
+                        ? 'Manage selected items'
+                        : 'Personalize your triggers',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withOpacity(
+                        0.65,
+                      ), // Maximum contrast for secondary text
                     ),
-                  ],
+                  ),
                 ],
               ),
             ],
           ),
-          if (_isMultiSelectMode)
-            IconButton(
-              icon: const Icon(
-                Icons.delete_sweep_rounded,
-                color: Colors.redAccent,
-              ),
-              onPressed: _deleteSelected,
-            )
-          else
-            IconButton(
-              icon: Icon(
-                Icons.select_all_rounded,
-                color: Colors.white.withOpacity(0.3),
-              ),
-              onPressed: () {
-                HapticService.selection();
-                setState(() => _isMultiSelectMode = !_isMultiSelectMode);
-              },
-            ),
+          Row(
+            children: [
+              IconButton(
+                    icon: const Icon(
+                      Icons.help_outline_rounded,
+                      color: Colors.white38,
+                      size: 24,
+                    ),
+                    onPressed: _showHelpDialog,
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(1, 1),
+                    end: const Offset(1.1, 1.1),
+                    duration: 3.seconds,
+                    curve: Curves.easeInOut,
+                  ),
+              if (_isMultiSelectMode)
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_sweep_rounded,
+                    color: Colors.redAccent,
+                    size: 26,
+                  ),
+                  onPressed: _deleteSelected,
+                ).animate().shake(duration: 500.ms)
+              else
+                IconButton(
+                      icon: Icon(
+                        Icons.select_all_rounded,
+                        color: Colors.white.withOpacity(0.35),
+                        size: 24,
+                      ),
+                      onPressed: () {
+                        HapticService.selection();
+                        setState(
+                          () => _isMultiSelectMode = !_isMultiSelectMode,
+                        );
+                      },
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(
+                      begin: const Offset(1, 1),
+                      end: const Offset(1.08, 1.08),
+                      duration: 2.5.seconds,
+                      curve: Curves.easeInOut,
+                    ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  void _showHelpDialog() {
+    HapticService.selection();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.8),
+      builder: (context) => const _StaggeredHelpDialog(),
     );
   }
 
   Widget _buildTabBar() {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
       child: TabBar(
         controller: _tabController,
         dividerColor: Colors.transparent,
-        indicatorSize: TabBarIndicatorSize.label,
-        indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(width: 3.0, color: theme.primaryColor),
-          borderRadius: BorderRadius.circular(2),
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: theme.primaryColor.withOpacity(0.25),
+          border: Border.all(
+            color: theme.primaryColor.withOpacity(0.5),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.primaryColor.withOpacity(0.08),
+              blurRadius: 10,
+              spreadRadius: -2,
+            ),
+          ],
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.white.withOpacity(0.3),
+        unselectedLabelColor: Colors.white.withOpacity(0.35),
         labelStyle: GoogleFonts.outfit(
           fontWeight: FontWeight.w900,
-          fontSize: 12,
-          letterSpacing: 1.5,
+          fontSize: 14,
+          letterSpacing: 0.5,
         ),
         tabs: const [
-          Tab(text: 'SCHEDULES'),
-          Tab(text: 'GEOFENCING'),
+          Tab(text: 'Schedules'),
+          Tab(text: 'Geofencing'),
         ],
-        onTap: (index) => setState(() {}),
+        onTap: (index) {
+          HapticService.light();
+          setState(() {});
+        },
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildSchedulesTab() {
     final schedules = ref.watch(switchScheduleProvider);
     if (schedules.isEmpty)
-      return _buildEmptyState(FontAwesomeIcons.calendarXmark, 'NO SCHEDULES');
+      return _buildEmptyState(
+        FontAwesomeIcons.calendarXmark,
+        'No active schedules',
+      );
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 10, bottom: 40),
       physics: const BouncingScrollPhysics(),
-      children: [
-        const _BetaInfoCard(
-          description:
-              "Our ultra-reliable background engine ensures your schedules trigger with millisecond precision, even when the app is completely closed.",
-        ),
-        const _PremiumSectionHeader(title: 'Active Schedules'),
-        _PremiumGroupedContainer(
-          children: List.generate(schedules.length, (index) {
-            final s = schedules[index];
-            final isSelected = _selectedScheduleIds.contains(s.id);
-            return _animatedSection(
-              index: index + 1,
-              ref: ref,
-              child: _buildScheduleItem(
-                s,
-                isSelected,
-                index == schedules.length - 1,
-              ),
-            );
-          }),
-        ),
-      ],
+      itemCount: schedules.length,
+      itemBuilder: (context, index) {
+        final s = schedules[index];
+        final isSelected = _selectedScheduleIds.contains(s.id);
+        return _animatedSection(
+          index: index + 1,
+          ref: ref,
+          child: _buildScheduleItem(
+            s,
+            isSelected,
+            index == schedules.length - 1,
+          ),
+        );
+      },
     );
   }
 
   Widget _buildGeofencingTab() {
     final rules = ref.watch(geofenceProvider);
     if (rules.isEmpty)
-      return _buildEmptyState(FontAwesomeIcons.locationDot, 'NO GEOFENCES');
+      return _buildEmptyState(
+        FontAwesomeIcons.locationDot,
+        'No location zones',
+      );
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 10, bottom: 40),
       physics: const BouncingScrollPhysics(),
-      children: [
-        const _BetaInfoCard(
-          description:
-              "Geofencing uses proximity sensors and GPS to trigger actions automatically. Background reliability depends on OS location permissions.",
-        ),
-        const _PremiumSectionHeader(title: 'Geofence Rules'),
-        _PremiumGroupedContainer(
-          children: List.generate(rules.length, (index) {
-            final r = rules[index];
-            final isSelected = _selectedGeofenceIds.contains(r.id);
-            return _animatedSection(
-              index: index + 1,
-              ref: ref,
-              child: _buildGeofenceItem(
-                r,
-                isSelected,
-                index == rules.length - 1,
-              ),
-            );
-          }),
-        ),
-      ],
+      itemCount: rules.length,
+      itemBuilder: (context, index) {
+        final r = rules[index];
+        final isSelected = _selectedGeofenceIds.contains(r.id);
+        return _animatedSection(
+          index: index + 1,
+          ref: ref,
+          child: _buildGeofenceItem(r, isSelected, index == rules.length - 1),
+        );
+      },
     );
   }
 
@@ -323,30 +372,46 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.02),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 48,
-              color: theme.primaryColor.withOpacity(0.2),
-            ),
-          ),
-          const SizedBox(height: 24),
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withOpacity(0.03),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: theme.primaryColor.withOpacity(0.08),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 54,
+                  color: theme.primaryColor.withOpacity(0.4),
+                ),
+              )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.05, 1.05),
+                duration: 2.seconds,
+              )
+              .moveY(
+                begin: 0,
+                end: -5,
+                duration: 2.seconds,
+                curve: Curves.easeInOut,
+              ),
+          const SizedBox(height: 32),
           Text(
-            message,
+            message.toUpperCase(),
             style: GoogleFonts.outfit(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withOpacity(0.2),
               fontWeight: FontWeight.w900,
               fontSize: 14,
-              letterSpacing: 2,
+              letterSpacing: 2.5,
             ),
-          ),
+          ).animate().fadeIn(delay: 400.ms),
         ],
       ),
-    ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.9, 0.9));
+    );
   }
 
   Widget _buildScheduleItem(SwitchSchedule s, bool isSelected, bool isLast) {
@@ -355,109 +420,365 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
         '${s.hour.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}';
 
     return GestureDetector(
-      onLongPress: () => _toggleMultiSelect(s.id, false),
-      onTap: _isMultiSelectMode
-          ? () => _toggleMultiSelect(s.id, false)
-          : () => _showAddScheduleDialog(existingSchedule: s),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.primaryColor.withOpacity(0.1)
-              : Colors.transparent,
-        ),
-        child: _buildPremiumSettingTile(
-          context,
-          title: timeStr,
-          subtitle: _getNodeFriendlyName(s.targetNode),
-          extraSubtitle: _buildDayChips(s.days),
-          leading: _buildPremiumIcon(
-            Icons.access_time_filled_rounded,
-            s.targetState ? theme.primaryColor : Colors.redAccent,
-            isAnimating: s.isEnabled,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!_isMultiSelectMode)
-                const Padding(
-                      padding: EdgeInsets.only(right: 12),
-                      child: Icon(
-                        Icons.edit_rounded,
-                        color: Colors.white24,
-                        size: 16,
+          onLongPress: () => _toggleMultiSelect(s.id, false),
+          onTap: _isMultiSelectMode
+              ? () => _toggleMultiSelect(s.id, false)
+              : () => _showAddScheduleDialog(existingSchedule: s),
+          child: AnimatedContainer(
+            duration: 300.ms,
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Colors.redAccent.withOpacity(0.12)
+                  : Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.redAccent.withOpacity(0.4)
+                    : Colors.white.withOpacity(0.06),
+                width: 1.2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: Colors.redAccent.withOpacity(0.1),
+                        blurRadius: 20,
+                        spreadRadius: 2,
                       ),
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .fade(begin: 0.3, end: 0.8, duration: 2.seconds),
-              if (_isMultiSelectMode) _buildSelectionCheck(isSelected, theme),
-              if (!_isMultiSelectMode)
-                _BreathingToggle(
-                  value: s.isEnabled,
-                  onChanged: (v) {
-                    ref
-                        .read(switchScheduleProvider.notifier)
-                        .updateSchedule(s.copyWith(isEnabled: v));
-                  },
+                    ]
+                  : [],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            timeStr,
+                            style: GoogleFonts.outfit(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w300,
+                              color: s.isEnabled
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.2),
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  (s.targetState
+                                          ? theme.primaryColor
+                                          : Colors.redAccent)
+                                      .withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color:
+                                    (s.targetState
+                                            ? theme.primaryColor
+                                            : Colors.redAccent)
+                                        .withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              s.targetState ? 'ON' : 'OFF',
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: s.targetState
+                                    ? (theme.primaryColor.computeLuminance() <
+                                              0.2
+                                          ? const Color(
+                                              0xFF00FFC2,
+                                            ) // Vibrant Mint
+                                          : theme.primaryColor)
+                                    : Colors.redAccent,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            _getNodeFriendlyName(s.targetNode),
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: s.isEnabled
+                                  ? Colors.white.withOpacity(0.95)
+                                  : Colors.white.withOpacity(0.4),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 4,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.15),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildDaySummary(s.days),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-            ],
+                if (_isMultiSelectMode)
+                  _buildSelectionCheck(isSelected, theme)
+                else
+                  _BreathingToggle(
+                    value: s.isEnabled,
+                    onChanged: (v) {
+                      ref
+                          .read(switchScheduleProvider.notifier)
+                          .updateSchedule(s.copyWith(isEnabled: v));
+                    },
+                  ),
+              ],
+            ),
           ),
-          isLast: isLast,
-        ),
-      ),
-    );
+        )
+        .animate(target: isSelected ? 1 : 0)
+        .scale(
+          begin: const Offset(1, 1),
+          end: const Offset(1.02, 1.02),
+          duration: 200.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 
   Widget _buildGeofenceItem(GeofenceRule r, bool isSelected, bool isLast) {
     final theme = Theme.of(context);
     return GestureDetector(
-      onLongPress: () => _toggleMultiSelect(r.id, true),
-      onTap: _isMultiSelectMode
-          ? () => _toggleMultiSelect(r.id, true)
-          : () => _showAddGeofenceDialog(existingRule: r),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.primaryColor.withOpacity(0.1)
-              : Colors.transparent,
-        ),
-        child: _buildPremiumSettingTile(
-          context,
-          title: r.name.toUpperCase(),
-          subtitle:
-              '${r.triggerOnEnter ? 'ENTER' : 'EXIT'} • ${_getNodeFriendlyName(r.targetNode)}',
-          leading: _buildPremiumIcon(
-            Icons.location_on_rounded,
-            const Color(0xFFFF8A80), // Vibrant Light Red (Neon-ish)
-            isAnimating: r.isEnabled,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!_isMultiSelectMode)
-                const Padding(
-                      padding: EdgeInsets.only(right: 12),
-                      child: Icon(
-                        Icons.edit_rounded,
-                        color: Colors.white24,
-                        size: 16,
+          onLongPress: () => _toggleMultiSelect(r.id, true),
+          onTap: _isMultiSelectMode
+              ? () => _toggleMultiSelect(r.id, true)
+              : () => _showAddGeofenceDialog(existingRule: r),
+          child: AnimatedContainer(
+            duration: 300.ms,
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Colors.redAccent.withOpacity(0.12)
+                  : Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.redAccent.withOpacity(0.4)
+                    : Colors.white.withOpacity(0.06),
+                width: 1.2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: Colors.redAccent.withOpacity(0.1),
+                        blurRadius: 20,
+                        spreadRadius: 2,
                       ),
+                    ]
+                  : [],
+            ),
+            child: Row(
+              children: [
+                _buildAnimatedLocationIcon(r.isEnabled),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r.name.toUpperCase(),
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: r.isEnabled
+                              ? Colors.white
+                              : Colors.white.withOpacity(0.3),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  (r.triggerOnEnter
+                                          ? const Color(0xFF00FFC2)
+                                          : Colors.orangeAccent)
+                                      .withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color:
+                                    (r.triggerOnEnter
+                                            ? const Color(0xFF00FFC2)
+                                            : Colors.orangeAccent)
+                                        .withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              r.triggerOnEnter ? 'ENTER' : 'EXIT',
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: r.triggerOnEnter
+                                    ? const Color(0xFF00FFC2)
+                                    : Colors.orangeAccent,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _getNodeFriendlyName(r.targetNode),
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (_isMultiSelectMode)
+                  _buildSelectionCheck(isSelected, theme)
+                else
+                  _BreathingToggle(
+                    value: r.isEnabled,
+                    onChanged: (v) {
+                      ref
+                          .read(geofenceProvider.notifier)
+                          .updateRule(r.copyWith(isEnabled: v));
+                    },
+                  ),
+              ],
+            ),
+          ),
+        )
+        .animate(target: isSelected ? 1 : 0)
+        .scale(
+          begin: const Offset(1, 1),
+          end: const Offset(1.02, 1.02),
+          duration: 200.ms,
+          curve: Curves.easeOutCubic,
+        );
+  }
+
+  Widget _buildAnimatedLocationIcon(bool isEnabled) {
+    final theme = Theme.of(context);
+    final color = isEnabled
+        ? theme.primaryColor
+        : Colors.white.withOpacity(0.1);
+
+    return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withOpacity(0.15), width: 1),
+          ),
+          child: Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (isEnabled)
+                  Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.primaryColor.withOpacity(0.1),
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1.8, 1.8),
+                        duration: 1.5.seconds,
+                        curve: Curves.easeOut,
+                      )
+                      .fadeOut(duration: 1.5.seconds),
+                Icon(
+                      Icons.location_on_rounded,
+                      color: isEnabled ? theme.primaryColor : Colors.white24,
+                      size: 22,
                     )
                     .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .fade(begin: 0.3, end: 0.8, duration: 2.seconds),
-              if (_isMultiSelectMode) _buildSelectionCheck(isSelected, theme),
-              if (!_isMultiSelectMode)
-                _BreathingToggle(
-                  value: r.isEnabled,
-                  onChanged: (v) {
-                    ref
-                        .read(geofenceProvider.notifier)
-                        .updateRule(r.copyWith(isEnabled: v));
-                  },
-                ),
-            ],
+                    .moveY(
+                      begin: 0,
+                      end: -3,
+                      duration: 800.ms,
+                      curve: Curves.easeInOut,
+                    ),
+              ],
+            ),
           ),
-          isLast: isLast,
+        )
+        .animate(target: isEnabled ? 1 : 0)
+        .scale(
+          begin: const Offset(1, 1),
+          end: const Offset(1.05, 1.05),
+          duration: 300.ms,
+          curve: Curves.easeOutBack,
+        );
+  }
+
+  Widget _buildDaySummary(List<int> days) {
+    if (days.length == 7)
+      return Text(
+        'Every Day',
+        style: GoogleFonts.outfit(
+          fontSize: 12,
+          color: Colors.white.withOpacity(0.45),
+          fontWeight: FontWeight.w500,
         ),
+      );
+    if (days.isEmpty)
+      return Text(
+        'Never',
+        style: GoogleFonts.outfit(
+          fontSize: 12,
+          color: Colors.white.withOpacity(0.45),
+          fontWeight: FontWeight.w500,
+        ),
+      );
+
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    String summary = days.map((d) => dayNames[d - 1]).join(', ');
+    return Flexible(
+      child: Text(
+        summary,
+        style: GoogleFonts.outfit(
+          fontSize: 12,
+          color: Colors.white.withOpacity(0.45),
+          fontWeight: FontWeight.w500,
+        ),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -574,8 +895,16 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
     final granted = await NebulaGeofenceService.requestPermissions();
     if (!granted && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Background Location Permission Required'),
+        SnackBar(
+          content: Text(
+            'Background Location Permission Required',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -680,21 +1009,39 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
   }
 
   Widget _buildTimePicker() {
-    return SizedBox(
-      height: 120,
-      child: CupertinoTheme(
-        data: const CupertinoThemeData(brightness: Brightness.dark),
-        child: CupertinoDatePicker(
-          mode: CupertinoDatePickerMode.time,
-          initialDateTime: DateTime(
-            2024,
-            1,
-            1,
-            _selectedTime.hour,
-            _selectedTime.minute,
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: CupertinoTheme(
+          data: const CupertinoThemeData(
+            brightness: Brightness.dark,
+            textTheme: CupertinoTextThemeData(
+              dateTimePickerTextStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-          onDateTimeChanged: (dt) => setState(
-            () => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute),
+          child: CupertinoDatePicker(
+            mode: CupertinoDatePickerMode.time,
+            use24hFormat: true,
+            initialDateTime: DateTime(
+              2024,
+              1,
+              1,
+              _selectedTime.hour,
+              _selectedTime.minute,
+            ),
+            onDateTimeChanged: (dt) => setState(
+              () => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute),
+            ),
           ),
         ),
       ),
@@ -708,17 +1055,17 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
         children: [
           ...switches.map(
             (s) => _NodePill(
-              s.id,
-              s.nickname ?? s.name,
-              _selectedNode == s.id,
-              (v) => setState(() => _selectedNode = v),
+              id: s.id,
+              label: s.nickname ?? s.name,
+              isSelected: _selectedNode == s.id,
+              onTap: (v) => setState(() => _selectedNode = v),
             ),
           ),
           _NodePill(
-            'ecoMode',
-            'ECO MODE',
-            _selectedNode == 'ecoMode',
-            (v) => setState(() => _selectedNode = v),
+            id: 'ecoMode',
+            label: 'ECO MODE',
+            isSelected: _selectedNode == 'ecoMode',
+            onTap: (v) => setState(() => _selectedNode = v),
           ),
         ],
       ),
@@ -737,19 +1084,19 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
         children: [
           Expanded(
             child: _ActionPill(
-              'TURN ON',
-              _targetState == true,
-              true,
-              (v) => setState(() => _targetState = v),
+              label: 'TURN ON',
+              isSelected: _targetState == true,
+              state: true,
+              onTap: (v) => setState(() => _targetState = v),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: _ActionPill(
-              'TURN OFF',
-              _targetState == false,
-              false,
-              (v) => setState(() => _targetState = v),
+              label: 'TURN OFF',
+              isSelected: _targetState == false,
+              state: false,
+              onTap: (v) => setState(() => _targetState = v),
             ),
           ),
         ],
@@ -759,68 +1106,90 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
 
   Widget _buildDaySelector(ThemeData theme) {
     const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(7, (i) {
-          final day = i + 1;
-          final active = _selectedDays.contains(day);
-          return GestureDetector(
-            onTap: () {
-              HapticService.light();
-              setState(
-                () => active
-                    ? (_selectedDays.length > 1
-                          ? _selectedDays.remove(day)
-                          : null)
-                    : _selectedDays.add(day),
-              );
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: active
-                    ? const Color(0xFF007AFF) // Deep iOS-style blue
-                    : Colors.white.withOpacity(0.06),
-                border: Border.all(
-                  color: active
-                      ? const Color(0xFF007AFF)
-                      : Colors.white.withOpacity(0.15),
-                  width: 1.5,
-                ),
-                boxShadow: active
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF007AFF).withOpacity(0.4),
-                          blurRadius: 12,
-                          spreadRadius: -2,
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Center(
-                child: Text(
-                  days[i],
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontWeight: active ? FontWeight.w900 : FontWeight.w600,
-                    fontSize: 10,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            'ACTIVE DAYS',
+            style: GoogleFonts.outfit(
+              color: Colors.white.withOpacity(0.6), // Contrast bump
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(7, (i) {
+              final day = i + 1;
+              final active = _selectedDays.contains(day);
+              return GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  setState(
+                    () => active
+                        ? (_selectedDays.length > 1
+                              ? _selectedDays.remove(day)
+                              : null)
+                        : _selectedDays.add(day),
+                  );
+                },
+                child: AnimatedContainer(
+                  duration: 250.ms,
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: active
+                        ? (theme.primaryColor.computeLuminance() < 0.2
+                              ? const Color(0xFF323236)
+                              : theme.primaryColor)
+                        : Colors.white.withOpacity(0.05),
+                    border: Border.all(
+                      color: active
+                          ? theme.primaryColor
+                          : Colors.white.withOpacity(0.1),
+                      width: 1.5,
+                    ),
+                    boxShadow: active
+                        ? [
+                            BoxShadow(
+                              color: theme.primaryColor.withOpacity(0.4),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Center(
+                    child: Text(
+                      days[i],
+                      style: GoogleFonts.outfit(
+                        color: active
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.45),
+                        fontWeight: active ? FontWeight.w900 : FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }),
-      ),
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -994,19 +1363,19 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
               children: [
                 Expanded(
                   child: _ActionPill(
-                    'ENTER ZONE',
-                    _triggerOnEnter,
-                    true,
-                    (v) => setState(() => _triggerOnEnter = v),
+                    label: 'ENTER ZONE',
+                    isSelected: _triggerOnEnter,
+                    state: true,
+                    onTap: (v) => setState(() => _triggerOnEnter = v),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _ActionPill(
-                    'EXIT ZONE',
-                    !_triggerOnEnter,
-                    false,
-                    (v) => setState(() => _triggerOnEnter = !v),
+                    label: 'EXIT ZONE',
+                    isSelected: !_triggerOnEnter,
+                    state: false,
+                    onTap: (v) => setState(() => _triggerOnEnter = !v),
                   ),
                 ),
               ],
@@ -1018,19 +1387,19 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
               children: [
                 Expanded(
                   child: _ActionPill(
-                    'TURN ON',
-                    _targetState == true,
-                    true,
-                    (v) => setState(() => _targetState = v),
+                    label: 'TURN ON',
+                    isSelected: _targetState == true,
+                    state: true,
+                    onTap: (v) => setState(() => _targetState = v),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _ActionPill(
-                    'TURN OFF',
-                    _targetState == false,
-                    false,
-                    (v) => setState(() => _targetState = v),
+                    label: 'TURN OFF',
+                    isSelected: _targetState == false,
+                    state: false,
+                    onTap: (v) => setState(() => _targetState = v),
                   ),
                 ),
               ],
@@ -1046,15 +1415,22 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
   Widget _buildMapPreview() {
     final theme = Theme.of(context);
     return Container(
-      height: 200,
+      height: 220,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            spreadRadius: 5,
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         child: Stack(
           children: [
             FlutterMap(
@@ -1074,9 +1450,9 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
                       point: _selectedLocation,
                       radius: _radius,
                       useRadiusInMeter: true,
-                      color: theme.primaryColor.withOpacity(0.1),
-                      borderColor: theme.primaryColor,
-                      borderStrokeWidth: 1,
+                      color: theme.primaryColor.withOpacity(0.12),
+                      borderColor: theme.primaryColor.withOpacity(0.5),
+                      borderStrokeWidth: 2,
                     ),
                   ],
                 ),
@@ -1084,8 +1460,8 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
                   markers: [
                     Marker(
                       point: _selectedLocation,
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       child:
                           Icon(
                                 Icons.location_on,
@@ -1095,8 +1471,8 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
                               .animate(onPlay: (c) => c.repeat(reverse: true))
                               .slideY(
                                 begin: 0,
-                                end: -0.2,
-                                duration: 1.seconds,
+                                end: -0.15,
+                                duration: 800.ms,
                                 curve: Curves.easeInOut,
                               ),
                     ),
@@ -1105,22 +1481,29 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
               ],
             ),
             Positioned(
-              top: 12,
-              right: 12,
+              top: 16,
+              right: 16,
               child: GestureDetector(
                 onTap: _getCurrentLocation,
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.cardColor.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF1C1C1E).withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
                   child: _isGettingLocation
                       ? SizedBox(
-                          width: 16,
-                          height: 16,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
+                            strokeWidth: 2.5,
                             color: theme.primaryColor,
                           ),
                         )
@@ -1134,24 +1517,42 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
             ),
             if (_accuracy != null && _accuracy! > 30)
               Positioned(
-                bottom: 12,
-                left: 12,
+                bottom: 16,
+                left: 16,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+                    horizontal: 12,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.redAccent.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    'POOR SIGNAL (${_accuracy!.toStringAsFixed(0)}m)',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'POOR SIGNAL (${_accuracy!.toStringAsFixed(0)}m)',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1170,40 +1571,71 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
   }
 
   Widget _buildRadiusSelector(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'RADIUS',
-              style: GoogleFonts.outfit(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'ZONE RADIUS',
+                style: GoogleFonts.outfit(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
               ),
-            ),
-            Text(
-              '${_radius.toInt()} METERS',
-              style: GoogleFonts.outfit(
-                color: theme.primaryColor,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${_radius.toInt()}m',
+                  style: GoogleFonts.outfit(
+                    color: theme.primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              activeTrackColor: theme.primaryColor,
+              inactiveTrackColor: Colors.white.withOpacity(0.05),
+              thumbColor: Colors.white,
+              overlayColor: theme.primaryColor.withOpacity(0.1),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
             ),
-          ],
-        ),
-        Slider(
-          value: _radius,
-          min: 100,
-          max: 1000,
-          divisions: 18,
-          activeColor: theme.primaryColor,
-          inactiveColor: theme.dividerColor,
-          onChanged: (v) => setState(() => _radius = v),
-        ),
-      ],
+            child: Slider(
+              value: _radius,
+              min: 100,
+              max: 1000,
+              divisions: 18,
+              onChanged: (v) {
+                HapticService.light();
+                setState(() => _radius = v);
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1214,17 +1646,17 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
         children: [
           ...switches.map(
             (s) => _NodePill(
-              s.id,
-              s.nickname ?? s.name,
-              _selectedNode == s.id,
-              (v) => setState(() => _selectedNode = v),
+              id: s.id,
+              label: s.nickname ?? s.name,
+              isSelected: _selectedNode == s.id,
+              onTap: (v) => setState(() => _selectedNode = v),
             ),
           ),
           _NodePill(
-            'ecoMode',
-            'ECO MODE',
-            _selectedNode == 'ecoMode',
-            (v) => setState(() => _selectedNode = v),
+            id: 'ecoMode',
+            label: 'ECO MODE',
+            isSelected: _selectedNode == 'ecoMode',
+            onTap: (v) => setState(() => _selectedNode = v),
           ),
         ],
       ),
@@ -1233,11 +1665,11 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
 
   Widget _buildTimeConstraintSection(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1246,38 +1678,45 @@ class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
             children: [
               Icon(
                 Icons.access_time_rounded,
-                size: 16,
+                size: 18,
                 color: Colors.orangeAccent,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
-                'TIME CONSTRAINT (OPTIONAL)',
+                'TIME WINDOW (OPTIONAL)',
                 style: GoogleFonts.outfit(
                   color: Colors.orangeAccent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _TimeButton(
-                'START',
-                _startTime,
-                (v) => setState(() => _startTime = v),
+              Expanded(
+                child: _TimeButton(
+                  label: 'START',
+                  time: _startTime,
+                  onChanged: (v) => setState(() => _startTime = v),
+                ),
               ),
-              Icon(
-                Icons.arrow_forward_rounded,
-                color: theme.dividerColor,
-                size: 16,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white24,
+                  size: 20,
+                ),
               ),
-              _TimeButton(
-                'STOP',
-                _stopTime,
-                (v) => setState(() => _stopTime = v),
+              Expanded(
+                child: _TimeButton(
+                  label: 'STOP',
+                  time: _stopTime,
+                  onChanged: (v) => setState(() => _stopTime = v),
+                ),
               ),
             ],
           ),
@@ -1291,29 +1730,29 @@ InputDecoration _inputDecoration(ThemeData theme, String hint) {
   return InputDecoration(
     hintText: hint.toUpperCase(),
     hintStyle: GoogleFonts.outfit(
-      color: Colors.white.withOpacity(0.2),
+      color: Colors.white.withOpacity(0.15),
       fontSize: 12,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 1,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1.2,
     ),
     filled: true,
-    fillColor: Colors.black.withOpacity(0.3),
+    fillColor: Colors.white.withOpacity(0.04),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
-      borderSide: BorderSide(color: Colors.white.withOpacity(0.08), width: 1.2),
+      borderRadius: BorderRadius.circular(24),
+      borderSide: BorderSide(color: Colors.white.withOpacity(0.06), width: 1),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
-      borderSide: BorderSide(color: Colors.white.withOpacity(0.08), width: 1.2),
+      borderRadius: BorderRadius.circular(24),
+      borderSide: BorderSide(color: Colors.white.withOpacity(0.06), width: 1),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide(
-        color: theme.primaryColor.withOpacity(0.5),
+        color: theme.primaryColor.withOpacity(0.4),
         width: 1.5,
       ),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
   );
 }
 
@@ -1335,79 +1774,131 @@ class _BaseSheet extends StatelessWidget {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child:
-          Container(
-            width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.85,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0A0A0A),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(32),
-              ),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.08),
-                width: 1.5,
-              ),
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-            child: Column(
-              children: [
-                _buildDragHandle(),
-                const SizedBox(height: 24),
-                Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: theme.primaryColor,
-                            borderRadius: BorderRadius.circular(2),
+          RepaintBoundary(
+                child: Container(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height * 0.88,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E22),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(36),
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.15),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.6),
+                        blurRadius: 50,
+                        spreadRadius: 15,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
+                  child: Column(
+                    children: [
+                      _buildDragHandle()
+                          .animate()
+                          .fadeIn(duration: 400.ms)
+                          .scale(begin: const Offset(0.5, 1)),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  theme.primaryColor,
+                                  theme.primaryColor.withOpacity(0.3),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.primaryColor.withOpacity(0.3),
+                                  blurRadius: 12,
+                                ),
+                              ],
+                            ),
+                          ).animate().scaleY(
+                            begin: 0,
+                            duration: 400.ms,
+                            curve: Curves.easeOutBack,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                                title.toUpperCase(),
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
+                                ),
+                              )
+                              .animate()
+                              .fadeIn(delay: 100.ms)
+                              .slideX(begin: 0.1, end: 0),
+                          const Spacer(),
+                          IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                              )
+                              .animate(onPlay: (c) => c.repeat(reverse: true))
+                              .scale(
+                                begin: const Offset(1, 1),
+                                end: const Offset(1.1, 1.1),
+                                duration: 2.seconds,
+                                curve: Curves.easeInOut,
+                              ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: RepaintBoundary(
+                            child: child
+                                .animate()
+                                .fadeIn(delay: 200.ms, duration: 600.ms)
+                                .moveY(begin: 20, end: 0),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          title.toUpperCase(),
-                          style: GoogleFonts.outfit(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2.5,
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSaveButton(theme)
+                          .animate()
+                          .fadeIn(delay: 400.ms)
+                          .slideY(
+                            begin: 0.2,
+                            end: 0,
+                            curve: Curves.easeOutQuint,
                           ),
-                        ),
-                      ],
-                    )
-                    .animate()
-                    .fadeIn(duration: 600.ms, curve: AnimationEngine.appleEase)
-                    .slideX(
-                      begin: -0.1,
-                      end: 0,
-                      curve: AnimationEngine.iosSpring,
-                    ),
-                const SizedBox(height: 32),
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: child.animate().fadeIn(
-                      delay: 200.ms,
-                      duration: 400.ms,
-                    ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                _buildSaveButton(theme),
-              ],
-            ),
-          ).animate().slideY(
-            begin: 0.2,
-            end: 0,
-            duration: 600.ms,
-            curve: AnimationEngine.iosSpring,
-          ),
+              )
+              .animate()
+              .slideY(
+                begin: 0.2,
+                end: 0,
+                duration: 700.ms,
+                curve: Curves.easeOutQuart,
+              )
+              .fadeIn(),
     );
   }
 
   Widget _buildDragHandle() {
     return Container(
-      width: 40,
+      width: 36,
       height: 4,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
@@ -1417,89 +1908,138 @@ class _BaseSheet extends StatelessWidget {
   }
 
   Widget _buildSaveButton(ThemeData theme) {
-    return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onSave,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: double.infinity,
-              height: 60,
-              decoration: BoxDecoration(
-                color: theme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: theme.primaryColor.withOpacity(0.3),
-                  width: 1.5,
-                ),
+    return Container(
+          width: double.infinity,
+          height: 64,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.primaryColor.withOpacity(0.3),
+                blurRadius: 25,
+                spreadRadius: -2,
+                offset: const Offset(0, 10),
               ),
-              child: Center(
-                child: Text(
-                  'CONFIRM AUTOMATION',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    letterSpacing: 1.5,
-                  ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                color: (theme.primaryColor.computeLuminance() < 0.2
+                    ? const Color(0xFF323236)
+                    : Colors.transparent),
+              ),
+              child: InkWell(
+                onTap: onSave,
+                borderRadius: BorderRadius.circular(24),
+                child: Center(
+                  child:
+                      Text(
+                            'CONFIRM AUTOMATION',
+                            style: GoogleFonts.outfit(
+                              color:
+                                  Colors.white, // Locked to white for contrast
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              letterSpacing: 2,
+                            ),
+                          )
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .scale(
+                            begin: const Offset(1, 1),
+                            end: const Offset(1.02, 1.02),
+                            duration: 1.seconds,
+                            curve: Curves.easeInOut,
+                          ),
                 ),
               ),
             ),
           ),
         )
         .animate(onPlay: (c) => c.repeat(reverse: true))
-        .shimmer(
-          duration: 3.seconds,
-          color: theme.primaryColor.withOpacity(0.1),
-        );
+        .shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.1));
   }
 }
 
 class _NodePill extends StatelessWidget {
   final String id;
-  final String name;
+  final String label;
   final bool isSelected;
   final Function(String) onTap;
 
-  const _NodePill(this.id, this.name, this.isSelected, this.onTap);
+  const _NodePill({
+    required this.id,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.selection();
-        onTap(id);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? Colors.white : Colors.white.withOpacity(0.15),
-            width: 1.5,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.2),
-                    blurRadius: 10,
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child:
+          GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  onTap(id);
+                },
+                child: AnimatedContainer(
+                  duration: 250.ms,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
                   ),
-                ]
-              : [],
-        ),
-        child: Text(
-          name.toUpperCase(),
-          style: GoogleFonts.outfit(
-            color: isSelected ? Colors.black : Colors.white70,
-            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-            fontSize: 13,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? (theme.primaryColor.computeLuminance() < 0.2
+                              ? const Color(0xFF323236)
+                              : theme.primaryColor.withOpacity(0.25))
+                        : Colors.white.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected
+                          ? theme.primaryColor.withOpacity(0.5)
+                          : Colors.white.withOpacity(0.08),
+                      width: 1.5,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: theme.primaryColor.withOpacity(0.1),
+                              blurRadius: 10,
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Text(
+                    label.toUpperCase(),
+                    style: GoogleFonts.outfit(
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.3),
+                      fontWeight: isSelected
+                          ? FontWeight.w900
+                          : FontWeight.w600,
+                      fontSize: 12,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              )
+              .animate(target: isSelected ? 1 : 0)
+              .scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.05, 1.05),
+                duration: 200.ms,
+                curve: Curves.easeOutBack,
+              ),
     );
   }
 }
@@ -1510,56 +2050,51 @@ class _ActionPill extends StatelessWidget {
   final bool state;
   final Function(bool) onTap;
 
-  const _ActionPill(this.label, this.isSelected, this.state, this.onTap);
+  const _ActionPill({
+    required this.label,
+    required this.isSelected,
+    required this.state,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // High contrast colors: Green for ON, Red for OFF
     final activeColor = state == true
-        ? const Color(0xFF00FF88)
-        : const Color(0xFFFF3D00);
+        ? const Color(0xFF00FFC2)
+        : Colors.orangeAccent;
+
     return GestureDetector(
       onTap: () {
         HapticService.selection();
         onTap(state);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        duration: 250.ms,
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.white.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(24),
+          color: isSelected
+              ? activeColor.withOpacity(0.15)
+              : Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? activeColor : Colors.white.withOpacity(0.15),
-            width: 2.0,
+            color: isSelected
+                ? activeColor.withOpacity(0.4)
+                : Colors.white.withOpacity(0.06),
+            width: 1.5,
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: activeColor.withOpacity(0.3),
-                blurRadius: 15,
-                spreadRadius: 0,
-              ),
-          ],
+          boxShadow: isSelected
+              ? [BoxShadow(color: activeColor.withOpacity(0.1), blurRadius: 10)]
+              : [],
         ),
         child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (isSelected) ...[
-                Icon(Icons.check_circle_rounded, color: Colors.black, size: 20),
-                const SizedBox(width: 10),
-              ],
-              Text(
-                label,
-                style: GoogleFonts.outfit(
-                  color: isSelected ? Colors.black : Colors.white70,
-                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w800,
-                  fontSize: 15,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: GoogleFonts.outfit(
+              color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+              fontSize: 13,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
       ),
@@ -1572,16 +2107,37 @@ class _TimeButton extends StatelessWidget {
   final TimeOfDay? time;
   final Function(TimeOfDay) onChanged;
 
-  const _TimeButton(this.label, this.time, this.onChanged);
+  const _TimeButton({required this.label, this.time, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final timeStr = time?.format(context) ?? '--:--';
+
     return GestureDetector(
       onTap: () async {
+        HapticService.selection();
         final picked = await showTimePicker(
           context: context,
           initialTime: time ?? TimeOfDay.now(),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.dark(
+                  primary: theme.primaryColor,
+                  onPrimary: Colors.white,
+                  surface: const Color(0xFF1E1E22), // Match graphite
+                  onSurface: Colors.white,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.primaryColor,
+                  ),
+                ),
+              ),
+              child: child!,
+            );
+          },
         );
         if (picked != null) {
           HapticService.medium();
@@ -1589,31 +2145,28 @@ class _TimeButton extends StatelessWidget {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(14),
+          color: Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
               style: GoogleFonts.outfit(
-                color: Colors.orangeAccent.withOpacity(0.8),
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
+                color: Colors.white24,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              time == null
-                  ? '--:--'
-                  : '${time!.hour.toString().padLeft(2, '0')}:${time!.minute.toString().padLeft(2, '0')}',
+              timeStr,
               style: GoogleFonts.outfit(
-                color: time == null
-                    ? Colors.white.withOpacity(0.2)
-                    : Colors.deepOrangeAccent,
+                color: time != null ? Colors.white : Colors.white10,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -1625,161 +2178,9 @@ class _TimeButton extends StatelessWidget {
   }
 }
 
-// --- PREMIUM UI COMPONENTS (MARRYING SETTINGS SCREEN DESIGN) ---
+// End of file helper classes removed as they are no longer used
 
-class _PremiumSectionHeader extends StatelessWidget {
-  final String title;
-  const _PremiumSectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 32, 28, 12),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 16,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(2),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.5),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            title.toUpperCase(),
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: Colors.white.withOpacity(0.5),
-              letterSpacing: 2.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PremiumGroupedContainer extends ConsumerWidget {
-  final List<Widget> children;
-  const _PremiumGroupedContainer({required this.children});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: theme.cardColor.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Column(children: children),
-    );
-  }
-}
-
-Widget _buildPremiumSettingTile(
-  BuildContext context, {
-  required String title,
-  required String subtitle,
-  Widget? extraSubtitle,
-  required Widget leading,
-  required Widget trailing,
-  bool isLast = false,
-}) {
-  return Container(
-    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-    decoration: BoxDecoration(
-      border: isLast
-          ? null
-          : Border(
-              bottom: BorderSide(
-                color: Colors.white.withOpacity(0.05),
-                width: 1,
-              ),
-            ),
-    ),
-    child: Row(
-      children: [
-        leading,
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.outfit(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold, // Bolder title
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.5),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              if (extraSubtitle != null) ...[
-                const SizedBox(height: 6),
-                extraSubtitle,
-              ],
-            ],
-          ),
-        ),
-        trailing,
-      ],
-    ),
-  );
-}
-
-Widget _buildPremiumIcon(
-  IconData icon,
-  Color color, {
-  bool isAnimating = false,
-}) {
-  return Container(
-    width: 44,
-    height: 44,
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.15), // Highly transparent background
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: color.withOpacity(0.2), width: 1.5),
-    ),
-    child: Center(
-      child: Icon(icon, color: color, size: 22)
-          .animate(target: isAnimating ? 1 : 0)
-          .scale(
-            begin: const Offset(1, 1),
-            end: const Offset(1.1, 1.1),
-            duration: 1.seconds,
-            curve: Curves.easeInOut,
-          )
-          .then()
-          .scale(
-            begin: const Offset(1.1, 1.1),
-            end: const Offset(1, 1),
-            duration: 1.seconds,
-            curve: Curves.easeInOut,
-          ),
-    ),
-  );
-}
+// End of file helper classes removed as they are no longer used
 
 // Breathing Toggle Switch
 class _BreathingToggle extends StatefulWidget {
@@ -1792,59 +2193,130 @@ class _BreathingToggle extends StatefulWidget {
   State<_BreathingToggle> createState() => _BreathingToggleState();
 }
 
-class _BreathingToggleState extends State<_BreathingToggle> {
+class _BreathingToggleState extends State<_BreathingToggle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _glowController;
+  bool _isTapped = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activeColor = theme.primaryColor;
-    final inactiveColor = Colors.white.withOpacity(0.1);
+    const inactiveColor = Color(0xFF1C1C1E);
 
     return GestureDetector(
+      onTapDown: (_) => setState(() => _isTapped = true),
+      onTapUp: (_) => setState(() => _isTapped = false),
+      onTapCancel: () => setState(() => _isTapped = false),
       onTap: () {
         HapticService.selection();
         widget.onChanged(!widget.value);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 50,
-        height: 28,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: widget.value ? activeColor : inactiveColor,
-          boxShadow: widget.value
-              ? [
-                  BoxShadow(
-                    color: activeColor.withOpacity(0.4),
-                    blurRadius: 10,
-                    spreadRadius: 1,
+      child: RepaintBoundary(
+        child: AnimatedScale(
+          scale: _isTapped ? 0.94 : 1.0,
+          duration: 150.ms,
+          curve: Curves.easeOutCirc,
+          child: AnimatedBuilder(
+            animation: _glowController,
+            builder: (context, child) {
+              return Container(
+                width: 54,
+                height: 32,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: widget.value
+                      ? (activeColor.computeLuminance() < 0.2
+                            ? const Color(0xFF323236)
+                            : activeColor)
+                      : inactiveColor,
+                  border: Border.all(
+                    color: widget.value
+                        ? activeColor.withOpacity(
+                            0.4 + (_glowController.value * 0.3),
+                          )
+                        : Colors.white.withOpacity(0.08),
+                    width: 1.5,
                   ),
-                ]
-              : [],
-        ),
-        child: Stack(
-          alignment: Alignment.centerLeft,
-          children: [
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.elasticOut,
-              left: widget.value ? 24.0 : 2.0,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
+                  boxShadow: widget.value
+                      ? [
+                          BoxShadow(
+                            color: activeColor.withOpacity(
+                              0.25 * _glowController.value,
+                            ),
+                            blurRadius: 12 * _glowController.value,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (widget.value)
+                      Positioned.fill(
+                        child: Opacity(
+                          opacity: _glowController.value * 0.2,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.white.withOpacity(0),
+                                  Colors.white.withOpacity(0.5),
+                                  Colors.white.withOpacity(0),
+                                ],
+                                stops: const [0, 0.5, 1],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                transform: GradientRotation(
+                                  _glowController.value * 6,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    AnimatedPositioned(
+                      duration: 400.ms,
+                      curve: Curves.elasticOut,
+                      left: widget.value ? 26.0 : 4.0,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -1852,45 +2324,7 @@ class _BreathingToggleState extends State<_BreathingToggle> {
 }
 
 // Widget to explain Beta status
-class _BetaInfoCard extends StatelessWidget {
-  final String description;
-  const _BetaInfoCard({required this.description});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withOpacity(0.5), // Slate-like dark
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueGrey.withOpacity(0.3)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            FontAwesomeIcons.circleInfo,
-            size: 16,
-            color: Colors.blueGrey.shade300,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              description,
-              style: GoogleFonts.outfit(
-                color: Colors.blueGrey.shade200,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// End of file helper classes removed as they are no longer used
 
 // Helper for Staggered Animation
 Widget _animatedSection({
@@ -1907,36 +2341,156 @@ Widget _animatedSection({
 }
 
 // Small chips for Days (Mon, Tue...) in the list tile
-Widget _buildDayChips(List<int> days) {
-  if (days.length == 7) {
-    return Text(
-      'EVERY DAY',
-      style: GoogleFonts.outfit(
-        color: Colors.white54,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return Wrap(
-    spacing: 4,
-    children: days.map((d) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+// End of file helper classes removed as they are no longer used
+
+class _StaggeredHelpDialog extends StatelessWidget {
+  const _StaggeredHelpDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final questions = [
+      {
+        'q': 'How do schedules work?',
+        'a':
+            'Schedules trigger actions at specific times on selected days. They run locally on the ESP32 if configured, or via cloud.',
+      },
+      {
+        'q': 'What is Geofencing?',
+        'a':
+            'Geofencing triggers actions when you enter or leave a defined location zone. It uses your phone\'s GPS/Location sensors.',
+      },
+      {
+        'q': 'Are automations reliable?',
+        'a':
+            'Yes! Our Hybrid Engine ensures background precision. Make sure you grant background location permissions for Geofencing.',
+      },
+    ];
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(4),
+          color: const Color(0xFF1E1E22), // Unify background
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 40,
+              spreadRadius: -10,
+            ),
+          ],
         ),
-        child: Text(
-          dayNames[d - 1].toUpperCase(),
-          style: GoogleFonts.outfit(
-            color: Colors.white70,
-            fontSize: 9,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: theme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Automation Help',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            ...List.generate(questions.length, (index) {
+              return Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          questions[index]['q']!,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white, // Locked to white for contrast
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          questions[index]['a']!,
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(
+                              0.75,
+                            ), // Contrast bump
+                            height: 1.6,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(delay: (300 + index * 100).ms)
+                  .slideY(begin: 0.1, end: 0);
+            }),
+            const SizedBox(height: 8),
+            GestureDetector(
+                  onTap: () {
+                    HapticService.light();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    decoration: BoxDecoration(
+                      color: theme.primaryColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: theme.primaryColor.withOpacity(0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'GOT IT',
+                        style: GoogleFonts.outfit(
+                          color: (theme.primaryColor.computeLuminance() < 0.2
+                              ? Colors.white
+                              : theme.primaryColor),
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .animate()
+                .fadeIn(delay: 700.ms)
+                .scale(
+                  begin: const Offset(0.9, 0.9),
+                  end: const Offset(1, 1),
+                  curve: Curves.easeOutBack,
+                  duration: 400.ms,
+                ),
+          ],
         ),
-      );
-    }).toList(),
-  );
+      ),
+    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).fadeIn();
+  }
 }

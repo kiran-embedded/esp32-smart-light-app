@@ -81,7 +81,9 @@ object GeofenceHelper {
             .addGeofence(geofence)
             .build()
         
-        val intent = Intent(context, GeofenceReceiver::class.java)
+        val intent = Intent(context, GeofenceReceiver::class.java).apply {
+            action = "com.iot.nebulacontroller.GEOFENCE_EVENT"
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             0,

@@ -1,11 +1,30 @@
-# Nebula Core v1.2.0+23 (TITANIUM EDITION)
+# Nebula Core v1.2.0+25 (HIGH-CONTRAST EDITION)
 
 **Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-23`
-**Update Size:** MAJOR PATCH
-**Priority:** CRITICAL FEATURE UPDATE
+**Build ID:** `NC-ANDROID-REL-25`
+**Update Size:** MAJOR VISIBILITY & BACKGROUND RELIABILITY PATCH
+**Priority:** URGENT FOR DARK THEME USERS
 
 ---
+
+## 🚀 WHAT'S NEW: THE VISIBILITY & RELIABILITY OVERHAUL
+This update introduces a complete high-contrast redesign for perfect legibility in all themes and a critical fix for background automation.
+
+### 🎭 High-Contrast Visibility Engine (The "Graphite" Update)
+We have overhauled the Automation Hub to ensure 100% legibility across all themes:
+*   **Modern Graphite Foundation**: Unified all backgrounds to a visible Graphite shade (`0xFF1E1E22`), eliminating "pure black" visibility issues.
+*   **Universal White Labels**: All active tabs, selected pills, and main headings are now locked to **Pure White (`Colors.white`)** with Ultra-Bold weighing (`w900`).
+*   **Luminance Floor Engine**: Interactive elements (Day Pills, SnackBars, Toggles) now automatically adapt their background colors if the primary theme is too dark, ensuring they stay perfectly visible.
+*   **Maximum Secondary Contrast**: Captions and summaries now use high-opacity white (0.65+) for crystal-clear readability.
+
+### 🌍 Background Geofence Reliability (App Closed Fix)
+We have resolved the issue where geofences failed to trigger when the app was closed:
+- **Receiver Promotion**: The `GeofenceReceiver` is now properly exported and standardized with fallback intent filters.
+- **Atomic Alarm Bridging**: Events are now securely bridged to a native exact alarm isolate for guaranteed background execution.
+- **Foreground Service Elevation**: Correctly handles location triggers via the `NativeAlarmService` even when the app process is terminated.
+
+---
+
 
 ## 📚 WHAT'S NEW: CORE CONCEPTS
 This update unlocks two powerful automation engines previously unavailable in the Nebula ecosystem.

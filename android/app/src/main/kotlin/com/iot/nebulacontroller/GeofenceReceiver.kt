@@ -12,22 +12,45 @@ import com.google.android.gms.location.GeofencingEvent
 
 class GeofenceReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val geofencingEvent = GeofencingEvent.fromIntent(intent)
+        val pendingResult = goAsync()
+        Log.d("GeofenceReceiver", "onReceive triggered - Action: ${intent.action}")
         
-        if (geofencingEvent == null) {
-             Log.e("GeofenceReceiver", "GeofencingEvent is null")
-             return
+        try {
+            val geofencingEvent = GeofencingEvent.fromIntent(intent)
+            
+            if (geofencingEvent == null) {
+                 Log.e("GeofenceReceiver", "GeofencingEvent is null")
+                 return
+            }
+
+            if (geofencingEvent.hasError()) {
+                Log.e("GeofenceReceiver", "Geofencing Error: ${geofencingEvent.errorCode}")
+                return
+            }
+
+            val geofenceTransition = geofencingEvent.geofenceTransition
+
+            if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                Log.d("GEOFENCE", "ENTER fired")
+            } else if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+                Log.d("GEOFENCE", "EXIT fired")
+            }
+
+            if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
+                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+                
+                val triggeringGeofences = geofencingEvent.triggeringGeofences
+                triggeringGeofences?.forEach { geofence ->
+                    scheduleExecution(context, geofence.requestId, geofenceTransition)
+                }
+            }
+        } finally {
+            pendingResult.finish()
         }
+    }
 
-        if (geofencingEvent.hasError()) {
-            Log.e("GeofenceReceiver", "Geofencing Error: ${geofencingEvent.errorCode}")
-            return
-        }
-
-        val geofenceTransition = geofencingEvent.geofenceTransition
-
-        // Helper to trigger execution via ALARM PATH (Unified Reliability)
-        fun scheduleExecution(ruleId: String, transitionType: Int) {
+    // Helper to trigger execution via ALARM PATH (Unified Reliability)
+    private fun scheduleExecution(context: Context, ruleId: String, transitionType: Int) {
             val prefs = context.getSharedPreferences("GeofencePrefs", Context.MODE_PRIVATE)
             val storedRule = prefs.getString(ruleId, null) ?: return 
             
@@ -97,14 +120,4 @@ class GeofenceReceiver : BroadcastReceiver() {
                 )
             }
         }
-
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-            geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
-            
-            val triggeringGeofences = geofencingEvent.triggeringGeofences
-            triggeringGeofences?.forEach { geofence ->
-                scheduleExecution(geofence.requestId, geofenceTransition)
-            }
-        }
-    }
 }
