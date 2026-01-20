@@ -1,7 +1,7 @@
-# Nebula Core v1.2.0+25 (INTUITION & FLUIDITY)
+# Nebula Core v1.2.0+26 (INTUITION & FLUIDITY)
 
 **Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-25`
+**Build ID:** `NC-ANDROID-REL-26`
 **Update Size:** MAJOR INTERACTION & OPTIMIZATION
 **Priority:** RECOMMENDED
 
@@ -41,7 +41,7 @@ The Nebula Core UI now feels more alive than ever, responding to every gesture w
 *   `[UI]` **Scheduler**: Updated `_buildPremiumScheduleItem` and `_AddScheduleSheet` to 12-hour format.
 *   `[UI]` **Performance**: Strategic `RepaintBoundary` placement for high-refresh-rate optimization.
 *   `[UI]` **Animation**: Added custom breathing and shimmer loops using `flutter_animate`.
-*   `[CORE]` **Versioning**: Bumped version to `v1.2.0+25`.
+*   `[CORE]` **Versioning**: Bumped version to `v1.2.0+26`.
 
 ---
 
