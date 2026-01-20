@@ -1,52 +1,47 @@
-# Nebula Core v1.2.0+24 (PURE AUTOMATION)
+# Nebula Core v1.2.0+25 (INTUITION & FLUIDITY)
 
 **Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-24`
-**Update Size:** MAJOR UI & CORE OPTIMIZATION
-**Priority:** CRITICAL FOR STABILITY
+**Build ID:** `NC-ANDROID-REL-25`
+**Update Size:** MAJOR INTERACTION & OPTIMIZATION
+**Priority:** RECOMMENDED
 
 ---
 
-## 🚀 WHAT'S NEW: THE SCHEDULER & PERFORMANCE UPDATE
-This update delivers a complete overhaul of the Scheduler UI, removes the legacy Geofencing engine to streamline performance, and fixes all visibility and reliability issues.
+## 🚀 WHAT'S NEW: THE INTUITION UPDATE
+This release transforms how you interact with your home automation by introducing contextual controls and extreme performance optimizations for high-refresh-rate displays.
 
-### 🎨 The All-New Scheduler UI
-We have reimagined the automation experience with a focus on premium aesthetics and fluid performance:
-*   **Dynamic Theme Engine**: No more "Light Blue." Every toggle, pill, and action now perfectly respects your active theme (e.g., Cyberpunk Neon, Deep Space).
-*   **Fluid Performance**: Rewritten `ListView` architecture with `cacheExtent` optimization ensures 60fps scrolling, even with complex schedules.
-*   **Micro-Interactions**: Added satisfying haptic feedback and "breathing" animations to edit modes and toggles.
-*   **Visual Clarity**:
-    *   **Action Pills**: Crystal clear ON/OFF states with high-contrast text.
-    *   **Day Selectors**: Intuitive, touch-friendly day toggles.
-    *   **Iconography**: Restored the missing spinning "Clock Icon" in the Switch Tab.
+### 🧠 Contextual Scheduling (Long-Press)
+*   **Intuitive Entry**: Removed the global clock icon from the main screen. Now, simply **long-press** any switch tile to open its specific scheduling hub.
+*   **Smart Pre-selection**: When you open the scheduler via long-press, the corresponding switch is automatically pre-selected in the "Add Schedule" flow, saving you time and taps.
 
-### ✂️ Geofencing Deprecation
-To focus on core reliability and simpler automation, the **Geofencing Engine has been fully removed**:
-*   **Leaner Core**: Removed `GeofenceHelper`, `GeofenceService`, and `BootReceiver` logic related to location tracking.
-*   **Battery Life**: Significant improvement in background battery usage by eliminating constant location polling.
-*   **Simplified Permissions**: The app no longer requires background location access, making the setup process faster and more privacy-focused.
+### 🕒 12-Hour Clock Support
+*   **Format Upgrade**: All time displays in the Automation Hub now follow the standard 12-hour format (AM/PM).
+*   **Seamless Selection**: The time picker has been updated to support the 12-hour format for a more natural scheduling experience.
+
+### ⚡ 90FPS Fluidity & Breathing UI
+*   **Buttery Smooth Scrolling**: Integrated `RepaintBoundary` and optimized `ListView` caching to ensure zero-lag scrolling at 90fps, even with multiple active schedules.
+*   **Breathing Animations**:
+    *   **Hub Indicator**: A subtle, pulsing neon glow in the header indicates active automation.
+    *   **Breathing Button**: The "Create New Schedule" button now features a continuous LED breathing pulse and moving shimmer effect.
+    *   **Glassmorphism Polish**: Enhanced Frosted Glass effects across the entire scheduler interface.
 
 ### 🛠️ Core Improvements
-*   **Notification Engine**: Schedules now trigger a local notification when they execute, giving you instant confirmation even when the app is closed.
-*   **Background Reliability**: Reinforced `NativeAlarmService` to ensure schedules fire exactly on time, every time.
-*   **Dependency Cleanup**: Removed unused packages (`geofence_service`) to reduce app size and build complexity.
+*   **Code Optimization**: Removed legacy unused widgets and simplified the interaction logic in the Control View.
+*   **Resource Management**: Minimized background repaints to further improve battery efficiency.
 
 ---
 
-## 📸 VISUAL UPGRADE
-The new Scheduler UI is designed to feel like a native extension of your phone:
-*   **Glassmorphism**: Subtle, theme-aware glass effects.
-*   **Neon Glows**: Dynamic shadows that match your chosen accent color.
-*   **Smooth Motion**: Staggered entry animations for a premium feel.
+## 📸 THE NEW STANDARD
+The Nebula Core UI now feels more alive than ever, responding to every gesture with fluid transitions and vibrant, theme-aware feedback.
 
 ---
 
 ## 📋 TECHNICAL CHANGELOG
-*   `[UI]` **Scheduler**: Replaced hardcoded colors with `Theme.of(context).primaryColor`.
-*   `[UI]` **Performance**: Added `cacheExtent: 1000` to `SchedulerSettingsPopup` to fix scroll lag.
-*   `[UI]` **Fix**: Restored visibility of the Clock Icon in the Switch Tab.
-*   `[CORE]` **Cleanup**: Removed all Geofencing code from `MainActivity.kt` and `BootReceiver.kt`.
-*   `[CORE]` **Update**: Bumped version to `v1.2.0+24`.
+*   `[UI]` **Interaction**: Implemented long-press trigger on `SwitchTile` for scheduler entry.
+*   `[UI]` **Scheduler**: Updated `_buildPremiumScheduleItem` and `_AddScheduleSheet` to 12-hour format.
+*   `[UI]` **Performance**: Strategic `RepaintBoundary` placement for high-refresh-rate optimization.
+*   `[UI]` **Animation**: Added custom breathing and shimmer loops using `flutter_animate`.
+*   `[CORE]` **Versioning**: Bumped version to `v1.2.0+25`.
 
 ---
 

@@ -11,13 +11,14 @@ import '../../providers/switch_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../services/scheduler_service.dart';
 import '../../core/ui/responsive_layout.dart';
-import '../../core/theme/app_theme.dart';
-import '../../providers/theme_provider.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/animation_provider.dart';
+import '../common/frosted_glass.dart';
+import '../common/pixel_led_border.dart';
 
 class SchedulerSettingsPopup extends ConsumerStatefulWidget {
-  const SchedulerSettingsPopup({super.key});
+  final String? initialDeviceId;
+  const SchedulerSettingsPopup({super.key, this.initialDeviceId});
 
   @override
   ConsumerState<SchedulerSettingsPopup> createState() =>
@@ -140,7 +141,26 @@ class _SchedulerSettingsPopupState
                     ),
                   )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .shimmer(duration: 2.seconds, color: Colors.white24),
+                  .shimmer(duration: 2.seconds, color: Colors.white24)
+                  .custom(
+                    duration: 1500.ms,
+                    builder: (context, value, child) => Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                (_isMultiSelectMode
+                                        ? const Color(0xFFFF4D4D)
+                                        : Theme.of(context).primaryColor)
+                                    .withOpacity(0.2 * value),
+                            blurRadius: 20 * value,
+                            spreadRadius: 5 * value,
+                          ),
+                        ],
+                      ),
+                      child: child,
+                    ),
+                  ),
               const SizedBox(width: 14),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,27 +262,26 @@ class _SchedulerSettingsPopupState
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 10, bottom: 40),
-      physics: const BouncingScrollPhysics(),
-      itemExtent: 120, // Adjusted height for premium tile
-      cacheExtent: 1000, // Pre-render items to prevent jank
-      addAutomaticKeepAlives: true,
-      addRepaintBoundaries: true,
-      itemCount: schedules.length,
-      itemBuilder: (context, index) {
-        final s = schedules[index];
-        final isSelected = _selectedScheduleIds.contains(s.id);
-        // Only animate if it's the first load or index is low to prevent scroll jank
-        if (index < 6) {
+    return RepaintBoundary(
+      child: ListView.builder(
+        padding: const EdgeInsets.only(top: 10, bottom: 40),
+        physics: const BouncingScrollPhysics(),
+        itemExtent: 120, // Adjusted height for premium tile
+        cacheExtent: 1000, // Pre-render items to prevent jank
+        addAutomaticKeepAlives: true,
+        addRepaintBoundaries: true,
+        itemCount: schedules.length,
+        itemBuilder: (context, index) {
+          final s = schedules[index];
+          final isSelected = _selectedScheduleIds.contains(s.id);
+          // Always animate with staggering for a "breathing" feel on entrance
           return _animatedSection(
-            index: index + 1,
+            index: index,
             ref: ref,
             child: _buildPremiumScheduleItem(s, isSelected),
           );
-        }
-        return _buildPremiumScheduleItem(s, isSelected);
-      },
+        },
+      ),
     );
   }
 
@@ -271,14 +290,13 @@ class _SchedulerSettingsPopupState
     final primaryColor = theme.primaryColor;
 
     // Copying _PremiumGroupedContainer style logic
-    final currentThemeMode = ref.watch(themeProvider);
-    final glowIntensity = AppTheme.getThemeGlowIntensity(
-      currentThemeMode,
-    ); // Ensure AppTheme is imported and has this
     final blurEnabled = ref.watch(switchSettingsProvider).blurEffectsEnabled;
 
+    // 12-hour format logic
+    final hourInt = s.hour > 12 ? s.hour - 12 : (s.hour == 0 ? 12 : s.hour);
+    final amPm = s.hour >= 12 ? 'PM' : 'AM';
     final timeStr =
-        '${s.hour.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}';
+        '${hourInt.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}';
 
     return RepaintBoundary(
       child: GestureDetector(
@@ -286,132 +304,133 @@ class _SchedulerSettingsPopupState
         onTap: _isMultiSelectMode
             ? () => _toggleMultiSelect(s.id)
             : () => _showAddScheduleDialog(existingSchedule: s),
-        child: AnimatedContainer(
-          duration: 300.ms,
+        child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? primaryColor.withOpacity(0.15)
-                : (blurEnabled
-                      ? Colors.black.withOpacity(0.3)
-                      : const Color(0xFF151515)),
-            borderRadius: BorderRadius.circular(24),
+          child: FrostedGlass(
+            radius: BorderRadius.circular(24),
+            blur: blurEnabled ? 15 : 0,
+            opacity: isSelected ? 0.25 : 0.12,
             border: Border.all(
               color: isSelected ? primaryColor : Colors.white.withOpacity(0.08),
-              width: 1.2,
+              width: 1.5,
             ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: primaryColor.withOpacity(0.2),
-                      blurRadius: 15,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(
-                        0.05 * glowIntensity,
-                      ),
-                      blurRadius: 20 * glowIntensity,
-                      spreadRadius: -5,
-                    ),
-                  ],
-          ),
-          child: Row(
-            children: [
-              // Icon Container
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: primaryColor.withOpacity(0.2)),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                // Icon Container
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: primaryColor.withOpacity(0.2)),
+                  ),
+                  child: Icon(
+                    FontAwesomeIcons.clock,
+                    color: primaryColor,
+                    size: 20,
+                  ),
                 ),
-                child: Icon(
-                  FontAwesomeIcons.clock,
-                  color: primaryColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 20),
+                const SizedBox(width: 20),
 
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          timeStr,
-                          style: GoogleFonts.outfit(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: s.isEnabled ? Colors.white : Colors.white54,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                (s.targetState
-                                        ? primaryColor
-                                        : Colors.redAccent)
-                                    .withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            s.targetState ? 'ON' : 'OFF',
-                            style: GoogleFonts.outfit(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              color: s.targetState
-                                  ? primaryColor
-                                  : Colors.redAccent,
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              colors: [
+                                Colors.white,
+                                Colors.white.withOpacity(0.7),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ).createShader(bounds),
+                            child: Text(
+                              timeStr,
+                              style: GoogleFonts.outfit(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: s.isEnabled
+                                    ? Colors.white
+                                    : Colors.white54,
+                                letterSpacing: -0.5,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_getNodeFriendlyName(s.targetNode)} • ${_getDaySummaryText(s.days)}',
-                      style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        color: Colors.white.withOpacity(0.5),
-                        fontWeight: FontWeight.w500,
+                          const SizedBox(width: 6),
+                          Text(
+                            amPm,
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: primaryColor.withOpacity(0.8),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  (s.targetState
+                                          ? primaryColor
+                                          : Colors.redAccent)
+                                      .withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              s.targetState ? 'ON' : 'OFF',
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: s.targetState
+                                    ? primaryColor
+                                    : Colors.redAccent,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_getNodeFriendlyName(s.targetNode)} • ${_getDaySummaryText(s.days)}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
 
-              // Action
-              if (_isMultiSelectMode)
-                _buildSelectionCheck(isSelected)
-              else
-                _BreathingToggle(
-                  value: s.isEnabled,
-                  onChanged: (v) {
-                    ref
-                        .read(switchScheduleProvider.notifier)
-                        .updateSchedule(s.copyWith(isEnabled: v));
-                  },
-                ),
-            ],
+                // Action
+                if (_isMultiSelectMode)
+                  _buildSelectionCheck(isSelected)
+                else
+                  _BreathingToggle(
+                    value: s.isEnabled,
+                    onChanged: (v) {
+                      ref
+                          .read(switchScheduleProvider.notifier)
+                          .updateSchedule(s.copyWith(isEnabled: v));
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -506,44 +525,55 @@ class _SchedulerSettingsPopupState
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Theme.of(context).primaryColor.withOpacity(0.3),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.1),
-                          blurRadius: 15,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_circle_outline_rounded,
-                          color: Theme.of(context).primaryColor,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'CREATE NEW SCHEDULE',
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
+                    height: 60,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                    ), // Adjust for border
+                    child:
+                        PixelLedBorder(
+                              colors: [
+                                Theme.of(context).primaryColor,
+                                Theme.of(context).colorScheme.secondary,
+                                Theme.of(context).colorScheme.tertiary,
+                                Theme.of(context).primaryColor,
+                              ],
+                              borderRadius: 20,
+                              strokeWidth: 2,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_circle_outline_rounded,
+                                      color: Theme.of(context).primaryColor,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'CREATE NEW SCHEDULE',
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .animate(onPlay: (c) => c.repeat())
+                            .shimmer(duration: 2500.ms, color: Colors.white12)
+                            .scale(
+                              begin: const Offset(1, 1),
+                              end: const Offset(1.02, 1.02),
+                              duration: 2.seconds,
+                              curve: Curves.easeInOut,
+                            ),
                   ),
                 ),
               )
@@ -562,7 +592,10 @@ class _SchedulerSettingsPopupState
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (context) => _AddScheduleSheet(schedule: existingSchedule),
+        builder: (context) => _AddScheduleSheet(
+          schedule: existingSchedule,
+          initialDeviceId: widget.initialDeviceId,
+        ),
       );
     }
   }
@@ -645,7 +678,8 @@ class _SchedulerSettingsPopupState
 // Custom Sheet for Adding Schedule (Modified from original to fit new design)
 class _AddScheduleSheet extends ConsumerStatefulWidget {
   final SwitchSchedule? schedule;
-  const _AddScheduleSheet({this.schedule});
+  final String? initialDeviceId;
+  const _AddScheduleSheet({this.schedule, this.initialDeviceId});
   @override
   ConsumerState<_AddScheduleSheet> createState() => _AddScheduleSheetState();
 }
@@ -669,7 +703,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
       _selectedDays = List.from(widget.schedule!.days);
     } else {
       _selectedTime = TimeOfDay.now();
-      _selectedNode = 'relay1';
+      _selectedNode = widget.initialDeviceId ?? 'relay1';
       _targetState = true;
       _selectedDays = [1, 2, 3, 4, 5, 6, 7];
     }
@@ -752,7 +786,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
           ),
           child: CupertinoDatePicker(
             mode: CupertinoDatePickerMode.time,
-            use24hFormat: true,
+            use24hFormat: false,
             initialDateTime: DateTime(
               2024,
               1,
