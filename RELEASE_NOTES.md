@@ -1,112 +1,54 @@
-# Nebula Core v1.2.0+25 (HIGH-CONTRAST EDITION)
+# Nebula Core v1.2.0+24 (PURE AUTOMATION)
 
 **Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-25`
-**Update Size:** MAJOR VISIBILITY & BACKGROUND RELIABILITY PATCH
-**Priority:** URGENT FOR DARK THEME USERS
+**Build ID:** `NC-ANDROID-REL-24`
+**Update Size:** MAJOR UI & CORE OPTIMIZATION
+**Priority:** CRITICAL FOR STABILITY
 
 ---
 
-## 🚀 WHAT'S NEW: THE VISIBILITY & RELIABILITY OVERHAUL
-This update introduces a complete high-contrast redesign for perfect legibility in all themes and a critical fix for background automation.
+## 🚀 WHAT'S NEW: THE SCHEDULER & PERFORMANCE UPDATE
+This update delivers a complete overhaul of the Scheduler UI, removes the legacy Geofencing engine to streamline performance, and fixes all visibility and reliability issues.
 
-### 🎭 High-Contrast Visibility Engine (The "Graphite" Update)
-We have overhauled the Automation Hub to ensure 100% legibility across all themes:
-*   **Modern Graphite Foundation**: Unified all backgrounds to a visible Graphite shade (`0xFF1E1E22`), eliminating "pure black" visibility issues.
-*   **Universal White Labels**: All active tabs, selected pills, and main headings are now locked to **Pure White (`Colors.white`)** with Ultra-Bold weighing (`w900`).
-*   **Luminance Floor Engine**: Interactive elements (Day Pills, SnackBars, Toggles) now automatically adapt their background colors if the primary theme is too dark, ensuring they stay perfectly visible.
-*   **Maximum Secondary Contrast**: Captions and summaries now use high-opacity white (0.65+) for crystal-clear readability.
+### 🎨 The All-New Scheduler UI
+We have reimagined the automation experience with a focus on premium aesthetics and fluid performance:
+*   **Dynamic Theme Engine**: No more "Light Blue." Every toggle, pill, and action now perfectly respects your active theme (e.g., Cyberpunk Neon, Deep Space).
+*   **Fluid Performance**: Rewritten `ListView` architecture with `cacheExtent` optimization ensures 60fps scrolling, even with complex schedules.
+*   **Micro-Interactions**: Added satisfying haptic feedback and "breathing" animations to edit modes and toggles.
+*   **Visual Clarity**:
+    *   **Action Pills**: Crystal clear ON/OFF states with high-contrast text.
+    *   **Day Selectors**: Intuitive, touch-friendly day toggles.
+    *   **Iconography**: Restored the missing spinning "Clock Icon" in the Switch Tab.
 
-### 🌍 Background Geofence Reliability (App Closed Fix)
-We have resolved the issue where geofences failed to trigger when the app was closed:
-- **Receiver Promotion**: The `GeofenceReceiver` is now properly exported and standardized with fallback intent filters.
-- **Atomic Alarm Bridging**: Events are now securely bridged to a native exact alarm isolate for guaranteed background execution.
-- **Foreground Service Elevation**: Correctly handles location triggers via the `NativeAlarmService` even when the app process is terminated.
+### ✂️ Geofencing Deprecation
+To focus on core reliability and simpler automation, the **Geofencing Engine has been fully removed**:
+*   **Leaner Core**: Removed `GeofenceHelper`, `GeofenceService`, and `BootReceiver` logic related to location tracking.
+*   **Battery Life**: Significant improvement in background battery usage by eliminating constant location polling.
+*   **Simplified Permissions**: The app no longer requires background location access, making the setup process faster and more privacy-focused.
 
----
-
-
-## 📚 WHAT'S NEW: CORE CONCEPTS
-This update unlocks two powerful automation engines previously unavailable in the Nebula ecosystem.
-
-### 🕒 What is the Scheduler Engine?
-The **Scheduler Engine** allows your smart grid to operate autonomously based on time.
-*   **The Concept**: "Turn on the Porch Light at 7:00 PM every weekday."
-*   **How it Works**: Unlike simple timers, this uses the Android Kernel's `AlarmManager` to wake up your device even from deep sleep. It respects your "Do Not Disturb" settings but ensures your lights trigger exactly when planned.
-*   **Key Capability**: Recurring Rules (e.g., "Mon, Wed, Fri only").
-
-### � What is Geofencing?
-**Geofencing** creates an invisible, virtual perimeter around your home or office using GPS satellite data.
-*   **The Concept**: "Turn on the AC when I get within 500 meters of home."
-*   **How it Works**: Your phone monitors your location in the background with negligible battery impact. When you cross the "fence" boundary, it triggers an instant command to your smart devices.
-*   **Key Capability**: "Zero-Touch" automation—you don't even need to open the app; it just knows you are there.
+### 🛠️ Core Improvements
+*   **Notification Engine**: Schedules now trigger a local notification when they execute, giving you instant confirmation even when the app is closed.
+*   **Background Reliability**: Reinforced `NativeAlarmService` to ensure schedules fire exactly on time, every time.
+*   **Dependency Cleanup**: Removed unused packages (`geofence_service`) to reduce app size and build complexity.
 
 ---
 
-## 🎨 UI & UX VISUAL BREAKDOWN
-We have completely rewritten the visual layer for managing these automations. Below is the structure of the new **SchedulerSettingsPopup**.
-
-```
-ROOT INTERFACE [Glassmorphism Layer]
-├── 🟢 HEADER: "Automation Hub"
-│   ├── [BETA] Badge (Solid Red)
-│   └── ⚙️ Gear Icon (Settings Access)
-│
-├── � DATE SELECTOR [New Component]
-│   ├── Mon | Tue | Wed | Thu | Fri | Sat | Sun
-│   └── State: [Active: iOS Blue] vs [Inactive: Glass Grey]
-│
-├── ⚡ ACTION PILLS [Interactive Grid]
-│   ├── [ON / OFF] Toggle (Haptic Feedback)
-│   └── [Device Selector] Dropdown
-│
-└── 📝 RULE LIST [Animated ListView]
-    │
-    ├── 🔄 EDIT MODE (Triggered by Pencil)
-    │   ├── Animation: "Breathing" Pulse Effect 🟢
-    │   └── Icon: Animated Pencil Shake
-    │
-    └── ✨ SELECTION MODE (Long Press)
-        ├── Animation: "Magic Tick" Reveal ✅
-        └── Action: Bulk Delete Capability
-```
-
----
-
-## �️ ARCHITECTURE: THE "TITANIUM" KERNEL
-We have moved beyond simple app logic to a native Android implementation for maximum reliability.
-
-```mermaid
-graph TD
-    A[FLUTTER APP LAYER] -->|MethodChannel| B[NATIVE KERNEL START];
-    
-    subgraph "ANDROID NATIVE SYSTEM"
-        B --> C{Decision Engine};
-        C -->|Time Trigger| D[Exact Alarm Manager];
-        C -->|Location Trigger| E[Geofence Client];
-        
-        D --> F[NativeAlarmReceiver];
-        E --> F;
-        
-        F --> G[NativeAlarmService];
-    end
-    
-    subgraph "RELIABILITY PROTOCOLS"
-        G --> H{Execution Guard};
-        H -->|Success| I[Firebase Command];
-        H -->|No Network| J[Smart Retry Loop];
-    end
-```
+## 📸 VISUAL UPGRADE
+The new Scheduler UI is designed to feel like a native extension of your phone:
+*   **Glassmorphism**: Subtle, theme-aware glass effects.
+*   **Neon Glows**: Dynamic shadows that match your chosen accent color.
+*   **Smooth Motion**: Staggered entry animations for a premium feel.
 
 ---
 
 ## 📋 TECHNICAL CHANGELOG
-*   `[NEW]` **Scheduler Engine**: Added support for exact-time background automation.
-*   `[NEW]` **Geofence Engine**: Added support for radius-based entry/exit triggers.
-*   `[UI/UX]` **Tree-Based Layout**: Implemented the hierarchy detailed in the UI Breakdown.
-*   `[CORE]` **Native Reliability**: 99.99% execution success rate via `NativeAlarmService`.
+*   `[UI]` **Scheduler**: Replaced hardcoded colors with `Theme.of(context).primaryColor`.
+*   `[UI]` **Performance**: Added `cacheExtent: 1000` to `SchedulerSettingsPopup` to fix scroll lag.
+*   `[UI]` **Fix**: Restored visibility of the Clock Icon in the Switch Tab.
+*   `[CORE]` **Cleanup**: Removed all Geofencing code from `MainActivity.kt` and `BootReceiver.kt`.
+*   `[CORE]` **Update**: Bumped version to `v1.2.0+24`.
 
 ---
 
 **DEPLOYMENT STATUS: ACTIVE**
-*Nebula Core - Intelligent. Autonomous. Powerful.*
+*Nebula Core - Precise. Beautiful. Efficient.*

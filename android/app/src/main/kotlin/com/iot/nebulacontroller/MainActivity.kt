@@ -5,7 +5,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.content.pm.PackageManager
 import android.os.Build
-import com.google.android.gms.location.GeofencingClient
+
 import com.google.android.gms.location.LocationServices
 import android.content.Context
 import android.content.Intent
@@ -57,35 +57,6 @@ class MainActivity : FlutterActivity() {
                     } else {
                         result.error("INVALID_ARGS", "Missing arguments", null)
                     }
-                }
-                "addGeofence" -> {
-                    val id = call.argument<String>("id")
-                    val lat = call.argument<Double>("latitude")
-                    val lng = call.argument<Double>("longitude")
-                    val radius = call.argument<Double>("radius")
-                    val triggerOnEnter = call.argument<Boolean>("triggerOnEnter") ?: true
-                    val triggerOnExit = call.argument<Boolean>("triggerOnExit") ?: false
-                    val node = call.argument<String>("targetNode")
-                    val state = call.argument<Boolean>("targetState") ?: true
-                    val deviceId = call.argument<String>("deviceId")
-
-                    if (id != null && lat != null && lng != null && radius != null && node != null && deviceId != null) {
-                        GeofenceHelper.addGeofence(
-                            this, id, lat, lng, radius.toFloat(), node, state, triggerOnEnter, triggerOnExit, deviceId
-                        )
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_ARGS", "Missing geofence args", null)
-                    }
-                }
-                "removeGeofence" -> {
-                     val id = call.argument<String>("id")
-                     if (id != null) {
-                         GeofenceHelper.removeGeofence(this, id)
-                         result.success(true)
-                     } else {
-                         result.error("INVALID_ARGS", "Missing id", null)
-                     }
                 }
                 else -> result.notImplemented()
             }

@@ -19,7 +19,6 @@ import 'services/scheduler_service.dart';
 import 'services/notification_service.dart';
 import 'services/haptic_service.dart';
 import 'services/ble_service.dart';
-import 'services/geofence_service.dart';
 import 'providers/switch_provider.dart';
 import 'services/firebase_switch_service.dart';
 import 'providers/immersive_provider.dart';
@@ -63,7 +62,6 @@ void main() async {
 
   await SchedulerService.init();
   await NotificationService.init();
-  await NebulaGeofenceService.init();
 
   // Request critical permissions on startup
   WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -166,4 +166,16 @@ class PersistenceService {
       return [];
     }
   }
+
+  static const String _geofenceMasterKey = 'geofence_master_switch';
+
+  static Future<void> saveGeofenceMasterSwitch(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_geofenceMasterKey, enabled);
+  }
+
+  static Future<bool?> getGeofenceMasterSwitch() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_geofenceMasterKey);
+  }
 }

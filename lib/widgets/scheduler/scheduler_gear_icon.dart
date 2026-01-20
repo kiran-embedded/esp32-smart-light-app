@@ -20,6 +20,9 @@ class SchedulerGearIcon extends StatefulWidget {
 class _SchedulerGearIconState extends State<SchedulerGearIcon> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return GestureDetector(
       onTap: () {
         HapticService.medium();
@@ -36,20 +39,10 @@ class _SchedulerGearIconState extends State<SchedulerGearIcon> {
             Icon(
                   Icons.access_time_filled_rounded,
                   size: 20,
-                  color: widget.isEnabled ? Colors.cyanAccent : Colors.white38,
+                  color: widget.isEnabled ? primaryColor : Colors.white38,
                 )
-                .animate(
-                  onPlay: (controller) => controller.repeat(reverse: true),
-                )
-                .scale(
-                  begin: const Offset(1, 1),
-                  end: const Offset(1.1, 1.1),
-                  duration: 1.seconds,
-                )
-                .shimmer(
-                  color: Colors.cyanAccent.withOpacity(0.5),
-                  duration: 2.seconds,
-                ),
+                .animate(onPlay: (controller) => controller.repeat())
+                .rotate(duration: 10.seconds),
       ),
     );
   }

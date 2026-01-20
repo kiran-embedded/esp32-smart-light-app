@@ -10,13 +10,15 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.iot.nebulacontroller.R 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.os.PowerManager
 
 class NativeAlarmService : Service() {
+
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -35,6 +37,12 @@ class NativeAlarmService : Service() {
         }
 
         startForegroundServiceNotification()
+
+        // Acquire WakeLock immediately
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nebula:NativeServiceWakelock")
+        wakeLock?.acquire(10 * 1000L) // 10s strict timeout
+        Log.d("NativeService", "WakeLock Acquired (10s limit)")
 
         // 4. Network Readiness Check
         if (!isNetworkAvailable()) {
@@ -132,7 +140,36 @@ class NativeAlarmService : Service() {
 
         ref.child(node).setValue(targetVal).addOnCompleteListener {
             Log.d("NativeService", "Write Complete: ${it.isSuccessful}")
+            if (it.isSuccessful) {
+                showCompletionNotification(node, state)
+            }
             stopSelf()
+        }
+    }
+
+    private fun showCompletionNotification(node: String, state: Boolean) {
+        val channelId = "nebula_automation_notifications"
+        val stateText = if (state) "ON" else "OFF"
+        val title = "Schedule Executed"
+        val content = "Successfully turned $stateText $node"
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setSmallIcon(R.mipmap.launcher_icon)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+            
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(System.currentTimeMillis().toInt(), notification)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (wakeLock?.isHeld == true) {
+            Log.d("NativeService", "WakeLock Released in onDestroy")
+            wakeLock?.release()
         }
     }
 }

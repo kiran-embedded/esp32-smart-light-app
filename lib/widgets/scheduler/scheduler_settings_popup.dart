@@ -5,18 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' as ll;
-import 'package:geolocator/geolocator.dart';
 import '../../models/switch_schedule.dart';
-import '../../models/geofence_rule.dart';
 import '../../providers/switch_schedule_provider.dart';
 import '../../providers/switch_provider.dart';
-import '../../providers/geofence_provider.dart';
 import '../../services/haptic_service.dart';
-import '../../services/geofence_service.dart';
 import '../../services/scheduler_service.dart';
 import '../../core/ui/responsive_layout.dart';
+import '../../core/theme/app_theme.dart';
+import '../../providers/theme_provider.dart';
+import '../../providers/switch_settings_provider.dart';
+import '../../providers/animation_provider.dart';
 
 class SchedulerSettingsPopup extends ConsumerStatefulWidget {
   const SchedulerSettingsPopup({super.key});
@@ -26,35 +24,20 @@ class SchedulerSettingsPopup extends ConsumerStatefulWidget {
       _SchedulerSettingsPopupState();
 }
 
-class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _SchedulerSettingsPopupState
+    extends ConsumerState<SchedulerSettingsPopup> {
   final List<String> _selectedScheduleIds = [];
-  final List<String> _selectedGeofenceIds = [];
   bool _isMultiSelectMode = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _toggleMultiSelect(String id, bool isGeofence) {
+  void _toggleMultiSelect(String id) {
     setState(() {
-      final list = isGeofence ? _selectedGeofenceIds : _selectedScheduleIds;
-      if (list.contains(id)) {
-        list.remove(id);
-        if (_selectedScheduleIds.isEmpty && _selectedGeofenceIds.isEmpty) {
+      if (_selectedScheduleIds.contains(id)) {
+        _selectedScheduleIds.remove(id);
+        if (_selectedScheduleIds.isEmpty) {
           _isMultiSelectMode = false;
         }
       } else {
-        list.add(id);
+        _selectedScheduleIds.add(id);
         _isMultiSelectMode = true;
       }
     });
@@ -67,10 +50,6 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
           .read(switchScheduleProvider.notifier)
           .deleteSchedules(_selectedScheduleIds);
       _selectedScheduleIds.clear();
-    }
-    if (_selectedGeofenceIds.isNotEmpty) {
-      ref.read(geofenceProvider.notifier).deleteRules(_selectedGeofenceIds);
-      _selectedGeofenceIds.clear();
     }
     setState(() {
       _isMultiSelectMode = false;
@@ -86,12 +65,12 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E22), // More Visible Graphite
+          color: const Color(0xFF0B0F14), // High-Performance Neon Base
           borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
-          border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
+          border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withOpacity(0.6),
               blurRadius: 40,
               spreadRadius: 5,
             ),
@@ -102,15 +81,7 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
             const SizedBox(height: 12),
             _buildDragHandle(),
             _buildHeader(),
-            _buildTabBar(),
-            Expanded(
-              child: RepaintBoundary(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [_buildSchedulesTab(), _buildGeofencingTab()],
-                ),
-              ),
-            ),
+            Expanded(child: RepaintBoundary(child: _buildSchedulesList())),
             _buildFooterButton(),
           ],
         ),
@@ -130,7 +101,6 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
   }
 
   Widget _buildHeader() {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 20, 16, 8),
       child: Row(
@@ -147,12 +117,12 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
                         end: Alignment.bottomCenter,
                         colors: [
                           _isMultiSelectMode
-                              ? Colors.redAccent
-                              : theme.primaryColor,
+                              ? const Color(0xFFFF4D4D) // Neon Red
+                              : Theme.of(context).primaryColor, // Dynamic Theme
                           (_isMultiSelectMode
-                                  ? Colors.redAccent
-                                  : theme.primaryColor)
-                              .withOpacity(0.3),
+                                  ? const Color(0xFFFF4D4D)
+                                  : Theme.of(context).primaryColor)
+                              .withOpacity(0.1),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(2),
@@ -160,11 +130,11 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
                         BoxShadow(
                           color:
                               (_isMultiSelectMode
-                                      ? Colors.redAccent
-                                      : theme.primaryColor)
-                                  .withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 1,
+                                      ? const Color(0xFFFF4D4D)
+                                      : Theme.of(context).primaryColor)
+                                  .withOpacity(0.4),
+                          blurRadius: 15,
+                          spreadRadius: 2,
                         ),
                       ],
                     ),
@@ -177,7 +147,7 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
                 children: [
                   Text(
                     _isMultiSelectMode
-                        ? '${_selectedScheduleIds.length + _selectedGeofenceIds.length} SELECTED'
+                        ? '${_selectedScheduleIds.length} SELECTED'
                         : 'Automation Hub',
                     style: GoogleFonts.outfit(
                       fontSize: 22,
@@ -193,9 +163,7 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
                     style: GoogleFonts.outfit(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white.withOpacity(
-                        0.65,
-                      ), // Maximum contrast for secondary text
+                      color: const Color(0xFFAAB0BC), // Cool Gray Label
                     ),
                   ),
                 ],
@@ -223,7 +191,7 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
                 IconButton(
                   icon: const Icon(
                     Icons.delete_sweep_rounded,
-                    color: Colors.redAccent,
+                    color: const Color(0xFFFF4D4D), // Neon Red
                     size: 26,
                   ),
                   onPressed: _deleteSelected,
@@ -265,487 +233,196 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
     );
   }
 
-  Widget _buildTabBar() {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      height: 46,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        dividerColor: Colors.transparent,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: theme.primaryColor.withOpacity(0.25),
-          border: Border.all(
-            color: theme.primaryColor.withOpacity(0.5),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.primaryColor.withOpacity(0.08),
-              blurRadius: 10,
-              spreadRadius: -2,
-            ),
-          ],
-        ),
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.white.withOpacity(0.35),
-        labelStyle: GoogleFonts.outfit(
-          fontWeight: FontWeight.w900,
-          fontSize: 14,
-          letterSpacing: 0.5,
-        ),
-        tabs: const [
-          Tab(text: 'Schedules'),
-          Tab(text: 'Geofencing'),
-        ],
-        onTap: (index) {
-          HapticService.light();
-          setState(() {});
-        },
-      ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
-  }
-
-  Widget _buildSchedulesTab() {
+  Widget _buildSchedulesList() {
     final schedules = ref.watch(switchScheduleProvider);
-    if (schedules.isEmpty)
+    if (schedules.isEmpty) {
       return _buildEmptyState(
         FontAwesomeIcons.calendarXmark,
         'No active schedules',
       );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.only(top: 10, bottom: 40),
       physics: const BouncingScrollPhysics(),
+      itemExtent: 120, // Adjusted height for premium tile
+      cacheExtent: 1000, // Pre-render items to prevent jank
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       itemCount: schedules.length,
       itemBuilder: (context, index) {
         final s = schedules[index];
         final isSelected = _selectedScheduleIds.contains(s.id);
-        return _animatedSection(
-          index: index + 1,
-          ref: ref,
-          child: _buildScheduleItem(
-            s,
-            isSelected,
-            index == schedules.length - 1,
-          ),
-        );
+        // Only animate if it's the first load or index is low to prevent scroll jank
+        if (index < 6) {
+          return _animatedSection(
+            index: index + 1,
+            ref: ref,
+            child: _buildPremiumScheduleItem(s, isSelected),
+          );
+        }
+        return _buildPremiumScheduleItem(s, isSelected);
       },
     );
   }
 
-  Widget _buildGeofencingTab() {
-    final rules = ref.watch(geofenceProvider);
-    if (rules.isEmpty)
-      return _buildEmptyState(
-        FontAwesomeIcons.locationDot,
-        'No location zones',
-      );
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 10, bottom: 40),
-      physics: const BouncingScrollPhysics(),
-      itemCount: rules.length,
-      itemBuilder: (context, index) {
-        final r = rules[index];
-        final isSelected = _selectedGeofenceIds.contains(r.id);
-        return _animatedSection(
-          index: index + 1,
-          ref: ref,
-          child: _buildGeofenceItem(r, isSelected, index == rules.length - 1),
-        );
-      },
-    );
-  }
-
-  Widget _buildEmptyState(IconData icon, String message) {
+  Widget _buildPremiumScheduleItem(SwitchSchedule s, bool isSelected) {
     final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-                padding: const EdgeInsets.all(28),
+    final primaryColor = theme.primaryColor;
+
+    // Copying _PremiumGroupedContainer style logic
+    final currentThemeMode = ref.watch(themeProvider);
+    final glowIntensity = AppTheme.getThemeGlowIntensity(
+      currentThemeMode,
+    ); // Ensure AppTheme is imported and has this
+    final blurEnabled = ref.watch(switchSettingsProvider).blurEffectsEnabled;
+
+    final timeStr =
+        '${s.hour.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}';
+
+    return RepaintBoundary(
+      child: GestureDetector(
+        onLongPress: () => _toggleMultiSelect(s.id),
+        onTap: _isMultiSelectMode
+            ? () => _toggleMultiSelect(s.id)
+            : () => _showAddScheduleDialog(existingSchedule: s),
+        child: AnimatedContainer(
+          duration: 300.ms,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? primaryColor.withOpacity(0.15)
+                : (blurEnabled
+                      ? Colors.black.withOpacity(0.3)
+                      : const Color(0xFF151515)),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isSelected ? primaryColor : Colors.white.withOpacity(0.08),
+              width: 1.2,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.2),
+                      blurRadius: 15,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(
+                        0.05 * glowIntensity,
+                      ),
+                      blurRadius: 20 * glowIntensity,
+                      spreadRadius: -5,
+                    ),
+                  ],
+          ),
+          child: Row(
+            children: [
+              // Icon Container
+              Container(
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.03),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.primaryColor.withOpacity(0.08),
-                    width: 1,
-                  ),
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: primaryColor.withOpacity(0.2)),
                 ),
                 child: Icon(
-                  icon,
-                  size: 54,
-                  color: theme.primaryColor.withOpacity(0.4),
+                  FontAwesomeIcons.clock,
+                  color: primaryColor,
+                  size: 20,
                 ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scale(
-                begin: const Offset(1, 1),
-                end: const Offset(1.05, 1.05),
-                duration: 2.seconds,
-              )
-              .moveY(
-                begin: 0,
-                end: -5,
-                duration: 2.seconds,
-                curve: Curves.easeInOut,
               ),
-          const SizedBox(height: 32),
-          Text(
-            message.toUpperCase(),
-            style: GoogleFonts.outfit(
-              color: Colors.white.withOpacity(0.2),
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              letterSpacing: 2.5,
-            ),
-          ).animate().fadeIn(delay: 400.ms),
-        ],
+              const SizedBox(width: 20),
+
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          timeStr,
+                          style: GoogleFonts.outfit(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: s.isEnabled ? Colors.white : Colors.white54,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                (s.targetState
+                                        ? primaryColor
+                                        : Colors.redAccent)
+                                    .withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            s.targetState ? 'ON' : 'OFF',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: s.targetState
+                                  ? primaryColor
+                                  : Colors.redAccent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_getNodeFriendlyName(s.targetNode)} • ${_getDaySummaryText(s.days)}',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.5),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Action
+              if (_isMultiSelectMode)
+                _buildSelectionCheck(isSelected)
+              else
+                _BreathingToggle(
+                  value: s.isEnabled,
+                  onChanged: (v) {
+                    ref
+                        .read(switchScheduleProvider.notifier)
+                        .updateSchedule(s.copyWith(isEnabled: v));
+                  },
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildScheduleItem(SwitchSchedule s, bool isSelected, bool isLast) {
-    final theme = Theme.of(context);
-    final timeStr =
-        '${s.hour.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}';
-
-    return GestureDetector(
-          onLongPress: () => _toggleMultiSelect(s.id, false),
-          onTap: _isMultiSelectMode
-              ? () => _toggleMultiSelect(s.id, false)
-              : () => _showAddScheduleDialog(existingSchedule: s),
-          child: AnimatedContainer(
-            duration: 300.ms,
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? Colors.redAccent.withOpacity(0.12)
-                  : Colors.white.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.redAccent.withOpacity(0.4)
-                    : Colors.white.withOpacity(0.06),
-                width: 1.2,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Colors.redAccent.withOpacity(0.1),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            timeStr,
-                            style: GoogleFonts.outfit(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w300,
-                              color: s.isEnabled
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.2),
-                              letterSpacing: -1,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  (s.targetState
-                                          ? theme.primaryColor
-                                          : Colors.redAccent)
-                                      .withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color:
-                                    (s.targetState
-                                            ? theme.primaryColor
-                                            : Colors.redAccent)
-                                        .withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              s.targetState ? 'ON' : 'OFF',
-                              style: GoogleFonts.outfit(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: s.targetState
-                                    ? (theme.primaryColor.computeLuminance() <
-                                              0.2
-                                          ? const Color(
-                                              0xFF00FFC2,
-                                            ) // Vibrant Mint
-                                          : theme.primaryColor)
-                                    : Colors.redAccent,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            _getNodeFriendlyName(s.targetNode),
-                            style: GoogleFonts.outfit(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: s.isEnabled
-                                  ? Colors.white.withOpacity(0.95)
-                                  : Colors.white.withOpacity(0.4),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.15),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildDaySummary(s.days),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (_isMultiSelectMode)
-                  _buildSelectionCheck(isSelected, theme)
-                else
-                  _BreathingToggle(
-                    value: s.isEnabled,
-                    onChanged: (v) {
-                      ref
-                          .read(switchScheduleProvider.notifier)
-                          .updateSchedule(s.copyWith(isEnabled: v));
-                    },
-                  ),
-              ],
-            ),
-          ),
-        )
-        .animate(target: isSelected ? 1 : 0)
-        .scale(
-          begin: const Offset(1, 1),
-          end: const Offset(1.02, 1.02),
-          duration: 200.ms,
-          curve: Curves.easeOutCubic,
-        );
-  }
-
-  Widget _buildGeofenceItem(GeofenceRule r, bool isSelected, bool isLast) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-          onLongPress: () => _toggleMultiSelect(r.id, true),
-          onTap: _isMultiSelectMode
-              ? () => _toggleMultiSelect(r.id, true)
-              : () => _showAddGeofenceDialog(existingRule: r),
-          child: AnimatedContainer(
-            duration: 300.ms,
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? Colors.redAccent.withOpacity(0.12)
-                  : Colors.white.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.redAccent.withOpacity(0.4)
-                    : Colors.white.withOpacity(0.06),
-                width: 1.2,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Colors.redAccent.withOpacity(0.1),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Row(
-              children: [
-                _buildAnimatedLocationIcon(r.isEnabled),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        r.name.toUpperCase(),
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: r.isEnabled
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.3),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  (r.triggerOnEnter
-                                          ? const Color(0xFF00FFC2)
-                                          : Colors.orangeAccent)
-                                      .withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color:
-                                    (r.triggerOnEnter
-                                            ? const Color(0xFF00FFC2)
-                                            : Colors.orangeAccent)
-                                        .withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              r.triggerOnEnter ? 'ENTER' : 'EXIT',
-                              style: GoogleFonts.outfit(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: r.triggerOnEnter
-                                    ? const Color(0xFF00FFC2)
-                                    : Colors.orangeAccent,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _getNodeFriendlyName(r.targetNode),
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white38,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (_isMultiSelectMode)
-                  _buildSelectionCheck(isSelected, theme)
-                else
-                  _BreathingToggle(
-                    value: r.isEnabled,
-                    onChanged: (v) {
-                      ref
-                          .read(geofenceProvider.notifier)
-                          .updateRule(r.copyWith(isEnabled: v));
-                    },
-                  ),
-              ],
-            ),
-          ),
-        )
-        .animate(target: isSelected ? 1 : 0)
-        .scale(
-          begin: const Offset(1, 1),
-          end: const Offset(1.02, 1.02),
-          duration: 200.ms,
-          curve: Curves.easeOutCubic,
-        );
-  }
-
-  Widget _buildAnimatedLocationIcon(bool isEnabled) {
-    final theme = Theme.of(context);
-    final color = isEnabled
-        ? theme.primaryColor
-        : Colors.white.withOpacity(0.1);
-
-    return Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
-            shape: BoxShape.circle,
-            border: Border.all(color: color.withOpacity(0.15), width: 1),
-          ),
-          child: Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (isEnabled)
-                  Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: theme.primaryColor.withOpacity(0.1),
-                        ),
-                      )
-                      .animate(onPlay: (c) => c.repeat())
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1.8, 1.8),
-                        duration: 1.5.seconds,
-                        curve: Curves.easeOut,
-                      )
-                      .fadeOut(duration: 1.5.seconds),
-                Icon(
-                      Icons.location_on_rounded,
-                      color: isEnabled ? theme.primaryColor : Colors.white24,
-                      size: 22,
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .moveY(
-                      begin: 0,
-                      end: -3,
-                      duration: 800.ms,
-                      curve: Curves.easeInOut,
-                    ),
-              ],
-            ),
-          ),
-        )
-        .animate(target: isEnabled ? 1 : 0)
-        .scale(
-          begin: const Offset(1, 1),
-          end: const Offset(1.05, 1.05),
-          duration: 300.ms,
-          curve: Curves.easeOutBack,
-        );
+  String _getDaySummaryText(List<int> days) {
+    if (days.length == 7) return 'Every Day';
+    if (days.isEmpty) return 'Never';
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map((d) => dayNames[d - 1]).join(', ');
   }
 
   Widget _buildDaySummary(List<int> days) {
@@ -783,15 +460,17 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
     );
   }
 
-  Widget _buildSelectionCheck(bool isSelected, ThemeData theme) {
+  Widget _buildSelectionCheck(bool isSelected) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isSelected ? Colors.redAccent : Colors.transparent,
+        color: isSelected
+            ? const Color(0xFFFF4D4D)
+            : Colors.transparent, // Neon Red
         border: Border.all(
-          color: isSelected ? Colors.redAccent : Colors.white24,
+          color: isSelected ? const Color(0xFFFF4D4D) : Colors.white24,
           width: 2,
         ),
       ),
@@ -814,7 +493,6 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
   }
 
   Widget _buildFooterButton() {
-    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 10, 20, Responsive.paddingBottom + 20),
       child:
@@ -823,24 +501,24 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
                 child: InkWell(
                   onTap: () {
                     HapticService.selection();
-                    _tabController.index == 0
-                        ? _showAddScheduleDialog()
-                        : _showAddGeofenceDialog();
+                    _showAddScheduleDialog();
                   },
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: theme.primaryColor.withOpacity(0.3),
+                        color: Theme.of(context).primaryColor.withOpacity(0.3),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.primaryColor.withOpacity(0.1),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withOpacity(0.1),
                           blurRadius: 15,
                           spreadRadius: 1,
                         ),
@@ -851,14 +529,12 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
                       children: [
                         Icon(
                           Icons.add_circle_outline_rounded,
-                          color: theme.primaryColor,
+                          color: Theme.of(context).primaryColor,
                           size: 22,
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          _tabController.index == 0
-                              ? 'CREATE NEW SCHEDULE'
-                              : 'ADD LOCATION ZONE',
+                          'CREATE NEW SCHEDULE',
                           style: GoogleFonts.outfit(
                             color: Colors.white,
                             fontWeight: FontWeight.w900,
@@ -874,7 +550,7 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .shimmer(
                 duration: 3.seconds,
-                color: theme.primaryColor.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
               ),
     );
   }
@@ -891,32 +567,78 @@ class _SchedulerSettingsPopupState extends ConsumerState<SchedulerSettingsPopup>
     }
   }
 
-  void _showAddGeofenceDialog({GeofenceRule? existingRule}) async {
-    final granted = await NebulaGeofenceService.requestPermissions();
-    if (!granted && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Background Location Permission Required',
+  Widget _buildEmptyState(IconData icon, String message) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).primaryColor.withOpacity(0.03), // Dynamic
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).primaryColor.withOpacity(0.08),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 54,
+                  color: Theme.of(
+                    context,
+                  ).primaryColor.withOpacity(0.4), // Dynamic
+                ),
+              )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.05, 1.05),
+                duration: 2.seconds,
+              )
+              .moveY(
+                begin: 0,
+                end: -5,
+                duration: 2.seconds,
+                curve: Curves.easeInOut,
+              ),
+          const SizedBox(height: 32),
+          Text(
+            message.toUpperCase(),
             style: GoogleFonts.outfit(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.white.withOpacity(0.2),
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              letterSpacing: 2.5,
             ),
-          ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    if (mounted) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => _AddGeofenceSheet(rule: existingRule),
-      );
-    }
+          ).animate().fadeIn(delay: 400.ms),
+        ],
+      ),
+    );
+  }
+
+  // --- HELPER FOR ANIMATED SECTIONS ---
+  Widget _animatedSection({
+    required int index,
+    required WidgetRef ref,
+    required Widget child,
+  }) {
+    final animationsEnabled = ref
+        .watch(animationSettingsProvider)
+        .animationsEnabled;
+
+    if (!animationsEnabled) return child;
+
+    return child
+        .animate()
+        .fadeIn(
+          delay: (index * 30).ms, // Faster stagger
+          duration: 400.ms, // Snappier fade
+          curve: Curves.easeOutQuad,
+        )
+        .slideY(begin: 0.1, duration: 400.ms, curve: Curves.easeOutQuad);
   }
 }
 
@@ -955,7 +677,6 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final switches = ref.watch(switchDevicesProvider);
     return _BaseSheet(
       title: widget.schedule != null ? 'EDIT SCHEDULE' : 'NEW SCHEDULE',
@@ -989,7 +710,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
               widget.schedule != null ? 'Schedule Updated' : 'Schedule Created',
               style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
             ),
-            backgroundColor: theme.primaryColor,
+            backgroundColor: Theme.of(context).primaryColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1002,7 +723,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
           const SizedBox(height: 24),
           _buildActionSelector(),
           const SizedBox(height: 24),
-          _buildDaySelector(theme),
+          _buildDaySelector(),
         ],
       ),
     );
@@ -1104,7 +825,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
     );
   }
 
-  Widget _buildDaySelector(ThemeData theme) {
+  Widget _buildDaySelector() {
     const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1151,21 +872,22 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: active
-                        ? (theme.primaryColor.computeLuminance() < 0.2
-                              ? const Color(0xFF323236)
-                              : theme.primaryColor)
+                        ? Theme.of(context)
+                              .primaryColor // Dynamic Theme
                         : Colors.white.withOpacity(0.05),
                     border: Border.all(
                       color: active
-                          ? theme.primaryColor
+                          ? Theme.of(context).primaryColor
                           : Colors.white.withOpacity(0.1),
                       width: 1.5,
                     ),
                     boxShadow: active
                         ? [
                             BoxShadow(
-                              color: theme.primaryColor.withOpacity(0.4),
-                              blurRadius: 15,
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.4),
+                              blurRadius: 4,
                               spreadRadius: 2,
                             ),
                           ]
@@ -1194,567 +916,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
   }
 }
 
-// Geofencing sheet
-class _AddGeofenceSheet extends ConsumerStatefulWidget {
-  final GeofenceRule? rule;
-  const _AddGeofenceSheet({this.rule});
-  @override
-  ConsumerState<_AddGeofenceSheet> createState() => _AddGeofenceSheetState();
-}
-
-class _AddGeofenceSheetState extends ConsumerState<_AddGeofenceSheet> {
-  final _nameController = TextEditingController();
-  ll.LatLng _selectedLocation = const ll.LatLng(0, 0);
-  double _radius = 200.0;
-  bool _triggerOnEnter = true;
-  String _selectedNode = 'relay1';
-  bool _targetState = true;
-  TimeOfDay? _startTime;
-  TimeOfDay? _stopTime;
-  final MapController _mapController = MapController();
-  bool _isGettingLocation = false;
-  double? _accuracy;
-
-  bool _isMapReady = false;
-  bool _showNameError = false; // Validation State
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.rule != null) {
-      _nameController.text = widget.rule!.name;
-      _selectedLocation = ll.LatLng(
-        widget.rule!.latitude,
-        widget.rule!.longitude,
-      );
-      _radius = widget.rule!.radius;
-      _triggerOnEnter = widget.rule!.triggerOnEnter;
-      _selectedNode = widget.rule!.targetNode;
-      _targetState = widget.rule!.targetState;
-
-      if (widget.rule!.startTime != null) {
-        final parts = widget.rule!.startTime!.split(':');
-        _startTime = TimeOfDay(
-          hour: int.parse(parts[0]),
-          minute: int.parse(parts[1]),
-        );
-      }
-      if (widget.rule!.stopTime != null) {
-        final parts = widget.rule!.stopTime!.split(':');
-        _stopTime = TimeOfDay(
-          hour: int.parse(parts[0]),
-          minute: int.parse(parts[1]),
-        );
-      }
-
-      // Delay map move slightly
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) {
-          setState(() => _isMapReady = true);
-          _mapController.move(_selectedLocation, 16);
-        }
-      });
-    } else {
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) {
-          setState(() => _isMapReady = true);
-          _getCurrentLocation();
-        }
-      });
-    }
-  }
-
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isGettingLocation = true);
-    try {
-      final p = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      setState(() {
-        _selectedLocation = ll.LatLng(p.latitude, p.longitude);
-        _accuracy = p.accuracy;
-        _isGettingLocation = false;
-      });
-      _mapController.move(_selectedLocation, 16);
-    } catch (e) {
-      setState(() => _isGettingLocation = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final switches = ref.watch(switchDevicesProvider);
-    return _BaseSheet(
-      title: widget.rule != null ? 'EDIT ZONE' : 'LOCATION RULE',
-      onSave: () {
-        if (_nameController.text.trim().isEmpty) {
-          setState(() => _showNameError = true);
-          HapticService.light();
-          return;
-        }
-
-        final r = GeofenceRule(
-          id:
-              widget.rule?.id ??
-              DateTime.now().millisecondsSinceEpoch.toString(),
-          name: _nameController.text.trim(),
-          latitude: _selectedLocation.latitude,
-          longitude: _selectedLocation.longitude,
-          radius: _radius,
-          triggerOnEnter: _triggerOnEnter,
-          triggerOnExit: !_triggerOnEnter,
-          targetNode: _selectedNode,
-          targetState: _targetState,
-          startTime: _startTime != null
-              ? '${_startTime!.hour}:${_startTime!.minute}'
-              : null,
-          stopTime: _stopTime != null
-              ? '${_stopTime!.hour}:${_stopTime!.minute}'
-              : null,
-          isEnabled: widget.rule?.isEnabled ?? true,
-        );
-
-        if (widget.rule != null) {
-          ref.read(geofenceProvider.notifier).updateRule(r);
-        } else {
-          ref.read(geofenceProvider.notifier).addRule(r);
-        }
-
-        Navigator.pop(context);
-        HapticService.heavy();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.rule != null ? 'Zone Updated' : 'Zone Created',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: theme.primaryColor,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      },
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildMapPreview(),
-            const SizedBox(height: 20),
-            _buildNameField(theme),
-            if (_showNameError) ...[
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Text(
-                  "Please enter a zone name",
-                  style: TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ).animate().fadeIn().shake(),
-            ],
-            const SizedBox(height: 20),
-            _buildRadiusSelector(theme),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionPill(
-                    label: 'ENTER ZONE',
-                    isSelected: _triggerOnEnter,
-                    state: true,
-                    onTap: (v) => setState(() => _triggerOnEnter = v),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ActionPill(
-                    label: 'EXIT ZONE',
-                    isSelected: !_triggerOnEnter,
-                    state: false,
-                    onTap: (v) => setState(() => _triggerOnEnter = !v),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildNodeSelector(switches),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionPill(
-                    label: 'TURN ON',
-                    isSelected: _targetState == true,
-                    state: true,
-                    onTap: (v) => setState(() => _targetState = v),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ActionPill(
-                    label: 'TURN OFF',
-                    isSelected: _targetState == false,
-                    state: false,
-                    onTap: (v) => setState(() => _targetState = v),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildTimeConstraintSection(theme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMapPreview() {
-    final theme = Theme.of(context);
-    return Container(
-      height: 220,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF161616),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Stack(
-          children: [
-            FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _selectedLocation,
-                initialZoom: 15,
-                onTap: (_, loc) => setState(() => _selectedLocation = loc),
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                ),
-                CircleLayer(
-                  circles: [
-                    CircleMarker(
-                      point: _selectedLocation,
-                      radius: _radius,
-                      useRadiusInMeter: true,
-                      color: theme.primaryColor.withOpacity(0.12),
-                      borderColor: theme.primaryColor.withOpacity(0.5),
-                      borderStrokeWidth: 2,
-                    ),
-                  ],
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _selectedLocation,
-                      width: 44,
-                      height: 44,
-                      child:
-                          Icon(
-                                Icons.location_on,
-                                color: theme.primaryColor,
-                                size: 40,
-                              )
-                              .animate(onPlay: (c) => c.repeat(reverse: true))
-                              .slideY(
-                                begin: 0,
-                                end: -0.15,
-                                duration: 800.ms,
-                                curve: Curves.easeInOut,
-                              ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: GestureDetector(
-                onTap: _getCurrentLocation,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1E).withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: _isGettingLocation
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: theme.primaryColor,
-                          ),
-                        )
-                      : Icon(
-                          Icons.my_location,
-                          color: theme.primaryColor,
-                          size: 20,
-                        ),
-                ),
-              ),
-            ),
-            if (_accuracy != null && _accuracy! > 30)
-              Positioned(
-                bottom: 16,
-                left: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'POOR SIGNAL (${_accuracy!.toStringAsFixed(0)}m)',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNameField(ThemeData theme) {
-    return TextField(
-      controller: _nameController,
-      style: GoogleFonts.outfit(color: theme.colorScheme.onSurface),
-      decoration: _inputDecoration(theme, 'RULE NAME (e.g. HOME, OFFICE)'),
-    );
-  }
-
-  Widget _buildRadiusSelector(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'ZONE RADIUS',
-                style: GoogleFonts.outfit(
-                  color: Colors.white.withOpacity(0.4),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${_radius.toInt()}m',
-                  style: GoogleFonts.outfit(
-                    color: theme.primaryColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 4,
-              activeTrackColor: theme.primaryColor,
-              inactiveTrackColor: Colors.white.withOpacity(0.05),
-              thumbColor: Colors.white,
-              overlayColor: theme.primaryColor.withOpacity(0.1),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-            ),
-            child: Slider(
-              value: _radius,
-              min: 100,
-              max: 1000,
-              divisions: 18,
-              onChanged: (v) {
-                HapticService.light();
-                setState(() => _radius = v);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNodeSelector(List<dynamic> switches) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          ...switches.map(
-            (s) => _NodePill(
-              id: s.id,
-              label: s.nickname ?? s.name,
-              isSelected: _selectedNode == s.id,
-              onTap: (v) => setState(() => _selectedNode = v),
-            ),
-          ),
-          _NodePill(
-            id: 'ecoMode',
-            label: 'ECO MODE',
-            isSelected: _selectedNode == 'ecoMode',
-            onTap: (v) => setState(() => _selectedNode = v),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeConstraintSection(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.access_time_rounded,
-                size: 18,
-                color: Colors.orangeAccent,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'TIME WINDOW (OPTIONAL)',
-                style: GoogleFonts.outfit(
-                  color: Colors.orangeAccent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _TimeButton(
-                  label: 'START',
-                  time: _startTime,
-                  onChanged: (v) => setState(() => _startTime = v),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Colors.white24,
-                  size: 20,
-                ),
-              ),
-              Expanded(
-                child: _TimeButton(
-                  label: 'STOP',
-                  time: _stopTime,
-                  onChanged: (v) => setState(() => _stopTime = v),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-InputDecoration _inputDecoration(ThemeData theme, String hint) {
-  return InputDecoration(
-    hintText: hint.toUpperCase(),
-    hintStyle: GoogleFonts.outfit(
-      color: Colors.white.withOpacity(0.15),
-      fontSize: 12,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 1.2,
-    ),
-    filled: true,
-    fillColor: Colors.white.withOpacity(0.04),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(24),
-      borderSide: BorderSide(color: Colors.white.withOpacity(0.06), width: 1),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(24),
-      borderSide: BorderSide(color: Colors.white.withOpacity(0.06), width: 1),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(24),
-      borderSide: BorderSide(
-        color: theme.primaryColor.withOpacity(0.4),
-        width: 1.5,
-      ),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-  );
-}
+// Geofence Sheet Deleted
 
 // Common UI Components
 class _BaseSheet extends StatelessWidget {
@@ -1779,7 +941,7 @@ class _BaseSheet extends StatelessWidget {
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height * 0.88,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E22),
+                    color: const Color(0xFF0B0F14), // Deep Black
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(36),
                     ),
@@ -1821,7 +983,7 @@ class _BaseSheet extends StatelessWidget {
                               boxShadow: [
                                 BoxShadow(
                                   color: theme.primaryColor.withOpacity(0.3),
-                                  blurRadius: 12,
+                                  blurRadius: 2,
                                 ),
                               ],
                             ),
@@ -1914,14 +1076,17 @@ class _BaseSheet extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
-              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+              colors: [
+                theme.primaryColor, // Dynamic Theme
+                theme.primaryColor.withOpacity(0.6),
+              ],
             ),
             boxShadow: [
               BoxShadow(
                 color: theme.primaryColor.withOpacity(0.3),
-                blurRadius: 25,
+                blurRadius: 10, // Moderate glow for button
                 spreadRadius: -2,
-                offset: const Offset(0, 10),
+                offset: const Offset(0, 5),
               ),
             ],
           ),
@@ -1930,9 +1095,7 @@ class _BaseSheet extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
-                color: (theme.primaryColor.computeLuminance() < 0.2
-                    ? const Color(0xFF323236)
-                    : Colors.transparent),
+                color: Colors.transparent, // Glass effect managed by gradient
               ),
               child: InkWell(
                 onTap: onSave,
@@ -1981,7 +1144,6 @@ class _NodePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(right: 12),
       child:
@@ -1998,22 +1160,24 @@ class _NodePill extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? (theme.primaryColor.computeLuminance() < 0.2
-                              ? const Color(0xFF323236)
-                              : theme.primaryColor.withOpacity(0.25))
+                        ? Theme.of(context).primaryColor.withOpacity(
+                            0.15,
+                          ) // Dynamic Theme Glass
                         : Colors.white.withOpacity(0.04),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected
-                          ? theme.primaryColor.withOpacity(0.5)
+                          ? Theme.of(context).primaryColor.withOpacity(0.5)
                           : Colors.white.withOpacity(0.08),
                       width: 1.5,
                     ),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: theme.primaryColor.withOpacity(0.1),
-                              blurRadius: 10,
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.15),
+                              blurRadius: 4,
                             ),
                           ]
                         : [],
@@ -2060,8 +1224,9 @@ class _ActionPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeColor = state == true
-        ? const Color(0xFF00FFC2)
-        : Colors.orangeAccent;
+        ? Theme.of(context)
+              .primaryColor // Dynamic Theme
+        : const Color(0xFFFF4D4D); // Neon Red
 
     return GestureDetector(
       onTap: () {
@@ -2096,82 +1261,6 @@ class _ActionPill extends StatelessWidget {
               letterSpacing: 1.2,
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TimeButton extends StatelessWidget {
-  final String label;
-  final TimeOfDay? time;
-  final Function(TimeOfDay) onChanged;
-
-  const _TimeButton({required this.label, this.time, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final timeStr = time?.format(context) ?? '--:--';
-
-    return GestureDetector(
-      onTap: () async {
-        HapticService.selection();
-        final picked = await showTimePicker(
-          context: context,
-          initialTime: time ?? TimeOfDay.now(),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.dark(
-                  primary: theme.primaryColor,
-                  onPrimary: Colors.white,
-                  surface: const Color(0xFF1E1E22), // Match graphite
-                  onSurface: Colors.white,
-                ),
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.primaryColor,
-                  ),
-                ),
-              ),
-              child: child!,
-            );
-          },
-        );
-        if (picked != null) {
-          HapticService.medium();
-          onChanged(picked);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                color: Colors.white24,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              timeStr,
-              style: GoogleFonts.outfit(
-                color: time != null ? Colors.white : Colors.white10,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -2215,9 +1304,8 @@ class _BreathingToggleState extends State<_BreathingToggle>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final activeColor = theme.primaryColor;
-    const inactiveColor = Color(0xFF1C1C1E);
+    final activeColor = Theme.of(context).primaryColor;
+    final inactiveColor = Colors.white.withOpacity(0.1);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isTapped = true),

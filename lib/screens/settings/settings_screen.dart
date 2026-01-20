@@ -30,6 +30,7 @@ import '../../services/haptic_service.dart';
 
 import '../../providers/ai_settings_provider.dart';
 import '../../providers/animation_provider.dart';
+import '../../providers/animation_provider.dart';
 import '../../widgets/ai/ai_assistant_dialog.dart';
 
 import '../../core/constants/app_constants.dart';
