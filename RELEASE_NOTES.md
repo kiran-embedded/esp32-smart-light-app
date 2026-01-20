@@ -1,7 +1,7 @@
-# Nebula Core v1.2.0+24 (OLED PERFECTION)
+# Nebula Core v1.2.0+30 (ULTIMATE PRECISION)
 
 **Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-24`
+**Build ID:** `NC-ANDROID-REL-30`
 **Update Size:** UI REFINEMENT & VISIBILITY OVERHAUL
 **Priority:** RECOMMENDED
 
@@ -45,7 +45,7 @@ This release brings the Automation Hub to perfection with OLED-optimized visuals
 *   `[FEAT]` **Rename**: Restored device renaming with Firebase sync
 *   `[FIX]` **Crash**: Added try-catch wrapper in `NativeAlarmService.onStartCommand`
 *   `[PERF]` **Blur**: Removed all blur effects for 90FPS smoothness
-*   `[CORE]` **Version**: Bumped to `v1.2.0+24`
+*   `[CORE]` **Version**: Bumped to `v1.2.0+30`
 
 ---
 
