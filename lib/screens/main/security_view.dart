@@ -112,6 +112,8 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                           sensor: sensor,
                           onAcknowledge: () =>
                               securityNotifier.acknowledge(name),
+                          onRename: (newName) =>
+                              securityNotifier.renameSensor(name, newName),
                         );
                       }, childCount: securityState.sensors.length),
                     ),
@@ -565,11 +567,13 @@ class _SensorCard extends StatefulWidget {
   final String name;
   final SensorState sensor;
   final VoidCallback onAcknowledge;
+  final Function(String) onRename;
 
   const _SensorCard({
     required this.name,
     required this.sensor,
     required this.onAcknowledge,
+    required this.onRename,
   });
 
   @override
@@ -577,6 +581,53 @@ class _SensorCard extends StatefulWidget {
 }
 
 class _SensorCardState extends State<_SensorCard> {
+  void _showRenameDialog(BuildContext context) {
+    final TextEditingController _controller = TextEditingController(
+      text: widget.sensor.nickname ?? widget.name,
+    );
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          title: Text(
+            "Rename Sensor",
+            style: GoogleFonts.outfit(color: Colors.white),
+          ),
+          content: TextField(
+            controller: _controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: "Enter custom name",
+              hintStyle: TextStyle(color: Colors.white38),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                "CANCEL",
+                style: TextStyle(color: Colors.white60),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_controller.text.trim().isNotEmpty) {
+                  widget.onRename(_controller.text.trim());
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text(
+                "SAVE",
+                style: TextStyle(color: Colors.cyanAccent),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasMotion = widget.sensor.status;
@@ -585,86 +636,98 @@ class _SensorCardState extends State<_SensorCard> {
     );
     final timeStr =
         "${lastTriggered.hour.toString().padLeft(2, '0')}:${lastTriggered.minute.toString().padLeft(2, '0')}";
-    final cleanName = widget.name
-        .replaceAll('PIR', '')
-        .replaceAll('_', ' ')
-        .trim()
-        .toUpperCase();
+    final cleanName =
+        widget.sensor.nickname ??
+        widget.name
+            .replaceAll('PIR', '')
+            .replaceAll('_', ' ')
+            .trim()
+            .toUpperCase();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: (hasMotion ? Colors.redAccent : Colors.white).withOpacity(0.04),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: (hasMotion ? Colors.redAccent : Colors.white).withOpacity(0.1),
-          width: 1,
+    return GestureDetector(
+      onLongPress: () {
+        HapticService.heavy();
+        _showRenameDialog(context);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: (hasMotion ? Colors.redAccent : Colors.white).withOpacity(
+            0.04,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: (hasMotion ? Colors.redAccent : Colors.white).withOpacity(
+              0.1,
+            ),
+            width: 1,
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: (hasMotion ? Colors.redAccent : Colors.white10)
-                        .withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    hasMotion
-                        ? Icons.motion_photos_on_rounded
-                        : Icons.sensors_rounded,
-                    size: 18.sp,
-                    color: hasMotion ? Colors.redAccent : Colors.white24,
-                  ),
-                ),
-                if (hasMotion)
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
-                      )
-                      .animate(onPlay: (c) => c.repeat())
-                      .scale(duration: 600.ms)
-                      .fadeOut(),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              cleanName,
-              style: GoogleFonts.outfit(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: (hasMotion ? Colors.redAccent : Colors.white10)
+                          .withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      hasMotion
+                          ? Icons.motion_photos_on_rounded
+                          : Icons.sensors_rounded,
+                      size: 18.sp,
+                      color: hasMotion ? Colors.redAccent : Colors.white24,
+                    ),
+                  ),
+                  if (hasMotion)
+                    Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                        .animate(onPlay: (c) => c.repeat())
+                        .scale(duration: 600.ms)
+                        .fadeOut(),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                timeStr == "00:00" ? "IDLE" : timeStr,
+              const Spacer(),
+              Text(
+                cleanName,
                 style: GoogleFonts.outfit(
-                  fontSize: 9.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white38,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  timeStr == "00:00" ? "IDLE" : timeStr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white38,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

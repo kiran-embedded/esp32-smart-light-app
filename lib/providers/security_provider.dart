@@ -10,11 +10,13 @@ class SensorState {
   final bool status;
   final int lastTriggered;
   final int lightLevel;
+  final String? nickname;
 
   SensorState({
     required this.status,
     required this.lastTriggered,
     required this.lightLevel,
+    this.nickname,
   });
 
   factory SensorState.fromMap(Map<dynamic, dynamic> map) {
@@ -22,6 +24,7 @@ class SensorState {
       status: map['status'] ?? false,
       lastTriggered: map['lastTriggered'] ?? 0,
       lightLevel: map['lightLevel'] ?? 0,
+      nickname: map['nickname']?.toString(),
     );
   }
 }
@@ -185,6 +188,10 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
 
   Future<void> acknowledge(String sensorName) async {
     await _service.acknowledgeAlert(sensorName);
+  }
+
+  Future<void> renameSensor(String sensorName, String newName) async {
+    await _service.renameSensor(sensorName, newName);
   }
 
   void simulateTrigger(String sensorName, bool status) {

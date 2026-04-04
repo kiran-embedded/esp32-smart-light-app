@@ -22,6 +22,10 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun startSecurityService() {
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val isEnabled = prefs.getBoolean("flutter.backgroundRunningEnabled", true)
+        if (!isEnabled) return
+
         val intent = Intent(this, SecurityForegroundService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
@@ -85,6 +89,20 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("ERR", e.message, null)
                     }
+                }
+                "startNativeSecurity" -> {
+                    val intent = Intent(this@MainActivity, SecurityForegroundService::class.java)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(intent)
+                    } else {
+                        startService(intent)
+                    }
+                    result.success(null)
+                }
+                "stopNativeSecurity" -> {
+                    val intent = Intent(this@MainActivity, SecurityForegroundService::class.java)
+                    stopService(intent)
+                    result.success(null)
                 }
                 else -> result.notImplemented()
             }

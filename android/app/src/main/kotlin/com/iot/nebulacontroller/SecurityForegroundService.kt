@@ -46,10 +46,13 @@ class SecurityForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         try {
+            if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {
+                com.google.firebase.FirebaseApp.initializeApp(this)
+            }
             startForegroundNotification()
             startFirebaseListener()
         } catch (e: Exception) {
-            Log.e("SecurityService", "CRITICAL ONCREATE ERROR: ${e.message}", e)
+            Log.e("SecurityService", "CRITICAL ONCREATE ERROR: \${e.message}", e)
         }
     }
 

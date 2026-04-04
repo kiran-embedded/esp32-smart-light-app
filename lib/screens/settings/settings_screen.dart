@@ -24,6 +24,7 @@ import '../../core/ui/responsive_layout.dart';
 import '../../providers/haptic_provider.dart';
 import '../../providers/update_provider.dart';
 import '../../providers/display_settings_provider.dart';
+import '../../providers/background_service_provider.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
 
@@ -454,7 +455,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                                   .setAlarmPriorityMode(val);
                             },
                           ),
-                          isLast: true,
+                        ),
+                        Consumer(
+                          builder: (context, ref, _) =>
+                              _buildPremiumSettingTile(
+                                context,
+                                title: 'Background Engine',
+                                subtitle: 'Allow operations when app is closed',
+                                leading: _buildPremiumIcon(
+                                  Icons.memory,
+                                  Colors.indigo,
+                                ),
+                                trailing: _BreathingToggle(
+                                  value: ref.watch(backgroundServiceProvider),
+                                  onChanged: (val) {
+                                    HapticService.selection();
+                                    ref
+                                        .read(
+                                          backgroundServiceProvider.notifier,
+                                        )
+                                        .toggle(val);
+                                  },
+                                ),
+                                isLast: true,
+                              ),
                         ),
                       ],
                     ),

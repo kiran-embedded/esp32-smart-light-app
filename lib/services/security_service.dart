@@ -89,4 +89,10 @@ class SecurityService {
         .ref('devices/$deviceId/security/sensors/$sensorName')
         .update({'status': false});
   }
+
+  Future<void> renameSensor(String sensorName, String newName) async {
+    await _database
+        .ref('devices/$deviceId/security/sensors/$sensorName')
+        .update({'nickname': newName});
+  }
 }

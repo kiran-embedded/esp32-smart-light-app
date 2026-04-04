@@ -36,7 +36,6 @@ import 'core/ui/responsive_layout.dart';
 import 'widgets/debug/global_fps_meter.dart';
 import 'widgets/debug/developer_test_overlay.dart';
 import 'services/performance_monitor_service.dart';
-import 'services/background_security_service.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -128,7 +127,6 @@ Future<void> _initCriticalSystems(SharedPreferences prefs) async {
   final servicesFuture = Future.wait([
     SchedulerService.init(),
     NotificationService.init(),
-    BackgroundSecurityService.initializeService(),
   ]);
 
   // 3. System UI & Background

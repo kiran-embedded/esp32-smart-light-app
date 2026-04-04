@@ -63,17 +63,12 @@
         <service
             android:name=".SecurityForegroundService"
             android:exported="false"
+            android:process=":security"
             android:foregroundServiceType="specialUse">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" 
                       android:value="Security monitoring for IoT sensors and alarms" />
         </service>
 
-        <service
-            android:name="id.flutter.flutter_background_service.BackgroundService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="dataSync"
-            tools:replace="android:exported" />
 
         <service
             android:name=".FCMService"
