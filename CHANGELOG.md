@@ -69,7 +69,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [1.2.0+32] - 2026-04-04
+
+### 🚀 The Quantum Release
+
+#### Added
+- **Newton-Raphson Layout Engine**: Iterative UI convergence for pixel-perfect scaling.
+- **PillLayoutEngine**: Sigmoid-driven expansion and spring physics for the status pill.
+- **Liquid Glass UI**: Jelly-like transitions and new glassmorphic aesthetics.
+- **Quantum Performance**: 90FPS optimized with hardcoded OLED blacks.
+- **Cute Robot Assistant**: Female-voiced, context-aware AI assistant.
+
+#### Fixed
+- **NativeAlarmService**: Resolved background wake-lock timeouts.
+
+---
+
 
 ### Planned Features
 - Multi-language support (i18n)

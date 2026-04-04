@@ -2,7 +2,7 @@ name: nebula_core
 description: "Ultra-Advanced Smart Switch Control App - NEBULA CORE"
 publish_to: 'none'
 
-version: 1.2.0+30
+version: 1.2.0+32
 
 environment:
   sdk: ^3.10.4
@@ -24,6 +24,7 @@ dependencies:
   google_sign_in: ^6.2.1
   cloud_firestore: ^5.4.4
   firebase_database: ^11.1.0
+  firebase_messaging: ^15.1.1
 
   # MQTT for ESP32 communication
   mqtt_client: ^10.0.0
@@ -66,10 +67,13 @@ dependencies:
   multicast_dns: ^0.3.2
   flutter_blue_plus: ^1.31.0
   flutter_local_notifications: ^19.5.0
+  flutter_background_service: ^5.0.0
 
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   android_intent_plus: ^6.0.0
+  flutter_markdown: ^0.7.7+1
+  expressions: ^0.2.5+3
 
 dev_dependencies:
   flutter_test:
