@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/haptic_service.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/switch_provider.dart';
 import '../../services/voice_service.dart';
@@ -38,55 +40,63 @@ class SwitchGrid extends ConsumerWidget {
       );
     }
 
-    Widget grid = GridView.builder(
-      padding: EdgeInsets.fromLTRB(
-        Responsive.horizontalPadding,
-        0,
-        Responsive.horizontalPadding,
-        100.h,
+    Widget grid = RepaintBoundary(
+      child: GridView.builder(
+        padding: EdgeInsets.fromLTRB(
+          Responsive.horizontalPadding,
+          0,
+          Responsive.horizontalPadding,
+          100.h,
+        ),
+        physics: const BouncingScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: Responsive.gridColumns,
+          crossAxisSpacing: AppConstants.gridSpacing.w,
+          mainAxisSpacing: AppConstants.gridSpacing.h,
+          childAspectRatio: 1.0,
+        ),
+        itemCount: devices.length,
+        itemBuilder: (context, index) {
+          final device = devices[index];
+          return RepaintBoundary(
+            child: SwitchTile(
+              device: device,
+              onTap: () {
+                HapticService.selection();
+                ref
+                    .read(switchDevicesProvider.notifier)
+                    .toggleSwitch(device.id);
+
+                // Sound Effect
+                final soundService = ref.read(soundServiceProvider);
+                if (!device.isActive) {
+                  soundService.playSwitchOn();
+                } else {
+                  soundService.playSwitchOff();
+                }
+
+                // Trigger robo reaction
+                robo.triggerRoboReaction(ref, robo.RoboReaction.nod);
+
+                // Voice feedback
+                final voiceService = ref.read(voiceServiceProvider);
+                final status = !device.isActive ? 'on' : 'off';
+                voiceService.speak('${device.name} is $status.');
+              },
+              onLongPress: () {
+                HapticService.medium();
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) =>
+                      SchedulerSettingsPopup(initialDeviceId: device.id),
+                );
+              },
+            ),
+          );
+        },
       ),
-      physics: const BouncingScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: Responsive.gridColumns,
-        crossAxisSpacing: AppConstants.gridSpacing.w,
-        mainAxisSpacing: AppConstants.gridSpacing.h,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: devices.length,
-      itemBuilder: (context, index) {
-        final device = devices[index];
-        return SwitchTile(
-          device: device,
-          onTap: () {
-            ref.read(switchDevicesProvider.notifier).toggleSwitch(device.id);
-
-            // Sound Effect
-            final soundService = ref.read(soundServiceProvider);
-            if (!device.isActive) {
-              soundService.playSwitchOn();
-            } else {
-              soundService.playSwitchOff();
-            }
-
-            // Trigger robo reaction
-            robo.triggerRoboReaction(ref, robo.RoboReaction.nod);
-
-            // Voice feedback
-            final voiceService = ref.read(voiceServiceProvider);
-            final status = !device.isActive ? 'on' : 'off';
-            voiceService.speak('${device.name} is $status.');
-          },
-          onLongPress: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) =>
-                  SchedulerSettingsPopup(initialDeviceId: device.id),
-            );
-          },
-        );
-      },
     );
 
     return grid;

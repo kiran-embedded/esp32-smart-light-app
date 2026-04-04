@@ -143,12 +143,36 @@ class FirebaseSwitchService {
   /// value: 0 = OFF, 1 = ON
   /// NON-BLOCKING: This method returns immediately while the command sends in the background.
   /// Includes internal retry logic and connection reset.
-  void sendCommand(String relayKey, int value, {String? deviceId}) {
+  void sendCommand(
+    String relayKey,
+    int value, {
+    String? deviceId,
+    String? relayName,
+    String triggeredBy = 'app',
+  }) {
     final id = deviceId ?? AppConstants.defaultDeviceId;
     final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
 
-    // Fire and forget
+    // 1. Fire and forget command
     _executeCommandWithRetry(path, relayKey, value);
+
+    // 2. Log History
+    try {
+      final logPath = 'devices/$id/logs';
+      final logRef = _database.child(logPath).push();
+      final bool state = value == 1;
+
+      logRef.set({
+        'id': logRef.key,
+        'relayId': relayKey,
+        'relayName': relayName ?? relayKey,
+        'state': state,
+        'timestamp': DateTime.now().toIso8601String(),
+        'triggeredBy': triggeredBy,
+      });
+    } catch (e) {
+      print('History logging failed: $e');
+    }
   }
 
   Future<void> _executeCommandWithRetry(
@@ -158,10 +182,7 @@ class FirebaseSwitchService {
     int retryCount = 0,
   }) async {
     try {
-      await _database
-          .child(path)
-          .update({key: value})
-          .timeout(const Duration(seconds: 3));
+      await _database.child(path).update({key: value});
     } catch (e) {
       print('Background command failed (Attempt ${retryCount + 1}): $e');
       if (retryCount < 2) {
@@ -178,18 +199,21 @@ class FirebaseSwitchService {
     }
   }
 
+  static bool _persistenceSet = false;
+
   /// OPTIMIZATION: Enable offline persistence and faster syncing
   Future<void> optimizeConnection(bool enabled) async {
+    if (_persistenceSet) return; // Cannot change after initialization
     try {
       FirebaseDatabase.instance.setPersistenceEnabled(enabled);
-      FirebaseDatabase.instance.setPersistenceCacheSizeBytes(
-        10000000,
-      ); // 10MB cache
+      FirebaseDatabase.instance.setPersistenceCacheSizeBytes(10000000);
+      _persistenceSet = true;
       print(
         'Firebase Optimization: Persistence ${enabled ? 'ENABLED' : 'DISABLED'}',
       );
     } catch (e) {
-      print('Failed to set persistence (might be already set): $e');
+      _persistenceSet = true; // Still mark as set to avoid retry crashes
+      print('Firebase Persistence already set: $e');
     }
   }
 

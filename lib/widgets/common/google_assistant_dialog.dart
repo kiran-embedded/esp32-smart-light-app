@@ -28,11 +28,15 @@ class _GoogleAssistantDialogState extends ConsumerState<GoogleAssistantDialog> {
 
     try {
       final assistantService = ref.read(googleAssistantServiceProvider);
-      await assistantService.startListening((result) {
-        setState(() {
-          _lastCommand = result;
-          _isListening = false;
-        });
+      await assistantService.startListening((result, isFinal) {
+        if (mounted) {
+          setState(() {
+            _lastCommand = result;
+            if (isFinal) {
+              _isListening = false;
+            }
+          });
+        }
       });
     } catch (e) {
       setState(() {

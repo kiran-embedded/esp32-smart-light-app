@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/google_assistant_service.dart';
 import '../../widgets/robo/robo_assistant.dart' as robo;
 import '../../core/ui/responsive_layout.dart';
-import 'nebula_orb.dart';
+import 'quantum_voice_orb.dart';
 import 'text_decoder.dart';
 
 class VoiceAssistantOverlay extends ConsumerStatefulWidget {
@@ -15,16 +15,31 @@ class VoiceAssistantOverlay extends ConsumerStatefulWidget {
       _VoiceAssistantOverlayState();
 }
 
-class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay> {
+class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay>
+    with SingleTickerProviderStateMixin {
   String _statusText = 'Listening...';
   String _commandText = '';
   bool _isListening = false;
   bool _isSuccess = false;
+  bool _hasPopped = false;
+
+  late AnimationController _slideController;
 
   @override
   void initState() {
     super.initState();
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _slideController.forward();
     _startListening();
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    super.dispose();
   }
 
   Future<void> _startListening() async {
@@ -35,57 +50,54 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay> {
       _isSuccess = false;
     });
 
-    // Trigger robo speak/listen reaction
     robo.triggerRoboReaction(ref, robo.RoboReaction.speak);
 
     try {
       final assistantService = ref.read(googleAssistantServiceProvider);
-      await assistantService.startListening((result) {
+      await assistantService.startListening((result, isFinal) {
         if (mounted) {
           setState(() {
             _commandText = result;
-            // Show processing state if we have text but not final success yet
-            if (result.isNotEmpty && !_isSuccess) {
-              _statusText = 'Processing...';
+            if (result.isNotEmpty && !isFinal) {
+              _statusText = 'Decoding...';
             }
           });
 
-          // Heuristic: If we have a long enough string, assume it's a command and "succeed"
-          // In a real app, we'd wait for a specific "final" flag from the service,
-          // but here we simulate the "Nebula" processing delay for effect.
-          if (result.isNotEmpty && !_isSuccess) {
+          if (isFinal && result.isNotEmpty && !_isSuccess) {
             _handleCommandSuccess(result);
           }
         }
       });
-      // Do NOT set success here immediately. Just wait for callback or timeout.
     } catch (e) {
       if (mounted) {
         setState(() {
           _isListening = false;
           _statusText = 'Error';
-          _commandText = 'Try again.';
+          _commandText = 'Permission or limit reached.';
         });
       }
     }
   }
 
   void _handleCommandSuccess(String command) {
-    // Prevent multiple triggers
     if (_isSuccess) return;
 
-    // Delay slightly to let the user see the "decoding" effect finish or "Processing" state
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) {
-        setState(() {
-          _isListening = false;
-          _statusText = 'Executed';
-          _isSuccess = true;
-        });
+    setState(() {
+      _isListening = false;
+      _statusText = 'PROCESSED';
+      _isSuccess = true;
+    });
 
-        // Auto close faster
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) Navigator.pop(context);
+    // Final cooldown before popping
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted && !_hasPopped) {
+        _slideController.reverse().then((_) {
+          if (mounted) {
+            _hasPopped = true;
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          }
         });
       }
     });
@@ -104,125 +116,112 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(color: Colors.transparent),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.black, Colors.black],
-          ),
-          border: Border(
-            top: BorderSide(
-              color: Colors.cyanAccent.withOpacity(0.15),
-              width: 1,
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        children: [
+          // Scrim
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                if (Navigator.canPop(context)) Navigator.pop(context);
+              },
+              child: Container(color: Colors.transparent),
             ),
           ),
-        ),
-        child: Container(
-          // Inner padding container
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                const Color(0xFF1A1A1A), // Solid dark grey
-                Colors.black, // Solid black
-              ],
-            ),
-            border: Border(
-              top: BorderSide(
-                color: Colors.cyanAccent.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag Handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
 
-              // Dynamic Status
-              Text(
-                _isSuccess ? 'Success' : _statusText,
-                style: GoogleFonts.outfit(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w500,
-                  color: _isSuccess ? Colors.greenAccent : Colors.cyanAccent,
-                  letterSpacing: 1.2.w,
-                ),
-              ),
-              const SizedBox(height: 20),
+          // Liquid Slide-up Container
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: AnimatedBuilder(
+              animation: _slideController,
+              builder: (context, child) {
+                final slideY = (1.0 - _slideController.value) * 300;
+                final opacity = _slideController.value;
 
-              // Nebula Orb (Siri-like)
-              SizedBox(
-                height: 150.h,
-                child: Center(
-                  child: NebulaOrb(
-                    isListening: _isListening,
-                    isProcessing:
-                        !_isListening && !_isSuccess && _commandText.isNotEmpty,
-                    isSuccess: _isSuccess,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              // Command Text (Decoding Effect)
-              SizedBox(
-                height: 40.h,
-                child: _commandText.isEmpty
-                    ? Text(
-                        'Say "Turn on light"',
-                        style: GoogleFonts.outfit(
-                          fontSize: 20.sp,
-                          color: Colors.white54,
+                return Transform.translate(
+                  offset: Offset(0, slideY),
+                  child: Opacity(
+                    opacity: opacity,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.0),
+                            Colors.black.withOpacity(0.85),
+                            Colors.black,
+                          ],
                         ),
-                      )
-                    : TextDecoder(
-                        _commandText,
-                        style: GoogleFonts.outfit(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(40),
+                          topRight: Radius.circular(40),
                         ),
                       ),
-              ),
+                      padding: EdgeInsets.fromLTRB(24, 40, 24, 60.h),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Status + Glitter Orb
+                          Text(
+                            _statusText.toUpperCase(),
+                            style: GoogleFonts.outfit(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w900,
+                              color: _isSuccess
+                                  ? Colors.greenAccent
+                                  : Colors.cyanAccent.withOpacity(0.7),
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
 
-              const SizedBox(height: 30),
+                          SizedBox(
+                            height: 120.h,
+                            child: QuantumVoiceOrb(
+                              isListening: _isListening,
+                              isProcessing:
+                                  !_isListening &&
+                                  !_isSuccess &&
+                                  _commandText.isNotEmpty,
+                              isSuccess: _isSuccess,
+                            ),
+                          ),
 
-              // Close / Stop Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (_isListening)
-                    IconButton(
-                      icon: Icon(
-                        Icons.stop_circle_outlined,
-                        color: Colors.redAccent,
-                        size: 40.r,
+                          const SizedBox(height: 20),
+
+                          TextDecoder(
+                            _commandText.isEmpty
+                                ? 'NEBULA READY...'
+                                : _commandText,
+                            style: GoogleFonts.outfit(
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          if (_isListening)
+                            IconButton(
+                              onPressed: _stopListening,
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white38,
+                              ),
+                            ),
+                        ],
                       ),
-                      onPressed: _stopListening,
                     ),
-                ],
-              ),
-              const SizedBox(height: 20),
-            ],
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

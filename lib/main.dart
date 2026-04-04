@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
@@ -12,8 +13,11 @@ import 'screens/login/login_screen.dart';
 import 'screens/intro/cinematic_splash_screen.dart';
 import 'widgets/navigation/custom_transitions.dart';
 import 'screens/setup/firebase_setup_screen.dart';
+import 'screens/security/alarm_screen.dart';
+
 import 'providers/auth_provider.dart';
 import 'screens/main/main_screen.dart';
+
 import 'services/persistence_service.dart';
 import 'services/scheduler_service.dart';
 import 'services/notification_service.dart';
@@ -32,48 +36,23 @@ import 'core/ui/responsive_layout.dart';
 import 'widgets/debug/global_fps_meter.dart';
 import 'widgets/debug/developer_test_overlay.dart';
 import 'services/performance_monitor_service.dart';
+import 'services/background_security_service.dart';
+
+import 'package:flutter/foundation.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
+  // The notification is handled by the OS if it contains a 'notification' payload.
+  // For data-only messages, we'd trigger a local notification here.
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Preload ONLY what is absolutely critical for the UI tree to exist
   final prefs = await SharedPreferences.getInstance();
-
-  // Initialize Firebase (moved from _initBackgroundSystems to main)
-  try {
-    // Try custom config first, then default
-    final config = await PersistenceService.getFirebaseConfig();
-    if (config != null) {
-      await Firebase.initializeApp(
-        options: FirebaseOptions(
-          apiKey: config['apiKey']!,
-          appId: config['appId']!,
-          messagingSenderId: config['messagingSenderId']!,
-          projectId: config['projectId']!,
-          databaseURL: config['databaseURL'],
-        ),
-      );
-    } else {
-      await Firebase.initializeApp();
-    }
-  } catch (e) {
-    debugPrint("Firebase Init Error: $e");
-  }
-
-  await SchedulerService.init();
-  await NotificationService.init();
-
-  // Request critical permissions on startup
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    SchedulerService.requestPermissions();
-  });
-
-  // Kick off background initializations without awaiting (Zero-Block)
-  _initBackgroundSystems(prefs);
-
-  // Industry Level: Immersive Full-Screen (Non-blocking)
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   // Extract initial values for Provider overrides to prevent flash of default state
   final voiceEnabled = prefs.getBool('voice_enabled') ?? true;
@@ -91,6 +70,9 @@ void main() async {
     appOpeningSound: appOpeningSound,
     switchSound: switchSound,
   );
+
+  // Consolidate Firebase & Critical Services (Optimize for Startup Speed)
+  _initCriticalSystems(prefs);
 
   runApp(
     RestartWidget(
@@ -117,6 +99,47 @@ void main() async {
       ),
     ),
   );
+}
+
+Future<void> _initCriticalSystems(SharedPreferences prefs) async {
+  // 1. Firebase (Parallel)
+  final firebaseFuture = PersistenceService.getFirebaseConfig()
+      .then((config) {
+        if (config != null) {
+          return Firebase.initializeApp(
+            options: FirebaseOptions(
+              apiKey: config['apiKey']!,
+              appId: config['appId']!,
+              messagingSenderId: config['messagingSenderId']!,
+              projectId: config['projectId']!,
+              databaseURL: config['databaseURL'],
+            ),
+          );
+        } else {
+          return Firebase.initializeApp();
+        }
+      })
+      .catchError((e) {
+        debugPrint("Firebase Init Error: $e");
+        return Firebase.app(); // Return default app instance on error to satisfy FutureOr<FirebaseApp>
+      });
+
+  // 2. Critical Services (Non-blocking where possible)
+  final servicesFuture = Future.wait([
+    SchedulerService.init(),
+    NotificationService.init(),
+    BackgroundSecurityService.initializeService(),
+  ]);
+
+  // 3. System UI & Background
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  _initBackgroundSystems(prefs);
+
+  // Only wait for Firebase before proceeding to ensure data flows
+  await firebaseFuture;
+  await servicesFuture;
 }
 
 /// Handle secondary initializations in background to ensure instant Splash visibility
@@ -173,7 +196,20 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // Initialize Alarm Channel
+    const alarmChannel = MethodChannel('com.iot.nebulacontroller/alarm');
+    alarmChannel.setMethodCallHandler((call) async {
+      if (call.method == "getZone") {
+        // This is called when AlarmActivity starts
+        // We can either return the zone or let the call handle navigation
+      }
+    });
+
+    // Check if we launched for an alarm immediately
+    _checkForAlarm();
+
     // Initialize BLE using the provider instance
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(bleServiceProvider)
@@ -192,6 +228,22 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(firebaseSwitchServiceProvider).preWarmConnection();
+      _checkForAlarm();
+    }
+  }
+
+  Future<void> _checkForAlarm() async {
+    const alarmChannel = MethodChannel('com.iot.nebulacontroller/alarm');
+    try {
+      final String? zone = await alarmChannel.invokeMethod('getZone');
+      if (zone != null && mounted) {
+        // Navigate to AlarmScreen
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => AlarmScreen(zone: zone)),
+        );
+      }
+    } catch (e) {
+      // Ignored if not in AlarmActivity
     }
   }
 

@@ -4,9 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/display_settings_provider.dart';
-import '../../providers/animation_provider.dart';
 import '../../services/connectivity_service.dart';
-import '../../providers/connection_settings_provider.dart';
+import '../../providers/animation_provider.dart';
 import '../../providers/live_info_provider.dart';
 import '../../widgets/common/pixel_led_border.dart';
 import '../../core/ui/responsive_layout.dart';
@@ -71,43 +70,20 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     bool isConnected = false;
     String voltageText = "${liveInfo.acVoltage.toStringAsFixed(0)}V";
 
-    if (connectivity.activeMode == ConnectionMode.cloud) {
-      if (connectivity.isFirebaseConnected) {
-        modeText = "CLOUD MODE";
-        statusColor = Colors.greenAccent;
-        statusIcon = Icons.cloud_done_rounded;
-        isConnected = true;
-      } else {
-        modeText = "CONNECTING...";
-        statusColor = Colors.orangeAccent;
-        statusIcon = Icons.cloud_sync_rounded;
-        isConnected = false;
-      }
+    if (connectivity.isFirebaseConnected) {
+      modeText = "CLOUD MODE";
+      statusColor = Colors.greenAccent;
+      statusIcon = Icons.cloud_done_rounded;
+      isConnected = true;
     } else {
-      // Local Mode
-      if (connectivity.isEspHotspot) {
-        modeText = "HOTSPOT MODE";
-        statusColor = Colors.purpleAccent;
-        statusIcon = Icons.wifi_tethering;
-        isConnected = true;
-      } else if (connectivity.isLocalReachable) {
-        modeText = "LOCAL MODE";
-        statusColor = Colors.cyanAccent; // User requested Blueish for local
-        statusIcon = Icons.wifi;
-        isConnected = true;
-      } else {
-        // Fallback or searching in Local Mode
-        modeText = "SCANNING...";
-        statusColor = Colors.orangeAccent;
-        statusIcon = Icons.wifi_find;
-        isConnected = false;
-      }
+      modeText = "CONNECTING...";
+      statusColor = Colors.orangeAccent;
+      statusIcon = Icons.cloud_sync_rounded;
+      isConnected = false;
     }
 
-    // Override if completely disconnected (no SSID and no Firebase)
-    if (connectivity.ssid == null &&
-        !connectivity.isFirebaseConnected &&
-        !connectivity.isLocalReachable) {
+    // Override if completely disconnected
+    if (connectivity.ssid == null && !connectivity.isFirebaseConnected) {
       modeText = "DISCONNECTED";
       statusColor = Colors.redAccent;
       statusIcon = Icons.signal_wifi_off;

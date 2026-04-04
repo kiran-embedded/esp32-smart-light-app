@@ -38,27 +38,33 @@ class SuperActionPill extends ConsumerWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(40 * scale),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: const _SuperSegmentQuickToggle()),
-                    SizedBox(width: 16 * scale),
-                    Expanded(child: const _SuperSegmentEnergy()),
-                  ],
-                ),
-                SizedBox(height: 16 * scale),
-                Row(
-                  children: [
-                    Expanded(child: const _SuperSegmentGoogleHome()),
-                    SizedBox(width: 16 * scale),
-                    Expanded(child: const _SuperSegmentVoice()),
-                  ],
-                ),
-                SizedBox(height: 16 * scale),
-                const _SuperSegmentSchedule(),
-              ],
+            filter: ImageFilter.blur(
+              sigmaX: 2,
+              sigmaY: 2,
+            ), // High performance blur
+            child: Container(
+              color: Colors.black.withOpacity(0.85), // Solid dark background
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: const _SuperSegmentQuickToggle()),
+                      SizedBox(width: 16 * scale),
+                      Expanded(child: const _SuperSegmentEnergy()),
+                    ],
+                  ),
+                  SizedBox(height: 16 * scale),
+                  Row(
+                    children: [
+                      Expanded(child: const _SuperSegmentGoogleHome()),
+                      SizedBox(width: 16 * scale),
+                      Expanded(child: const _SuperSegmentVoice()),
+                    ],
+                  ),
+                  SizedBox(height: 16 * scale),
+                  const _SuperSegmentSchedule(),
+                ],
+              ),
             ),
           ),
         ),
@@ -465,7 +471,9 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                     colors: [
                       blendedColor.withOpacity(0.2 * glowIntensity),
                       blendedColor.withOpacity(0.05),
-                      theme.scaffoldBackgroundColor.withOpacity(0.4),
+                      theme.scaffoldBackgroundColor.withOpacity(
+                        0.2,
+                      ), // Leaner opacity
                     ],
                   ),
                   borderRadius: BorderRadius.circular(32 * scale),
@@ -473,22 +481,17 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                     color: blendedColor.withOpacity(0.35 * glowIntensity),
                     width: 1.2,
                   ),
-                  boxShadow: performanceMode
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: blendedColor.withOpacity(
-                              0.15 * glowIntensity,
-                            ),
-                            blurRadius: 30,
-                            spreadRadius: -10,
-                          ),
-                        ],
+                  boxShadow: [], // Always off for 90 FPS
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32 * scale),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(
+                      0.5,
+                    ), // Glass-like without BD Filter
+                    borderRadius: BorderRadius.circular(32 * scale),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -513,9 +516,9 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: blendedColor.withOpacity(0.6),
-                                        blurRadius: 6,
-                                        spreadRadius: 2,
+                                        color: blendedColor.withOpacity(0.4),
+                                        blurRadius: 4,
+                                        spreadRadius: 1,
                                       ),
                                     ],
                                   ),
@@ -530,7 +533,7 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                         if (widget.child != null) ...[
                           Expanded(child: widget.child!),
                         ] else ...[
-                          const Spacer(),
+                          const SizedBox(height: 16),
                         ],
                         SizedBox(height: 12.h * scale),
                         Align(

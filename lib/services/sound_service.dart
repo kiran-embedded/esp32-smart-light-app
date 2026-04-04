@@ -35,6 +35,19 @@ class SoundService {
       _sounds['tab'] = await SoLoud.instance.loadAsset(
         'assets/audio/tab_switch.mp3',
       );
+      _sounds['alarm_high'] = await SoLoud.instance.loadAsset(
+        'assets/audio/alarm_high.mp3',
+      );
+      _sounds['alarm_med'] = await SoLoud.instance.loadAsset(
+        'assets/audio/alarm_medium.mp3',
+      );
+      try {
+        _sounds['siren'] = await SoLoud.instance.loadAsset(
+          'assets/audio/siren.mp3',
+        );
+      } catch (e) {
+        debugPrint('Siren sound not found, skipping...');
+      }
     } catch (e) {
       debugPrint('SoLoud init error: $e');
     }
@@ -92,6 +105,52 @@ class SoundService {
       await _startupPlayer.play(AssetSource('audio/startup.mp3'));
     } catch (e) {
       debugPrint('Startup sound error: $e');
+    }
+  }
+
+  SoundHandle? _alarmHandle;
+
+  Future<void> playAlarmHigh({bool looping = true}) async {
+    final source = _sounds['alarm_high'];
+    if (source != null) {
+      if (_alarmHandle != null) SoLoud.instance.stop(_alarmHandle!);
+      _alarmHandle = await SoLoud.instance.play(
+        source,
+        volume: 1.0, // Force max volume for alarm
+        looping: looping,
+      );
+    }
+  }
+
+  Future<void> playAlarmMedium({bool looping = true}) async {
+    final source = _sounds['alarm_med'];
+    if (source != null) {
+      if (_alarmHandle != null) SoLoud.instance.stop(_alarmHandle!);
+      _alarmHandle = await SoLoud.instance.play(
+        source,
+        volume: 0.7,
+        looping: looping,
+      );
+    }
+  }
+
+  Future<void> playSiren({bool looping = true}) async {
+    // Try siren first, fallback to alarm_high
+    final source = _sounds['siren'] ?? _sounds['alarm_high'];
+    if (source != null) {
+      if (_alarmHandle != null) await SoLoud.instance.stop(_alarmHandle!);
+      _alarmHandle = await SoLoud.instance.play(
+        source,
+        volume: 1.0,
+        looping: looping,
+      );
+    }
+  }
+
+  Future<void> stopAlarm() async {
+    if (_alarmHandle != null) {
+      await SoLoud.instance.stop(_alarmHandle!);
+      _alarmHandle = null;
     }
   }
 

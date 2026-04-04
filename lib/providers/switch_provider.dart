@@ -38,6 +38,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         _createDefaultDevice('relay2', 'Switch 2'),
         _createDefaultDevice('relay3', 'Switch 3'),
         _createDefaultDevice('relay4', 'Switch 4'),
+        _createDefaultDevice('relay5', 'Switch 5'),
+        _createDefaultDevice('relay6', 'Switch 6'),
       ]) {
     if (initialNicknames != null) {
       _applyInitialNicknames(initialNicknames);
@@ -356,7 +358,12 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
     _ref
         .read(firebaseSwitchServiceProvider)
-        .sendCommand(id, newState ? 1 : 0, deviceId: _deviceId);
+        .sendCommand(
+          id,
+          newState ? 1 : 0,
+          deviceId: _deviceId,
+          relayName: state[deviceIndex].nickname ?? state[deviceIndex].name,
+        );
 
     _syncToCloud(state[deviceIndex].copyWith(isActive: newState));
   }

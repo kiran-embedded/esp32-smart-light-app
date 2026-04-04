@@ -36,41 +36,19 @@ class FrostedGlass extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final performanceMode = ref.watch(performanceProvider);
-    final blurEnabled = ref.watch(switchSettingsProvider).blurEffectsEnabled;
-    final bool effectivelyDisabled =
-        disableBlur || performanceMode || !blurEnabled;
-
-    if (blur == 0 || effectivelyDisabled)
-      return _buildBody(effectivelyDisabled);
-
-    return ClipRRect(
-      borderRadius: radius,
-      child: RepaintBoundary(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: _buildBody(effectivelyDisabled),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBody(bool effectivelyDisabled) {
-    // If blur is disabled, increase opacity slightly to ensure legibility
-    final double effectiveOpacity = effectivelyDisabled
-        ? (opacity + 0.15).clamp(0.0, 0.95)
-        : opacity;
-
     return Container(
       width: width,
       height: height,
       padding: padding,
       decoration: BoxDecoration(
-        color: (color ?? Colors.white).withOpacity(effectiveOpacity),
+        color: color ?? Theme.of(context).colorScheme.surface,
         borderRadius: radius,
         border:
             border ??
-            Border.all(color: Colors.white.withOpacity(0.12), width: 0.5),
+            Border.all(
+              color: (color ?? Colors.white).withOpacity(0.08),
+              width: 0.8,
+            ),
       ),
       child: child,
     );

@@ -11,8 +11,6 @@ import '../models/switch_schedule.dart';
 import 'persistence_service.dart';
 
 class SchedulerService {
-  static const int _baseAlarmId = 1000;
-
   static const _platform = MethodChannel(
     'com.iot.nebulacontroller/native_scheduler',
   );

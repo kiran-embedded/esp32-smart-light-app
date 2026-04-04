@@ -2,8 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_database/firebase_database.dart';
-
 import 'package:flutter/services.dart';
 
 import '../../services/haptic_service.dart';
@@ -28,13 +26,16 @@ import '../../widgets/common/pixel_led_border.dart';
 import '../../widgets/common/switch_tab_background.dart';
 import '../../widgets/navigation/animated_nav_icon.dart';
 import '../../widgets/common/premium_app_bar.dart';
-// Removed scheduler gear imports
+import '../../widgets/history/history_sheet.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/ui/responsive_layout.dart';
+import '../../core/ui/global_layout_engine.dart';
 
 import '../../providers/google_home_provider.dart';
 import '../../services/google_assistant_service.dart';
 
 import '../settings/settings_screen.dart';
+import 'security_view.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -64,7 +65,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
       });
     });
 
-    // Foreground Scheduler (Fallback "AI" Logic)
     _schedulerTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _checkSchedules();
     });
@@ -78,14 +78,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
     for (final schedule in schedules) {
       if (!schedule.isEnabled) continue;
 
-      // Check Time Match (Hour & Minute)
       if (schedule.hour == now.hour && schedule.minute == now.minute) {
-        // Check Day Match (if specific days selected)
         if (schedule.days.isNotEmpty && !schedule.days.contains(now.weekday)) {
           continue;
         }
 
-        // Check if already fired strictly within this minute
         final lastFired = _lastFiredSchedules[schedule.id];
         if (lastFired != null &&
             lastFired.year == now.year &&
@@ -93,19 +90,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
             lastFired.day == now.day &&
             lastFired.hour == now.hour &&
             lastFired.minute == now.minute) {
-          continue; // Already fired this minute
+          continue;
         }
 
-        // FIRE COMMAND: 0=ON, 1=OFF (Active Low)
-        final commandValue = schedule.targetState ? 0 : 1;
+        final commandValue = schedule.targetState ? 1 : 0;
         switchService.sendCommand(schedule.relayId, commandValue);
 
-        // Mark as fired
         _lastFiredSchedules[schedule.id] = now;
-
-        print(
-          'Foreground Scheduler: Executed ${schedule.relayId} -> ${schedule.targetState}',
-        );
       }
     }
   }
@@ -118,13 +109,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
     super.dispose();
   }
 
-  // ... (rest of class)
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // Logic for pre-warming connection is handled in main.dart or services
-    }
+    if (state == AppLifecycleState.resumed) {}
   }
 
   void _onPageChanged(int index) {
@@ -139,26 +126,22 @@ class _MainScreenState extends ConsumerState<MainScreen>
     HapticService.selection();
     ref.read(soundServiceProvider).playTabSwitch();
 
-    // Trigger Look/Blink
     robo.triggerRoboReaction(ref, robo.RoboReaction.blink);
 
     setState(() => _currentPage = index);
 
-    // Apply User's Fluidity Setting
     final animSettings = ref.read(animationSettingsProvider);
 
     if (animSettings.uiType == UiTransitionAnimation.zeroLatency) {
-      // Instant snap
       _pageController.jumpToPage(index);
     } else {
-      // Dynamic curves based on selection
       Curve curve = Curves.easeOut;
       Duration duration = const Duration(milliseconds: 300);
 
       switch (animSettings.uiType) {
         case UiTransitionAnimation.iOSSlide:
         case UiTransitionAnimation.iosExactSlide:
-          curve = Curves.fastLinearToSlowEaseIn; // classic iOS push feel
+          curve = Curves.easeOut;
           duration = const Duration(milliseconds: 400);
           break;
         case UiTransitionAnimation.butterZoom:
@@ -167,13 +150,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
           break;
         case UiTransitionAnimation.elasticSnap:
           curve = Curves.elasticOut;
-          duration = const Duration(milliseconds: 600);
+          duration = const Duration(milliseconds: 700);
           break;
         case UiTransitionAnimation.springRebounce:
-          curve = Curves.fastLinearToSlowEaseIn; // Dynamic spring-like
-          duration = const Duration(milliseconds: 700);
-          // We can use a different curve for more "rebounce"
           curve = Curves.elasticOut;
+          duration = const Duration(milliseconds: 700);
           break;
         case UiTransitionAnimation.fluidFade:
           curve = Curves.easeOutQuad;
@@ -190,68 +171,53 @@ class _MainScreenState extends ConsumerState<MainScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseDatabase.instance.ref('.info/connected').onValue,
-      builder: (context, snapshot) {
-        // Connected status used for background sync, but UI is now non-blocking
-        // final isConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBody: false, // Fix overlap with bottom nav
+      bottomNavigationBar: _buildBottomNav(theme),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: ColoredBox(color: Colors.black)),
+          Positioned.fill(
+            top: 85.h + Responsive.paddingTop,
+            child: ClipRect(
+              child: AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  double opacity = 0.0;
+                  if (_pageController.hasClients &&
+                      _pageController.position.haveDimensions) {
+                    final page =
+                        _pageController.page ?? _currentPage.toDouble();
+                    opacity = (1.0 - (page - 1).abs()).clamp(0.0, 1.0);
+                  } else {
+                    opacity = _currentPage == 1 ? 1.0 : 0.0;
+                  }
 
-        return Scaffold(
-          backgroundColor: Colors.transparent,
-          extendBody: true,
-          bottomNavigationBar: _buildBottomNav(theme),
-          body: Stack(
-            children: [
-              // Base Layer (Solid Black Void)
-              Positioned.fill(child: ColoredBox(color: Colors.black)),
+                  if (opacity <= 0.01) return const SizedBox.shrink();
 
-              // Background Layer - Restored below header
-              Positioned.fill(
-                top:
-                    85.h +
-                    Responsive.paddingTop, // Start strictly at grid level
-                child: ClipRect(
-                  // Force clip to prevent particle bleeding
-                  child: AnimatedBuilder(
-                    animation: _pageController,
-                    builder: (context, child) {
-                      double opacity = 0.0;
-                      if (_pageController.hasClients &&
-                          _pageController.position.haveDimensions) {
-                        final page =
-                            _pageController.page ?? _currentPage.toDouble();
-                        opacity = (1.0 - (page - 1).abs()).clamp(0.0, 1.0);
-                      } else {
-                        opacity = _currentPage == 1 ? 1.0 : 0.0;
-                      }
-
-                      if (opacity <= 0.01) return const SizedBox.shrink();
-
-                      return Opacity(opacity: opacity, child: child);
-                    },
-                    child: const SwitchTabBackground(child: SizedBox.expand()),
-                  ),
-                ),
+                  return Opacity(opacity: opacity, child: child);
+                },
+                child: const SwitchTabBackground(child: SizedBox.expand()),
               ),
-
-              // Content Layer - Optimized for 144fps
-              SafeArea(
-                bottom: false,
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: _onPageChanged,
-                  physics: const BouncingScrollPhysics(),
-                  children: const [
-                    DashboardView(),
-                    ControlView(),
-                    SettingsScreen(),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        );
-      },
+          SafeArea(
+            bottom: false,
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              physics: const BouncingScrollPhysics(),
+              children: const [
+                DashboardView(),
+                ControlView(),
+                SecurityView(),
+                SettingsScreen(),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -289,7 +255,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
             items: [
               _buildNavItem(Icons.dashboard_rounded, 'CORE', 0),
               _buildNavItem(Icons.grid_view_rounded, 'GRID', 1),
-              _buildNavItem(Icons.settings_suggest_rounded, 'SETUP', 2),
+              _buildNavItem(Icons.security_rounded, 'SECURITY', 2),
+              _buildNavItem(Icons.settings_suggest_rounded, 'SETUP', 3),
             ],
           ),
         ),
@@ -317,13 +284,20 @@ class DashboardView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final liveInfo = ref.watch(liveInfoProvider);
-    final systemState = liveInfo.acVoltage > 0
+    final systemState = liveInfo.acVoltage >= 100
         ? "GRID SYNC ACTIVE\nNebula Protection Enabled"
         : "GRID OFFLINE\nMonitoring Power State";
 
+    final layout = GlobalLayoutEngine.solve(
+      screenHeight: MediaQuery.of(context).size.height,
+      screenWidth: MediaQuery.of(context).size.width,
+      topPadding: MediaQuery.of(context).padding.top,
+      bottomPadding: MediaQuery.of(context).padding.bottom,
+      bottomNavHeight: 65.h, // Explicitly pass for quantum precision
+    );
+
     return Stack(
       children: [
-        // Content with dynamic spacing
         SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -331,29 +305,51 @@ class DashboardView extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                SizedBox(height: 65.h), // Account for App Bar
-                const ConnectionStatusPill(), // NEW: Connection Status Pill
-                const Spacer(flex: 1), // Top breathing room
-                const RepaintBoundary(
-                  child: RoboAssistant(eyesOnly: true, autoTuneEnabled: false),
+                SizedBox(height: layout.verticalOffset),
+                SizedBox(height: 65.h), // Base spacing for AppBar area
+                Transform.scale(
+                  scale: layout.pillScale,
+                  child: const ConnectionStatusPill(),
                 ),
-                const Spacer(flex: 1),
-                const RepaintBoundary(child: TimeDateWidget()),
-                const Spacer(flex: 1),
+                SizedBox(height: layout.gaps[0]),
                 RepaintBoundary(
-                  child: StatusCard(
-                    voltage: liveInfo.acVoltage,
-                    systemState: systemState,
+                  child: Transform.scale(
+                    scale: layout.roboScale,
+                    child: const RoboAssistant(
+                      eyesOnly: true,
+                      autoTuneEnabled: false,
+                    ),
                   ),
                 ),
-                const Spacer(flex: 2), // LARGER gap to push buttons lower
-                const RepaintBoundary(child: _ActionButtons()),
-                const Spacer(flex: 1), // Bottom breathing room
+                SizedBox(height: layout.gaps[1]),
+                RepaintBoundary(
+                  child: Transform.scale(
+                    scale: layout.timeScale,
+                    child: const TimeDateWidget(),
+                  ),
+                ),
+                SizedBox(height: layout.gaps[2]),
+                RepaintBoundary(
+                  child: Transform.scale(
+                    scale: layout.statusScale,
+                    child: StatusCard(
+                      voltage: liveInfo.acVoltage,
+                      systemState: systemState,
+                    ),
+                  ),
+                ),
+                SizedBox(height: layout.gaps[3]),
+                RepaintBoundary(
+                  child: Transform.scale(
+                    scale: layout.actionScale,
+                    child: const _ActionButtons(),
+                  ),
+                ),
+                SizedBox(height: layout.gaps[4]),
               ],
             ),
           ),
         ),
-
         Positioned(
           top: 0,
           left: 0,
@@ -371,18 +367,21 @@ class DashboardView extends ConsumerWidget {
                 ).createShader(bounds);
               },
               blendMode: BlendMode.srcIn,
-              child: Text(
-                'NEBULA CORE',
-                style: GoogleFonts.outfit(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2.w,
-                  shadows: [
-                    Shadow(
-                      color: theme.colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 12,
-                    ),
-                  ],
+              child: Transform.scale(
+                scale: layout.headerScale,
+                child: Text(
+                  'NEBULA CORE',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2.w,
+                    shadows: [
+                      Shadow(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -398,7 +397,6 @@ class DashboardView extends ConsumerWidget {
   }
 }
 
-// Fixed spacing for Environment Info to look premium
 class _EnvironmentInfo extends StatelessWidget {
   final ThemeData theme;
   final double temp;
@@ -430,11 +428,7 @@ class _EnvironmentInfo extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: theme.colorScheme.secondary,
-            size: 16,
-          ), // Smaller icon
+          Icon(icon, color: theme.colorScheme.secondary, size: 16),
           const SizedBox(width: 8),
           Text(
             '${temp.toStringAsFixed(1)}°C',
@@ -486,7 +480,7 @@ class _ActionButtons extends ConsumerWidget {
                 await showModalBottomSheet(
                   context: context,
                   backgroundColor: Colors.transparent,
-                  barrierColor: Colors.transparent, // Removed blur barrier
+                  barrierColor: Colors.transparent,
                   isScrollControlled: true,
                   builder: (context) => const VoiceAssistantOverlay(),
                 );
@@ -596,15 +590,12 @@ class _GlassButtonState extends State<_GlassButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Styling matching "Flux Reactor" (StatusCard)
     final isNeon = widget.isActive;
-
-    // Theme Blended Colors
     final themeColors = [
       widget.theme.colorScheme.primary,
       widget.theme.colorScheme.secondary,
       widget.theme.colorScheme.tertiary,
-      widget.theme.colorScheme.primary, // Wrap
+      widget.theme.colorScheme.primary,
     ];
 
     return GestureDetector(
@@ -612,16 +603,15 @@ class _GlassButtonState extends State<_GlassButton> {
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: () {
-        HapticService.selection(); // Crisp haptic
+        HapticService.selection();
         widget.onTap();
       },
       child: AnimatedScale(
         scale: _isPressed ? 0.96 : 1.0,
         duration: const Duration(milliseconds: 100),
         child: Container(
-          height: 80, // Restored height to 80 as per original
+          height: 80,
           decoration: BoxDecoration(
-            // Outer glow - Vibrant when active, Subtle when inactive
             boxShadow: [
               BoxShadow(
                 color: widget.theme.colorScheme.primary.withOpacity(
@@ -635,11 +625,11 @@ class _GlassButtonState extends State<_GlassButton> {
           child: PixelLedBorder(
             colors: themeColors,
             borderRadius: 28,
-            strokeWidth: 1.5, // Thinner liquid border
+            strokeWidth: 1.5,
             duration: const Duration(milliseconds: 2500),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF0A0A0A), // SOLID BLACK/GRAPHITE
+                color: const Color(0xFF0A0A0A),
                 borderRadius: BorderRadius.circular(28),
               ),
               child: Column(
@@ -657,11 +647,7 @@ class _GlassButtonState extends State<_GlassButton> {
                       ).createShader(bounds);
                     },
                     blendMode: BlendMode.srcIn,
-                    child: Icon(
-                      widget.icon,
-                      color: Colors.white, // Mask base
-                      size: 30, // Much larger/vivid
-                    ),
+                    child: Icon(widget.icon, color: Colors.white, size: 30),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -696,7 +682,6 @@ class _ControlViewState extends ConsumerState<ControlView> {
   @override
   void initState() {
     super.initState();
-    // No artificial delay for instant switch accessibility
     _isInitComplete = true;
   }
 
@@ -722,13 +707,9 @@ class _ControlViewState extends ConsumerState<ControlView> {
           )
         else
           Padding(
-            padding: EdgeInsets.only(
-              top: contentTopPadding, // Aligned with Dashboard
-            ),
-            child: ClipRect(child: SwitchGrid()),
+            padding: EdgeInsets.only(top: contentTopPadding),
+            child: const ClipRect(child: SwitchGrid()),
           ),
-
-        // PREMIUM APP BAR
         Positioned(
           top: 0,
           left: 0,
@@ -761,8 +742,23 @@ class _ControlViewState extends ConsumerState<ControlView> {
                 ),
               ),
             ),
-            trailing:
-                const SizedBox.shrink(), // Removed SchedulerGearIcon as requested
+            trailing: IconButton(
+              icon: Icon(
+                Icons.history_rounded,
+                color: theme.colorScheme.primary,
+              ),
+              onPressed: () {
+                HapticService.medium();
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (context) => const HistorySheet(
+                    deviceId: AppConstants.defaultDeviceId,
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],

@@ -11,6 +11,7 @@ enum NeonAnimationMode {
   strobe,
   rainbow,
   autoChange,
+  thinLine,
 }
 
 class DisplaySettings {

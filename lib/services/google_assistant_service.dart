@@ -1,5 +1,6 @@
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../providers/switch_provider.dart';
 import 'voice_service.dart';
 
@@ -20,43 +21,44 @@ class GoogleAssistantService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    final available = await _speech.initialize(
-      onError: (error) => print('Speech recognition error: $error'),
-      onStatus: (status) => print('Speech recognition status: $status'),
-    );
+    try {
+      final status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) return;
 
-    _isInitialized = available;
+      final available = await _speech.initialize(
+        onError: (error) => print('NEBULA_VOICE: Error -> $error'),
+        onStatus: (status) => print('NEBULA_VOICE: Status -> $status'),
+        finalTimeout: const Duration(seconds: 10),
+      );
+      _isInitialized = available;
+    } catch (e) {
+      _isInitialized = false;
+    }
 
-    // Initialize TTS engine in background
     _ref.read(voiceServiceProvider);
   }
 
-  Future<void> startListening(Function(String) onResult) async {
-    if (!_isInitialized) {
-      await initialize();
-    }
+  Future<void> startListening(Function(String, bool) onResult) async {
+    if (!_isInitialized) await initialize();
+    if (!_isInitialized) return;
 
-    if (!_isInitialized) {
-      throw Exception('Speech recognition not available');
-    }
-
-    if (_isListening) {
-      await stopListening();
-    }
-
+    if (_isListening) await stopListening();
     _isListening = true;
 
     await _speech.listen(
       onResult: (result) {
+        // Return both text and finality flag
+        onResult(result.recognizedWords, result.finalResult);
+
         if (result.finalResult) {
           _isListening = false;
-          onResult(result.recognizedWords);
           _processVoiceCommand(result.recognizedWords);
         }
       },
-      listenFor: const Duration(seconds: 5),
-      pauseFor: const Duration(seconds: 3),
-      localeId: 'en_US',
+      listenFor: const Duration(seconds: 10),
+      pauseFor: const Duration(seconds: 4),
+      partialResults: true,
+      listenMode: stt.ListenMode.confirmation,
     );
   }
 
@@ -71,87 +73,65 @@ class GoogleAssistantService {
 
   Future<void> _processVoiceCommand(String command) async {
     final lowerCommand = command.toLowerCase();
+    if (lowerCommand.isEmpty) return;
+
     final devices = _ref.read(switchDevicesProvider);
     final voiceService = _ref.read(voiceServiceProvider);
 
-    print("Voice Command Processed: $lowerCommand");
+    print("NEBULA_VOICE: Processing -> $lowerCommand");
 
-    // 1. Prepare candidate list (Hardware Name + Nickname)
-    // Structure: { "fan": deviceId, "fan light": deviceId, ... }
     final Map<String, String> candidates = {};
     for (var device in devices) {
-      // Add Hardware Name
       candidates[device.name.toLowerCase()] = device.id;
-      // Add Nickname
       if (device.nickname != null && device.nickname!.isNotEmpty) {
         candidates[device.nickname!.toLowerCase()] = device.id;
       }
     }
 
-    // 2. SORT keys by LENGTH DESCENDING (Critical for "Best Match")
-    // This ensures "Fan Light" is matched before "Fan"
     final sortedKeys = candidates.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
 
     String? matchedDeviceId;
-
     for (final key in sortedKeys) {
       if (lowerCommand.contains(key)) {
         matchedDeviceId = candidates[key];
-        break; // Stop at first (best) match
+        break;
       }
     }
 
-    // 3. Execute Command
     if (matchedDeviceId != null) {
       final device = devices.firstWhere((d) => d.id == matchedDeviceId);
       final deviceLabel = device.nickname ?? device.name;
 
-      // ON
-      if (lowerCommand.contains('on') ||
-          lowerCommand.contains('enable') ||
-          lowerCommand.contains('start')) {
-        if (!device.isActive) {
-          _ref.read(switchDevicesProvider.notifier).toggleSwitch(device.id);
-          await voiceService.speak("Turning on $deviceLabel");
-        } else {
-          await voiceService.speak("$deviceLabel is already on");
-        }
-      }
-      // OFF
-      else if (lowerCommand.contains('off') ||
-          lowerCommand.contains('disable') ||
-          lowerCommand.contains('stop')) {
-        if (device.isActive) {
-          _ref.read(switchDevicesProvider.notifier).toggleSwitch(device.id);
-          await voiceService.speak("Turning off $deviceLabel");
-        } else {
-          await voiceService.speak("$deviceLabel is already off");
-        }
-      }
-      // TOGGLE
-      else if (lowerCommand.contains('toggle') ||
-          lowerCommand.contains('switch')) {
+      if (lowerCommand.contains('on') || lowerCommand.contains('activate')) {
+        _ref
+            .read(switchDevicesProvider.notifier)
+            .setSwitchState(device.id, true);
+        await voiceService.speak("Engaging $deviceLabel.");
+      } else if (lowerCommand.contains('off') ||
+          lowerCommand.contains('deactivate')) {
+        _ref
+            .read(switchDevicesProvider.notifier)
+            .setSwitchState(device.id, false);
+        await voiceService.speak("Deactivating $deviceLabel.");
+      } else {
         _ref.read(switchDevicesProvider.notifier).toggleSwitch(device.id);
-        await voiceService.speak("Toggling $deviceLabel");
-      }
-      // Just name mentioned? Toggle it.
-      else {
-        _ref.read(switchDevicesProvider.notifier).toggleSwitch(device.id);
-        await voiceService.speak("Switched $deviceLabel");
+        await voiceService.speak("Toggling $deviceLabel.");
       }
     } else {
-      // No ID matched
-      // Check for generic "Turn on all lights" or similar?
-      // For now, simple error feedback
-      if (lowerCommand.isNotEmpty) {
-        await voiceService.speak("I couldn't find a switch with that name.");
+      if (lowerCommand.contains('all') || lowerCommand.contains('everything')) {
+        final state = !lowerCommand.contains('off');
+        for (var d in devices) {
+          _ref.read(switchDevicesProvider.notifier).setSwitchState(d.id, state);
+        }
+        await voiceService.speak(
+          "Setting habitat to ${state ? 'active' : 'standby'}.",
+        );
+      } else {
+        await voiceService.speak(
+          "I heard you, but I'm not sure which device to toggle.",
+        );
       }
     }
-  }
-
-  // Manual command processing (for testing)
-  void processCommand(String command) {
-    _processVoiceCommand(command);
   }
 }

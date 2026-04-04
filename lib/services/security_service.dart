@@ -1,0 +1,92 @@
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:async';
+
+class SecurityService {
+  final String deviceId;
+  final _database = FirebaseDatabase.instance;
+
+  SecurityService(this.deviceId);
+
+  Stream<Map<String, dynamic>> get sensorStream {
+    return _database.ref('devices/$deviceId/security/sensors').onValue.map((
+      event,
+    ) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
+  Stream<bool> get isArmedStream {
+    return _database.ref('devices/$deviceId/security/isArmed').onValue.map((
+      event,
+    ) {
+      return (event.snapshot.value as bool?) ?? true;
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> get securityLogsStream {
+    return _database
+        .ref('devices/$deviceId/security/logs')
+        .orderByChild('timestamp')
+        .limitToLast(50)
+        .onValue
+        .map((event) {
+          final data = event.snapshot.value as Map<dynamic, dynamic>?;
+          if (data == null) return [];
+          return data.entries
+              .map(
+                (e) => {
+                  'id': e.key,
+                  ...Map<String, dynamic>.from(e.value as Map),
+                },
+              )
+              .toList();
+        });
+  }
+
+  Stream<int> get ldrThresholdStream {
+    return _database.ref('devices/$deviceId/security/ldrThreshold').onValue.map(
+      (event) {
+        return (event.snapshot.value as int?) ?? 50;
+      },
+    );
+  }
+
+  Stream<int> get masterLdrStream {
+    return _database.ref('devices/$deviceId/security/masterLDR').onValue.map((
+      event,
+    ) {
+      return (event.snapshot.value as int?) ?? 0;
+    });
+  }
+
+  Stream<bool> get autoLightStream {
+    return _database
+        .ref('devices/$deviceId/security/autoLightOnMotion')
+        .onValue
+        .map((event) {
+          return (event.snapshot.value as bool?) ?? false;
+        });
+  }
+
+  Future<void> setArmedState(bool armed) async {
+    await _database.ref('devices/$deviceId/security/isArmed').set(armed);
+  }
+
+  Future<void> setLdrThreshold(int value) async {
+    await _database.ref('devices/$deviceId/security/ldrThreshold').set(value);
+  }
+
+  Future<void> setAutoLightOnMotion(bool enabled) async {
+    await _database
+        .ref('devices/$deviceId/security/autoLightOnMotion')
+        .set(enabled);
+  }
+
+  Future<void> acknowledgeAlert(String sensorName) async {
+    await _database
+        .ref('devices/$deviceId/security/sensors/$sensorName')
+        .update({'status': false});
+  }
+}

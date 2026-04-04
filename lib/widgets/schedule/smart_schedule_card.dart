@@ -15,6 +15,7 @@ class SmartScheduleCard extends ConsumerWidget {
     final schedules = ref.watch(switchScheduleProvider);
     final displaySettings = ref.watch(displaySettingsProvider);
     final scale = displaySettings.displayScale;
+    final theme = Theme.of(context);
 
     // Find next upcoming schedule
     final now = DateTime.now();
@@ -38,82 +39,87 @@ class SmartScheduleCard extends ConsumerWidget {
         horizontal: Responsive.horizontalPadding * scale,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(40 * scale),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        color: const Color(0xFF0D0D0D), // SOLID DEEP BLACK
+        borderRadius: BorderRadius.circular(32 * scale),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+            blurRadius: 40,
+            spreadRadius: -10,
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(40 * scale),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-          child: Padding(
-            padding: EdgeInsets.all(30 * scale),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SMART SCHEDULE',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white.withOpacity(0.4),
-                            letterSpacing: 3,
-                          ),
+        borderRadius: BorderRadius.circular(32 * scale),
+        child: Padding(
+          padding: EdgeInsets.all(28 * scale),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CORE HUB SCHEDULE',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11 * scale,
+                          fontWeight: FontWeight.w900,
+                          color: theme.colorScheme.primary.withOpacity(0.5),
+                          letterSpacing: 3,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          nextSchedule != null
-                              ? 'Next Hub Event'
-                              : 'System Sync Ready',
-                          style: GoogleFonts.outfit(
-                            fontSize: 22 * scale,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        nextSchedule != null ? 'Next Execution' : 'System Idle',
+                        style: GoogleFonts.outfit(
+                          fontSize: 24 * scale,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
                         ),
-                      ],
-                    ),
-                    _buildStatusBadge(nextSchedule != null, scale),
-                  ],
-                ),
-                if (nextSchedule != null) ...[
-                  const SizedBox(height: 32),
-                  _buildTimeline(nextSchedule, minDelta!, scale),
-                  const SizedBox(height: 32),
-                  _buildEventDetails(nextSchedule, scale),
-                ] else ...[
-                  const SizedBox(height: 40),
-                  Center(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: Colors.white.withOpacity(0.1),
-                          size: 40 * scale,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'All modules idling. No active timers.',
-                          style: GoogleFonts.outfit(
-                            fontSize: 14 * scale,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withOpacity(0.4),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                  _buildStatusBadge(nextSchedule != null, scale, theme),
                 ],
+              ),
+              if (nextSchedule != null) ...[
                 const SizedBox(height: 32),
-                _buildManageButton(context, scale),
+                _buildTimeline(nextSchedule, minDelta!, scale, theme),
+                const SizedBox(height: 32),
+                _buildEventDetails(nextSchedule, scale, theme),
+              ] else ...[
+                const SizedBox(height: 40),
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        color: theme.colorScheme.primary.withOpacity(0.2),
+                        size: 48 * scale,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'All automation triggers are idle.',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14 * scale,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
+              const SizedBox(height: 32),
+              _buildManageButton(context, scale, theme),
+            ],
           ),
         ),
       ),
@@ -137,8 +143,8 @@ class SmartScheduleCard extends ConsumerWidget {
     return scheduled;
   }
 
-  Widget _buildStatusBadge(bool active, double scale) {
-    final color = active ? const Color(0xFF00FAFF) : Colors.white;
+  Widget _buildStatusBadge(bool active, double scale, ThemeData theme) {
+    final color = active ? theme.colorScheme.primary : Colors.white;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -165,7 +171,12 @@ class SmartScheduleCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildTimeline(SwitchSchedule s, Duration delta, double scale) {
+  Widget _buildTimeline(
+    SwitchSchedule s,
+    Duration delta,
+    double scale,
+    ThemeData theme,
+  ) {
     final total = const Duration(hours: 24).inSeconds;
     final remaining = delta.inSeconds;
     final progress = (1.0 - (remaining / total)).clamp(0.0, 1.0);
@@ -188,7 +199,7 @@ class SmartScheduleCard extends ConsumerWidget {
               style: GoogleFonts.outfit(
                 fontSize: 11 * scale,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF00FAFF),
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
@@ -208,13 +219,16 @@ class SmartScheduleCard extends ConsumerWidget {
               child: Container(
                 height: 8 * scale,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0080FF), Color(0xFF00FAFF)],
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.5),
+                      theme.colorScheme.primary,
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF00FAFF).withOpacity(0.4),
+                      color: theme.colorScheme.primary.withOpacity(0.4),
                       blurRadius: 10,
                     ),
                   ],
@@ -246,7 +260,7 @@ class SmartScheduleCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEventDetails(SwitchSchedule s, double scale) {
+  Widget _buildEventDetails(SwitchSchedule s, double scale, ThemeData theme) {
     return Row(
       children: [
         _buildDetailPill(
@@ -254,6 +268,7 @@ class SmartScheduleCard extends ConsumerWidget {
           '${s.hour.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}',
           'EXECUTION',
           scale,
+          theme,
         ),
         const SizedBox(width: 16),
         _buildDetailPill(
@@ -261,6 +276,7 @@ class SmartScheduleCard extends ConsumerWidget {
           s.targetState ? 'POWER ON' : 'POWER OFF',
           'ACTION',
           scale,
+          theme,
         ),
       ],
     );
@@ -271,6 +287,7 @@ class SmartScheduleCard extends ConsumerWidget {
     String value,
     String label,
     double scale,
+    ThemeData theme,
   ) {
     return Expanded(
       child: Container(
@@ -285,13 +302,13 @@ class SmartScheduleCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: theme.colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 18 * scale,
-                color: Colors.white.withOpacity(0.8),
+                color: theme.colorScheme.primary,
               ),
             ),
             const SizedBox(width: 16),
@@ -326,19 +343,18 @@ class SmartScheduleCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildManageButton(BuildContext context, double scale) {
+  Widget _buildManageButton(
+    BuildContext context,
+    double scale,
+    ThemeData theme,
+  ) {
     return Container(
       width: double.infinity,
       height: 54 * scale,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.white.withOpacity(0.05),
-            Colors.white.withOpacity(0.02),
-          ],
-        ),
+        color: theme.colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20 * scale),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -356,7 +372,7 @@ class SmartScheduleCard extends ConsumerWidget {
                   style: GoogleFonts.outfit(
                     fontSize: 12 * scale,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white.withOpacity(0.6),
+                    color: theme.colorScheme.primary,
                     letterSpacing: 2,
                   ),
                 ),
@@ -364,7 +380,7 @@ class SmartScheduleCard extends ConsumerWidget {
                 Icon(
                   Icons.arrow_forward_rounded,
                   size: 16 * scale,
-                  color: Colors.white.withOpacity(0.4),
+                  color: theme.colorScheme.primary.withOpacity(0.7),
                 ),
               ],
             ),

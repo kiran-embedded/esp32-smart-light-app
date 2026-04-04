@@ -1,4 +1,4 @@
-# Nebula Core v1.2.0+30 (ULTIMATE PRECISION)
+# 🌌 NEBULA CORE — Version 1.2.0+31
 
 **Release Date:** January 20, 2026
 **Build ID:** `NC-ANDROID-REL-30`
@@ -14,6 +14,10 @@ This release brings the Automation Hub to perfection with OLED-optimized visuals
 *   **Pure Black Background**: Hardcoded `Colors.black` - no longer affected by theme changes
 *   **Zero Blur**: Removed all blur effects for rock-solid 90FPS performance
 *   **Premium Contrast**: High-contrast borders and text for maximum readability
+
+### *The "Ultimate Precision & History" Update*
+
+We are proud to introduce version 1.2.0+31 of the Nebula Core ecosystem. This release focuses on stability, optimized scheduling, and full switch activity tracking.
 
 ### 🏷️ Device Rename Functionality
 *   **Edit from Hub**: Tap the Edit icon in the Automation Hub header to rename any device

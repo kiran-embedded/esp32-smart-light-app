@@ -7,11 +7,28 @@ import android.content.pm.PackageManager
 import android.os.Build
 
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.FirebaseApp
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.iot.nebulacontroller/native_scheduler"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        FirebaseApp.initializeApp(this)
+        startSecurityService()
+    }
+
+    private fun startSecurityService() {
+        val intent = Intent(this, SecurityForegroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -58,10 +75,22 @@ class MainActivity : FlutterActivity() {
                         result.error("INVALID_ARGS", "Missing arguments", null)
                     }
                 }
+                "openBatterySettings" -> {
+                    val intent = Intent()
+                    intent.action = android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS
+                    intent.data = android.net.Uri.parse("package:$packageName")
+                    try {
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("ERR", e.message, null)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
     }
+
 
     private fun scheduleAlarm(id: Int, time: Long, node: String, state: Boolean, deviceId: String) {
         val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager

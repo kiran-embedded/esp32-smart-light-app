@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/switch_schedule.dart';
 import '../core/constants/app_constants.dart';
-import '../services/persistence_service.dart';
 import '../services/scheduler_service.dart';
 
 class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
@@ -11,15 +10,7 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
   final _database = FirebaseDatabase.instance.ref();
 
   SwitchScheduleNotifier() : super([]) {
-    _loadLocal();
     _initListener();
-  }
-
-  Future<void> _loadLocal() async {
-    final localData = await PersistenceService.getSchedules();
-    if (localData.isNotEmpty) {
-      state = localData.map((e) => SwitchSchedule.fromJson(e)).toList();
-    }
   }
 
   void _initListener() {
@@ -33,7 +24,6 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
         if (state.isNotEmpty) {
           // Verify if this is a genuine empty list from server
           state = [];
-          PersistenceService.saveSchedules([]);
         }
         return;
       }
@@ -51,18 +41,14 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
         }
       });
 
-      // Update state and local storage
+      // Update state
       state = schedules;
-      PersistenceService.saveSchedules(
-        schedules.map((e) => e.toJson()).toList(),
-      );
     });
   }
 
   Future<void> addSchedule(SwitchSchedule schedule) async {
     // Optimistic Update
     state = [...state, schedule];
-    PersistenceService.saveSchedules(state.map((e) => e.toJson()).toList());
 
     // Schedule Background Job
     await SchedulerService.scheduleEvent(schedule);
@@ -78,7 +64,6 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
       for (final s in state)
         if (s.id == schedule.id) schedule else s,
     ];
-    PersistenceService.saveSchedules(state.map((e) => e.toJson()).toList());
 
     // Update Background Job
     await SchedulerService.scheduleEvent(schedule);
@@ -91,7 +76,6 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
   Future<void> deleteSchedule(String id) async {
     // Optimistic Update
     state = state.where((s) => s.id != id).toList();
-    PersistenceService.saveSchedules(state.map((e) => e.toJson()).toList());
 
     // Cancel Background Job
     await SchedulerService.cancelEvent(id);
@@ -104,7 +88,6 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
   Future<void> deleteSchedules(List<String> ids) async {
     // Optimistic Update
     state = state.where((s) => !ids.contains(s.id)).toList();
-    PersistenceService.saveSchedules(state.map((e) => e.toJson()).toList());
 
     for (final id in ids) {
       // Cancel Background Job

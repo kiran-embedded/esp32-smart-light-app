@@ -10,22 +10,26 @@ class SwitchSettingsState {
   final bool dynamicBlending;
   final bool blurEffectsEnabled;
   final bool lowLatencyMode;
+  final bool alarmPriorityMode;
 
   SwitchSettingsState({
     this.dynamicBlending = false,
     this.blurEffectsEnabled = true,
     this.lowLatencyMode = false,
+    this.alarmPriorityMode = true,
   });
 
   SwitchSettingsState copyWith({
     bool? dynamicBlending,
     bool? blurEffectsEnabled,
     bool? lowLatencyMode,
+    bool? alarmPriorityMode,
   }) {
     return SwitchSettingsState(
       dynamicBlending: dynamicBlending ?? this.dynamicBlending,
       blurEffectsEnabled: blurEffectsEnabled ?? this.blurEffectsEnabled,
       lowLatencyMode: lowLatencyMode ?? this.lowLatencyMode,
+      alarmPriorityMode: alarmPriorityMode ?? this.alarmPriorityMode,
     );
   }
 }
@@ -37,13 +41,11 @@ class SwitchSettingsNotifier extends StateNotifier<SwitchSettingsState> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final blending = prefs.getBool('dynamic_switch_blending') ?? false;
-    final blur = prefs.getBool('blur_effects_enabled') ?? true;
-    final latency = prefs.getBool('low_latency_mode') ?? false;
     state = state.copyWith(
-      dynamicBlending: blending,
-      blurEffectsEnabled: blur,
-      lowLatencyMode: latency,
+      dynamicBlending: prefs.getBool('dynamic_switch_blending') ?? false,
+      blurEffectsEnabled: prefs.getBool('blur_effects_enabled') ?? true,
+      lowLatencyMode: prefs.getBool('low_latency_mode') ?? false,
+      alarmPriorityMode: prefs.getBool('alarm_priority_mode') ?? true,
     );
   }
 
@@ -63,5 +65,11 @@ class SwitchSettingsNotifier extends StateNotifier<SwitchSettingsState> {
     state = state.copyWith(lowLatencyMode: value);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('low_latency_mode', value);
+  }
+
+  Future<void> setAlarmPriorityMode(bool value) async {
+    state = state.copyWith(alarmPriorityMode: value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('alarm_priority_mode', value);
   }
 }

@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart'; // Added for animations
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/theme_provider.dart';
 import '../../core/theme/app_theme.dart';
@@ -28,10 +27,7 @@ import '../../providers/display_settings_provider.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
 
-import '../../providers/ai_settings_provider.dart';
 import '../../providers/animation_provider.dart';
-import '../../providers/animation_provider.dart';
-import '../../widgets/ai/ai_assistant_dialog.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../services/esp32_code_generator.dart';
@@ -41,7 +37,9 @@ import '../../services/update_service.dart';
 
 import '../login/login_screen.dart';
 import 'help_support_screen.dart';
+import 'help_center_screen.dart';
 import '../../widgets/robo/robo_assistant.dart';
+import '../../widgets/ai/ai_assistant_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -396,6 +394,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 ),
               ),
 
+              // --- 3.7. SECURITY & RELIABILITY ---
+              _animatedSection(
+                index: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _PremiumSectionHeader(
+                      title: 'Security & Reliability',
+                    ),
+                    _PremiumGroupedContainer(
+                      children: [
+                        _buildPremiumSettingTile(
+                          context,
+                          title: 'Battery Optimization',
+                          subtitle:
+                              'Ensure alarms trigger while device is asleep',
+                          leading: _buildPremiumIcon(
+                            Icons.battery_saver,
+                            Colors.greenAccent,
+                          ),
+                          onTap: () async {
+                            HapticService.heavy();
+                            const channel = MethodChannel(
+                              'com.iot.nebulacontroller/native_scheduler',
+                            );
+                            try {
+                              await channel.invokeMethod('openBatterySettings');
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Could not open system settings',
+                                    ),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                        _buildPremiumSettingTile(
+                          context,
+                          title: 'Alarm Audio Stream',
+                          subtitle: 'Bypasses Do Not Disturb/Silent mode',
+                          leading: _buildPremiumIcon(
+                            Icons.notification_important,
+                            Colors.redAccent,
+                          ),
+                          trailing: _BreathingToggle(
+                            value: ref
+                                .watch(switchSettingsProvider)
+                                .alarmPriorityMode,
+                            onChanged: (val) {
+                              HapticService.selection();
+                              ref
+                                  .read(switchSettingsProvider.notifier)
+                                  .setAlarmPriorityMode(val);
+                            },
+                          ),
+                          isLast: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
               // --- 4. APPEARANCE & STYLE ---
               _animatedSection(
                 index: 4,
@@ -444,17 +510,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                                 ),
                           ),
                           Consumer(
-                            builder: (context, ref, _) => _buildPremiumSettingTile(
-                              context,
-                              title: 'Font Scale',
-                              subtitle:
-                                  '${((ref.watch(displaySettingsProvider).fontScale * 100).toInt())}%',
-                              leading: _buildPremiumIcon(
-                                Icons.text_fields,
-                                Colors.brown,
-                              ),
-                              onTap: () => _showFontSizePicker(context, ref),
-                            ),
+                            builder: (context, ref, _) {
+                              final scale = ref
+                                  .watch(displaySettingsProvider)
+                                  .fontScale;
+                              String label = 'Medium';
+                              if (scale < 0.9) label = 'Small';
+                              if (scale > 1.1) label = 'Large';
+                              return _buildPremiumSettingTile(
+                                context,
+                                title: 'Font Scale',
+                                subtitle: label,
+                                leading: _buildPremiumIcon(
+                                  Icons.text_fields,
+                                  Colors.brown,
+                                ),
+                                onTap: () => _showFontSizePicker(context, ref),
+                              );
+                            },
                           ),
                           Consumer(
                             builder: (context, ref, _) =>
@@ -546,58 +619,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 ),
               ),
 
-              // --- AI ASSISTANT ---
-              _animatedSection(
-                index: 5,
-                child: RepaintBoundary(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const _PremiumSectionHeader(title: 'AI Assistant'),
-                      _PremiumGroupedContainer(
-                        children: [
-                          Consumer(
-                            builder: (context, ref, _) =>
-                                _buildPremiumSettingTile(
-                                  context,
-                                  title: 'Nebula AI Assistant',
-                                  subtitle: 'Smart voice & text control',
-                                  leading: _buildPremiumIcon(
-                                    Icons.auto_awesome,
-                                    Colors.deepPurpleAccent,
-                                  ),
-                                  trailing: _BreathingToggle(
-                                    value: ref
-                                        .watch(aiSettingsProvider)
-                                        .assistantEnabled,
-                                    onChanged: (val) => ref
-                                        .read(aiSettingsProvider.notifier)
-                                        .toggleAssistant(val),
-                                  ),
-                                ),
-                          ),
-                          Consumer(
-                            builder: (context, ref, _) => _buildPremiumSettingTile(
-                              context,
-                              title: 'Gemini API Key',
-                              subtitle:
-                                  ref.watch(aiSettingsProvider).apiKey.isEmpty
-                                  ? 'Not Set (Required)'
-                                  : '••••••••••••${ref.watch(aiSettingsProvider).apiKey.substring(ref.watch(aiSettingsProvider).apiKey.length - 4)}',
-                              leading: _buildPremiumIcon(
-                                Icons.vpn_key,
-                                Colors.grey,
-                              ),
-                              onTap: () => _showApiKeyDialog(context, ref),
-                              isLast: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Removed redundant AI Assistant Toggle as requested
 
               // --- 5. ADVANCED TOOLS ---
               _animatedSection(
@@ -636,37 +658,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             Colors.cyan,
                           ),
                           onTap: () => _showDeviceIdDialog(context, ref),
-                        ),
-                        _buildPremiumSettingTile(
-                          context,
-                          title: 'Force Sync',
-                          subtitle: 'Refresh hardware names',
-                          leading: _buildPremiumIcon(Icons.sync, Colors.green),
-                          onTap: () async {
-                            HapticService.selection();
-                            final result = await ref
-                                .read(switchDevicesProvider.notifier)
-                                .forceRefreshHardwareNames();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(result),
-                                  backgroundColor: result.contains('Error')
-                                      ? Colors.redAccent
-                                      : Colors.green.withOpacity(0.8),
-                                  behavior: SnackBarBehavior.floating,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        _buildPremiumSettingTile(
-                          context,
-                          title: 'Device Power Mode',
-                          subtitle: 'Eco vs Performance',
-                          leading: _buildPremiumIcon(Icons.bolt, Colors.amber),
-                          onTap: () => _showPowerModePicker(context, ref),
                           isLast: true,
                         ),
                       ],
@@ -776,20 +767,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             );
                           },
                         ),
-                        _buildPremiumSettingTile(
-                          context,
-                          title: 'Source Code',
-                          subtitle: 'github.com/kiran-embedded',
-                          leading: _buildPremiumIcon(Icons.code, Colors.purple),
-                          onTap: () {
-                            launchUrl(
-                              Uri.parse(
-                                'https://github.com/kiran-embedded/esp32-smart-light-app',
-                              ),
-                              mode: LaunchMode.externalApplication,
-                            );
-                          },
-                        ),
+
+                        // AI Assistant settings have been integrated into the Robo Assistant
                         _buildPremiumSettingTile(
                           context,
                           title: 'Logout',
@@ -851,22 +830,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
         ),
 
-        // FLOATING ROBO ASSISTANT
+        // FLOATING ROBO ASSISTANT — Nebula AI Trigger
         Positioned(
-          bottom: 120, // Above typical FAB/Dock area
-          right: 20,
-          child: Transform.scale(
-            scale: 0.65, // Small and cute
-            child: RoboAssistant(
-              onActionStarted: () {
-                // Trigger AI Dialog as requested
-                showModalBottomSheet(
+          bottom: 24,
+          right: 24,
+          child: SizedBox(
+            width: 80,
+            height: 100,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticService.heavy();
+                showGeneralDialog(
                   context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => const AiAssistantDialog(),
+                  pageBuilder: (context, _, __) => const AiAssistantDialog(),
+                  barrierDismissible: true,
+                  barrierLabel: 'AI Assistant',
+                  barrierColor: Colors.black.withOpacity(0.5),
+                  transitionDuration: const Duration(milliseconds: 300),
                 );
               },
+              child: AbsorbPointer(
+                child: Transform.scale(
+                  scale: 0.65,
+                  child: const RoboAssistant(eyesOnly: false),
+                ),
+              ),
             ),
           ),
         ),
@@ -1274,7 +1263,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               letterSpacing: 1.2,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          _buildPremiumSettingTile(
+            context,
+            title: 'Help & Documentation',
+            subtitle: 'Learn how to use Nebula Core',
+            leading: _buildPremiumIcon(
+              Icons.help_center_rounded,
+              Colors.amberAccent,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HelpCenterScreen(),
+                ),
+              );
+            },
+          ),
+          SizedBox(height: 16.h),
           child,
           const SizedBox(height: 32),
         ],
@@ -1830,56 +1837,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                   const SizedBox(height: 40),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'A',
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.4),
-                        ),
+                      _buildFontSizePreset(
+                        context,
+                        ref,
+                        'Small',
+                        0.85,
+                        Icons.text_fields,
                       ),
-                      Expanded(
-                        child: SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: theme.colorScheme.primary,
-                            inactiveTrackColor: Colors.white.withOpacity(0.1),
-                            thumbColor: Colors.white,
-                            overlayColor: theme.colorScheme.primary.withOpacity(
-                              0.2,
-                            ),
-                            trackHeight: 4,
-                          ),
-                          child: Slider(
-                            value: displaySettings.fontScale,
-                            min: 0.7,
-                            max: 1.3,
-                            onChanged: (val) {
-                              ref
-                                  .read(displaySettingsProvider.notifier)
-                                  .setFontScale(val);
-                              HapticService.selection();
-                            },
-                          ),
-                        ),
+                      const SizedBox(width: 12),
+                      _buildFontSizePreset(
+                        context,
+                        ref,
+                        'Medium',
+                        1.0,
+                        Icons.text_fields,
                       ),
-                      Text(
-                        'A',
-                        style: GoogleFonts.outfit(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
+                      const SizedBox(width: 12),
+                      _buildFontSizePreset(
+                        context,
+                        ref,
+                        'Large',
+                        1.15,
+                        Icons.text_fields,
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "${(displaySettings.fontScale * 100).toInt()}% Scale",
-                    style: GoogleFonts.outfit(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
                   ),
                 ],
               ),
@@ -1890,51 +1872,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
   }
 
-  void _showApiKeyDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController(
-      text: ref.read(aiSettingsProvider).apiKey,
-    );
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Gemini API Key'),
-        content: Column(
-          children: [
-            const SizedBox(height: 12),
-            const Text(
-              'Enter your free Gemini API key from Google AI Studio to enable the assistant.',
-              style: TextStyle(fontSize: 13),
+  Widget _buildFontSizePreset(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    double scale,
+    IconData icon,
+  ) {
+    final currentScale = ref.watch(displaySettingsProvider).fontScale;
+    final isSelected = (currentScale - scale).abs() < 0.01;
+    final theme = Theme.of(context);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticService.selection();
+          ref.read(displaySettingsProvider.notifier).setFontScale(scale);
+        },
+        child: AnimatedContainer(
+          duration: 200.ms,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? theme.colorScheme.primary.withOpacity(0.15)
+                : Colors.white.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : Colors.white.withOpacity(0.08),
+              width: isSelected ? 2 : 1,
             ),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: controller,
-              placeholder: 'Paste API Key here',
-              style: const TextStyle(color: Colors.white),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 20 * scale,
+                color: isSelected ? theme.colorScheme.primary : Colors.white38,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? Colors.white : Colors.white38,
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          CupertinoDialogAction(
-            onPressed: () {
-              ref
-                  .read(aiSettingsProvider.notifier)
-                  .setApiKey(controller.text.trim());
-              Navigator.pop(context);
-              HapticService.heavy();
-            },
-            isDefaultAction: true,
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
@@ -2007,129 +1995,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         ),
       );
     }
-  }
-
-  void _showPowerModePicker(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Device Power Mode',
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildModeOption(
-              context,
-              ref,
-              title: '🚀 Performance Mode',
-              subtitle: '1s Sync • Full Animations • 240MHz',
-              isSelected: !ref.read(switchDevicesProvider.notifier).isEcoMode,
-              onTap: () {
-                ref
-                    .read(firebaseSwitchServiceProvider)
-                    .sendCommand('ecoMode', 0);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Switched to Performance Mode')),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildModeOption(
-              context,
-              ref,
-              title: '🍃 Eco Efficiency',
-              subtitle: '5s Sync • Reduced LED Power',
-              isSelected: ref.read(switchDevicesProvider.notifier).isEcoMode,
-              onTap: () {
-                ref
-                    .read(firebaseSwitchServiceProvider)
-                    .sendCommand('ecoMode', 1);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Switched to Eco Mode')),
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModeOption(
-    BuildContext context,
-    WidgetRef ref, {
-    required String title,
-    required String subtitle,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

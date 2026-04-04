@@ -65,9 +65,28 @@ class VoiceService {
               throw Exception("Language setup timeout");
             },
           );
-      await _tts.setSpeechRate(0.5);
+      await _tts.setSpeechRate(0.45);
       await _tts.setVolume(1.0);
-      await _tts.setPitch(1.0);
+      await _tts.setPitch(1.3);
+
+      try {
+        final voices = await _tts.getVoices;
+        if (voices != null) {
+          final femaleVoice = voices.firstWhere(
+            (v) =>
+                v['name'].toString().toLowerCase().contains('female') ||
+                v['name'].toString().toLowerCase().contains('soft') ||
+                v['name'].toString().toLowerCase().contains('sfg'),
+            orElse: () => null,
+          );
+          if (femaleVoice != null) {
+            await _tts.setVoice({
+              "name": femaleVoice["name"],
+              "locale": femaleVoice["locale"],
+            });
+          }
+        }
+      } catch (e) {}
 
       _isInitialized = true;
     } catch (e) {

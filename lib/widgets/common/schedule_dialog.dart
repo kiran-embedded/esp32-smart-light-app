@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/switch_device.dart';
-import '../common/frosted_glass.dart';
 
 class ScheduleDialog extends ConsumerStatefulWidget {
   final SwitchDevice device;
@@ -116,11 +115,22 @@ class _ScheduleDialogState extends ConsumerState<ScheduleDialog> {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: FrostedGlass(
+      child: Container(
         padding: const EdgeInsets.all(24),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.3),
-          width: 1.2,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0A0A0A), // Deep OLED Black
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.3),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 20,
+              spreadRadius: 5,
+            ),
+          ],
         ),
         child: SingleChildScrollView(
           child: Column(

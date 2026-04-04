@@ -7,30 +7,22 @@ import '../providers/connection_settings_provider.dart';
 
 class ConnectivityState {
   final String? ssid;
-  final bool isEspHotspot;
-  final bool isLocalReachable;
   final bool isFirebaseConnected;
   final ConnectionMode activeMode;
 
   ConnectivityState({
     this.ssid,
-    this.isEspHotspot = false,
-    this.isLocalReachable = false,
     this.isFirebaseConnected = false,
     this.activeMode = ConnectionMode.cloud,
   });
 
   ConnectivityState copyWith({
     String? ssid,
-    bool? isEspHotspot,
-    bool? isLocalReachable,
     bool? isFirebaseConnected,
     ConnectionMode? activeMode,
   }) {
     return ConnectivityState(
       ssid: ssid ?? this.ssid,
-      isEspHotspot: isEspHotspot ?? this.isEspHotspot,
-      isLocalReachable: isLocalReachable ?? this.isLocalReachable,
       isFirebaseConnected: isFirebaseConnected ?? this.isFirebaseConnected,
       activeMode: activeMode ?? this.activeMode,
     );
@@ -79,35 +71,12 @@ class ConnectivityNotifier extends StateNotifier<ConnectivityState> {
       }
     } catch (_) {}
 
-    final isEspHotspot =
-        ssid != null && ssid.contains('Nebula'); // Matches new AP SSID or old
-
-    final bleService = _ref.read(bleServiceProvider);
-    bool isLocalReachable = bleService.isConnected;
-
-    if (!isLocalReachable && !state.isFirebaseConnected) {
-      // Passive attempt to connect BLE if everything is down
-      bleService.initBLE();
-    }
-
-    _updateStatus(
-      ssid: ssid,
-      isEspHotspot: isEspHotspot,
-      isLocalReachable:
-          isLocalReachable, // This flag might need refinement based on exact device ping
-    );
+    _updateStatus(ssid: ssid, isFirebaseConnected: state.isFirebaseConnected);
   }
 
-  void _updateStatus({
-    String? ssid,
-    bool? isEspHotspot,
-    bool? isLocalReachable,
-    bool? isFirebaseConnected,
-  }) {
+  void _updateStatus({String? ssid, bool? isFirebaseConnected}) {
     final newState = state.copyWith(
       ssid: ssid,
-      isEspHotspot: isEspHotspot,
-      isLocalReachable: isLocalReachable,
       isFirebaseConnected: isFirebaseConnected,
     );
 

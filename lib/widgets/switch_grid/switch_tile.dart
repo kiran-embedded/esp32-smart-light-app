@@ -9,6 +9,7 @@ import '../../core/ui/adaptive_text_engine.dart';
 import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/performance_provider.dart'; // Added
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/ui/responsive_layout.dart';
 import 'dart:math' as math; // For Cyberpunk jitter
 import 'dart:ui'; // For blur effects
@@ -205,62 +206,65 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     final iconInfo = DeviceIconResolver.resolve(displayName);
 
     return Padding(
-      padding: const EdgeInsets.all(2),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double side = constraints.maxWidth < constraints.maxHeight
-              ? constraints.maxWidth
-              : (constraints.maxHeight == double.infinity
-                    ? constraints.maxWidth
-                    : constraints.maxHeight);
+          padding: const EdgeInsets.all(2),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double side = constraints.maxWidth < constraints.maxHeight
+                  ? constraints.maxWidth
+                  : (constraints.maxHeight == double.infinity
+                        ? constraints.maxWidth
+                        : constraints.maxHeight);
 
-          return Center(
-            child: SizedBox(
-              width: side,
-              height: side,
-              child: GestureDetector(
-                onTapDown: _handleTapDown,
-                onLongPress: () {
-                  HapticService.pulse();
-                  widget.onLongPress();
-                },
-                child: AnimatedBuilder(
-                  animation: _pressController,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: 1.0 - (_pressController.value * 0.05),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(
-                                0.8,
-                              ), // Deep projection
-                              blurRadius: 40,
-                              offset: const Offset(0, 20),
-                              spreadRadius: -15,
+              return Center(
+                child: SizedBox(
+                  width: side,
+                  height: side,
+                  child: GestureDetector(
+                    onTapDown: _handleTapDown,
+                    onLongPress: () {
+                      HapticService.pulse();
+                      widget.onLongPress();
+                    },
+                    child: AnimatedBuilder(
+                      animation: _pressController,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: 1.0 - (_pressController.value * 0.05),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                    0.8,
+                                  ), // Deep projection
+                                  blurRadius: 40,
+                                  offset: const Offset(0, 20),
+                                  spreadRadius: -15,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: _buildStyleDispatcher(
-                          style,
-                          theme,
-                          displayName,
-                          uniqueColor,
-                          contentColor,
-                          iconInfo,
-                          blendingEnabled, // Pass blending flag
-                        ),
-                      ),
-                    );
-                  },
+                            child: _buildStyleDispatcher(
+                              style,
+                              theme,
+                              displayName,
+                              uniqueColor,
+                              contentColor,
+                              iconInfo,
+                              blendingEnabled, // Pass blending flag
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+              );
+            },
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 400.ms, delay: 100.ms)
+        .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack);
   }
 
   Widget _buildStyleDispatcher(

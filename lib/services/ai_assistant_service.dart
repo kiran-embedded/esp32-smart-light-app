@@ -1,51 +1,103 @@
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'local_ai_engine.dart';
 
 class AiAssistantService {
-  final String apiKey;
-
-  AiAssistantService(this.apiKey);
+  final LocalAiEngine _engine = LocalAiEngine();
 
   Future<String> sendMessage(
     String text,
-    List<Content> history,
+    List<dynamic>
+    history, // Keep dynamic for now to avoid breaking provider immediately
     String deviceContext,
   ) async {
-    final model = GenerativeModel(
-      model: 'gemini-1.5-flash',
-      apiKey: apiKey,
-      systemInstruction: Content.system('''
-You are Nebula AI, a high-end smart home assistant for the NEBULA CORE app.
-You control an ESP32-based smart switch system with multiple relays.
+    // Process query locally using the new engine
+    final response = await _engine.processQuery(text, deviceContext);
 
-CURRENT DEVICE STATE:
-$deviceContext
+    // Add command simulation if the user asked for control (Logic kept for compatibility)
+    // The provider handles the actual regex command parsing
+    return _inferCommands(text, response, deviceContext);
+  }
 
-CORE DIRECTIVE:
-1. Be concise, professional, and slightly futuristic.
-2. If the user asks to turn a device ON or OFF, acknowledge the action and provide a JSON-formatted command suffix.
-3. Use the current device state to avoid redundant commands (e.g., if it's already ON, just say so).
-4. Use nicknames if provided in the context.
+  String _inferCommands(String query, String response, String context) {
+    final q = query.toLowerCase();
+    String finalResponse = response;
 
-COMMAND FORMAT:
-Append exactly this to your response to trigger a device (replace X with relay ID 1-4 and STATE with ON or OFF):
-[COMMAND:RELAY_X:STATE]
+    // Intelligent Command Inference - Relays
+    final turnOn = q.contains('turn on') || q.contains('activate');
+    final turnOff = q.contains('turn off') || q.contains('deactivate');
 
-EXAMPLE:
-User: "Turn on the kitchen" (Assuming Relay 1 is nicknamed Kitchen)
-Response: "Understood. Activating the Kitchen light now. [COMMAND:RELAY_1:ON]"
-'''),
-    );
+    if (turnOn || turnOff) {
+      final state = turnOn ? 'ON' : 'OFF';
 
-    final chat = model.startChat(history: history);
-    final response = await chat.sendMessage(Content.text(text));
-    return response.text ?? "I'm sorry, I couldn't process that.";
+      // Multi-device: "All lights" or "everything"
+      if (q.contains('all') ||
+          q.contains('everything') ||
+          q.contains('lights')) {
+        for (int i = 1; i <= 4; i++) {
+          finalResponse += " [COMMAND:RELAY_$i:$state]";
+        }
+      } else {
+        // Individual relay - Parse by nickname from context first
+        bool relayTriggered = false;
+
+        // Extract nicknamed devices from context (e.g., "- relay1 (Fridge): OFF")
+        final deviceRegex = RegExp(r'- (relay[1-4]) \((.*?)\):');
+        final matches = deviceRegex.allMatches(context);
+
+        for (final match in matches) {
+          final rId = match.group(1);
+          final nickname = match.group(2)?.toLowerCase() ?? "";
+          final rNum = rId?.replaceAll('relay', '') ?? "";
+
+          if (q.contains(nickname) && nickname.isNotEmpty) {
+            finalResponse += " [COMMAND:RELAY_$rNum:$state]";
+            relayTriggered = true;
+            break;
+          }
+        }
+
+        // Fallback to literal "relay X" or "X"
+        if (!relayTriggered) {
+          for (int i = 1; i <= 4; i++) {
+            if (q.contains('relay $i') || q.contains('$i')) {
+              finalResponse += " [COMMAND:RELAY_$i:$state]";
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Intelligent Command Inference - Security (Advanced)
+    if (q.contains('arm') || q.contains('lock down') || q.contains('guard')) {
+      finalResponse += " [COMMAND:SECURITY:ARM]";
+    } else if (q.contains('disarm') ||
+        q.contains('safe') ||
+        q.contains('unlock')) {
+      finalResponse += " [COMMAND:SECURITY:DISARM]";
+    }
+
+    // Intelligent Command Inference - Themes (Advanced)
+    if (q.contains('theme') || q.contains('look') || q.contains('style')) {
+      if (q.contains('cyber') || q.contains('neon')) {
+        finalResponse += " [COMMAND:THEME:cyberNeon]";
+      } else if (q.contains('dark') || q.contains('space')) {
+        finalResponse += " [COMMAND:THEME:darkSpace]";
+      } else if (q.contains('light') || q.contains('white')) {
+        finalResponse += " [COMMAND:THEME:light]";
+      } else if (q.contains('apple') || q.contains('glass')) {
+        finalResponse += " [COMMAND:THEME:appleGlass]";
+      } else if (q.contains('kali') || q.contains('hack')) {
+        finalResponse += " [COMMAND:THEME:kaliLinux]";
+      } else if (q.contains('tokyo') || q.contains('retro')) {
+        finalResponse += " [COMMAND:THEME:neonTokyo]";
+      }
+    }
+
+    return finalResponse;
   }
 }
 
-final aiAssistantServiceProvider = Provider.family<AiAssistantService, String>((
-  ref,
-  apiKey,
-) {
-  return AiAssistantService(apiKey);
+final aiAssistantServiceProvider = Provider<AiAssistantService>((ref) {
+  return AiAssistantService();
 });

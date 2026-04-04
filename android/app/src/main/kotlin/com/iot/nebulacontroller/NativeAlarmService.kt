@@ -144,9 +144,22 @@ class NativeAlarmService : Service() {
         val db = FirebaseDatabase.getInstance()
         val ref = db.getReference("devices/$deviceId/commands")
 
-        ref.child(node).setValue(targetVal).addOnCompleteListener {
-            Log.d("NativeService", "Write Complete: ${it.isSuccessful}")
-            if (it.isSuccessful) {
+        ref.child(node).setValue(targetVal).addOnCompleteListener { task ->
+            Log.d("NativeService", "Write Complete: ${task.isSuccessful}")
+            if (task.isSuccessful) {
+                // Log History
+                val logRef = db.getReference("devices/$deviceId/logs").push()
+                val logData = mapOf(
+                    "id" to logRef.key,
+                    "relayId" to node,
+                    "state" to state,
+                    "timestamp" to java.time.OffsetDateTime.now().toString(),
+                    "triggeredBy" to "scheduler"
+                )
+                logRef.setValue(logData).addOnCompleteListener { logTask ->
+                    Log.d("NativeService", "History Log Complete: ${logTask.isSuccessful}")
+                }
+                
                 showCompletionNotification(node, state)
             }
             stopSelf()

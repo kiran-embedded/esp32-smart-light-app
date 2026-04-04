@@ -114,7 +114,9 @@ class _PixelLedPainter extends CustomPainter {
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth * 2.5
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      ..maskFilter = mode == NeonAnimationMode.thinLine
+          ? null
+          : const MaskFilter.blur(BlurStyle.normal, 8);
 
     switch (mode) {
       case NeonAnimationMode.sweep:
@@ -138,7 +140,20 @@ class _PixelLedPainter extends CustomPainter {
       case NeonAnimationMode.autoChange:
         _paintAutoChange(canvas, path, paint, glowPaint, size);
         break;
+      case NeonAnimationMode.thinLine:
+        _paintThinLine(canvas, path, paint, size);
+        break;
     }
+  }
+
+  void _paintThinLine(Canvas canvas, Path path, Paint paint, Size size) {
+    final gradient = SweepGradient(
+      colors: colors,
+      transform: GradientRotation(animation.value * 2 * math.pi),
+    );
+    paint.shader = gradient.createShader(Offset.zero & size);
+    paint.strokeWidth = 1.0; // Force 1px
+    canvas.drawPath(path, paint);
   }
 
   void _paintSweep(

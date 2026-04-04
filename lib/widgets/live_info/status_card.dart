@@ -11,6 +11,7 @@ import '../../services/haptic_service.dart';
 import '../../widgets/common/pixel_led_border.dart';
 import '../../providers/performance_provider.dart';
 import '../../core/ui/responsive_layout.dart';
+import '../../core/ui/pill_layout_engine.dart';
 
 class StatusCard extends ConsumerStatefulWidget {
   final double voltage;
@@ -26,55 +27,79 @@ class StatusCard extends ConsumerStatefulWidget {
   ConsumerState<StatusCard> createState() => _StatusCardState();
 }
 
-class _StatusCardState extends ConsumerState<StatusCard> {
+class _StatusCardState extends ConsumerState<StatusCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
   bool _isExpanded = false;
   bool _isPressed = false;
-  int _displayIndex =
-      0; // 0: Voltage+Status (Default), 1: Switches, 2: System Health, 3: Network
+  int _displayIndex = 0;
   Timer? _collapseTimer;
 
-  void _startCollapseTimer() {
-    _collapseTimer?.cancel();
-    _collapseTimer = Timer(const Duration(seconds: 4), () {
-      if (mounted && _isExpanded) {
-        setState(() {
-          _isExpanded = false;
-          _displayIndex = 0; // Reset to default view when collapsing
-        });
-      }
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _animationController.addListener(() {
+      setState(() {}); // Rebuild for engine values
     });
   }
 
   void _handleTap() {
-    setState(() {
-      if (!_isExpanded) {
-        _isExpanded = true;
-        _displayIndex = 1; // Start showing info
-        _startCollapseTimer();
-      } else {
-        // If already expanded, cycle through views
+    if (!_isExpanded) {
+      _isExpanded = true;
+      _displayIndex = 1;
+      _animationController.forward();
+      _startCollapseTimer();
+    } else {
+      // Cycle views while expanded
+      setState(() {
         _displayIndex = (_displayIndex + 1) % 4;
-        if (_displayIndex == 0) _displayIndex = 1; // Skip 0 while expanded
-        _startCollapseTimer(); // Reset timer on interaction
-      }
-    });
+        if (_displayIndex == 0) _displayIndex = 1;
+      });
+      _startCollapseTimer();
+    }
+    HapticService.medium();
+  }
+
+  void _collapse() {
+    if (mounted && _isExpanded) {
+      setState(() {
+        _isExpanded = false;
+        _displayIndex = 0;
+      });
+      _animationController.reverse();
+    }
+  }
+
+  void _startCollapseTimer() {
+    _collapseTimer?.cancel();
+    _collapseTimer = Timer(const Duration(seconds: 4), _collapse);
   }
 
   @override
   void dispose() {
     _collapseTimer?.cancel();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final voltageColor = widget.voltage < 160
+    final voltageColor = widget.voltage < 100
         ? Colors
-              .redAccent // CRITICAL LOW VOLTAGE
-        : (widget.voltage > 200 && widget.voltage < 250)
+              .redAccent // CRITICAL POWER CUT
+        : (widget.voltage >= 100 && widget.voltage < 180)
+        ? Colors
+              .orangeAccent // Low Voltage
+        : (widget.voltage >= 180 && widget.voltage < 250)
         ? Colors.greenAccent
-        : (widget.voltage > 250 ? Colors.redAccent : Colors.tealAccent);
+        : Colors.redAccent; // Overvoltage
 
     // Dynamic Island Data
     final switches = ref.watch(switchDevicesProvider);
@@ -84,116 +109,98 @@ class _StatusCardState extends ConsumerState<StatusCard> {
     final activeSwitches = switches.where((s) => s.isActive).toList();
     final activeCount = activeSwitches.length;
 
+    // Use Advanced Layout Engine
+    final pill = PillLayoutEngine.calculate(
+      _animationController.value,
+      Responsive.screenWidth,
+    );
+
     return Center(
       child: GestureDetector(
         onTapDown: (_) {
-          HapticService.light(); // Immediate smooth feedback on touch
+          HapticService.light();
           setState(() => _isPressed = true);
         },
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),
-        onTap: () {
-          HapticService.medium(); // Smooth "thud" for the action
-          _handleTap();
-        },
-        child: Animate(
-          onPlay: (c) => c.repeat(reverse: true),
-          effects: [
-            if (!ref.watch(performanceProvider))
-              ScaleEffect(
-                begin: const Offset(1, 1),
-                end: const Offset(1.015, 1.015),
-                duration: 3.seconds,
-                curve: Curves.easeInOutSine,
-              ),
-          ],
-          child: AnimatedScale(
-            scale: _isPressed ? 0.96 : 1.0, // Subtler squish
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOutCubic,
-            child: AnimatedContainer(
-              duration: const Duration(
-                milliseconds: 450,
-              ), // Slower, more fluid expansion
-              curve: Curves.fastLinearToSlowEaseIn, // Liquid-like physics
-              width: Responsive.screenWidth * 0.90, // Slightly narrower
-              height: _isExpanded ? 135.h : 72.h, // Reduced height (was 150/75)
-              decoration: BoxDecoration(
-                color: Colors.transparent, // Handled by inner container
-                borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: PixelLedBorder(
-                borderRadius: _isExpanded ? 40 : 36,
-                strokeWidth: 1.5, // Thinner border
-                duration: const Duration(seconds: 4),
-                colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.secondary,
-                  theme.colorScheme.tertiary,
-                  theme.colorScheme.primary, // Wrap
-                ],
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(_isExpanded ? 40 : 36),
-                  child: Container(
-                    color: Colors.black, // Opaque Background
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Background Subtle Glow (Very faint)
+        onTap: _handleTap,
+        child: AnimatedScale(
+          scale: _isPressed ? 0.96 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          child: Container(
+            width: pill.width,
+            height: pill.height,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(pill.radius),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: PixelLedBorder(
+              borderRadius: pill.radius,
+              strokeWidth: 1.5,
+              duration: const Duration(seconds: 4),
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.secondary,
+                theme.colorScheme.tertiary,
+                theme.colorScheme.primary,
+              ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(pill.radius),
+                child: Container(
+                  color: Colors.black,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Background Glow
+                      if (!ref.watch(performanceProvider))
                         Positioned.fill(
-                          child: Consumer(
-                            builder: (context, ref, _) {
-                              final perf = ref.watch(performanceProvider);
-                              if (perf) return const SizedBox.shrink();
-
-                              return Animate(
-                                onPlay: (c) => c.repeat(reverse: true),
-                                effects: [
-                                  ShimmerEffect(
-                                    duration: 5.seconds,
-                                    color: voltageColor.withOpacity(0.05),
-                                    angle: 45,
-                                  ),
-                                ],
-                                child: Container(color: Colors.transparent),
-                              );
-                            },
+                          child: Animate(
+                            onPlay: (c) => c.repeat(reverse: true),
+                            effects: [
+                              ShimmerEffect(
+                                duration: 5.seconds,
+                                color: voltageColor.withOpacity(0.05),
+                                angle: 45,
+                              ),
+                            ],
+                            child: Container(color: Colors.transparent),
                           ),
                         ),
 
-                        // Content Crossfade
-                        AnimatedCrossFade(
-                          firstChild: SizedBox(
-                            height: 72.h,
-                            child: _buildDefaultView(theme, voltageColor),
-                          ),
-                          secondChild: SizedBox(
-                            height: 135.h,
-                            child: _buildExpandedView(
-                              theme,
-                              activeCount,
-                              activeSwitches,
-                              liveInfo.acVoltage,
-                              liveInfo.temperature,
-                              connSettings.mode,
-                              _displayIndex,
-                            ),
-                          ),
-                          crossFadeState: !_isExpanded
-                              ? CrossFadeState.showFirst
-                              : CrossFadeState.showSecond,
-                          duration: const Duration(milliseconds: 400),
-                          sizeCurve: Curves.fastLinearToSlowEaseIn,
+                      // Collapsed Content (Fade out as progress increases)
+                      Opacity(
+                        opacity: pill.collapsedOpacity,
+                        child: IgnorePointer(
+                          ignoring: _animationController.value > 0.5,
+                          child: _buildDefaultView(theme, voltageColor),
                         ),
-                      ],
-                    ),
+                      ),
+
+                      // Expanded Content (Fade in as progress increases)
+                      Opacity(
+                        opacity: pill.expandedOpacity,
+                        child: IgnorePointer(
+                          ignoring: _animationController.value < 0.5,
+                          child: _buildExpandedView(
+                            theme,
+                            activeCount,
+                            activeSwitches,
+                            liveInfo.acVoltage,
+                            liveInfo.temperature,
+                            connSettings.mode,
+                            _displayIndex,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -238,12 +245,12 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    widget.voltage < 160 ? 'MAINS POWER CUT' : 'AC MAIN',
+                    widget.voltage < 100 ? 'SYSTEM CRITICAL' : 'AC MAIN',
                     style: GoogleFonts.outfit(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
-                      color: widget.voltage < 160
+                      color: widget.voltage < 100
                           ? Colors.redAccent
                           : theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
@@ -267,25 +274,29 @@ class _StatusCardState extends ConsumerState<StatusCard> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          widget.voltage.toStringAsFixed(1),
+                          widget.voltage < 100
+                              ? 'POWER CUT'
+                              : widget.voltage.toStringAsFixed(1),
                           style: GoogleFonts.outfit(
-                            fontSize: 28.sp,
-                            fontWeight: FontWeight.bold,
+                            fontSize: widget.voltage < 100 ? 20.sp : 28.sp,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6.0),
-                          child: Text(
-                            'V',
-                            style: GoogleFonts.outfit(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                        if (widget.voltage >= 100) ...[
+                          const SizedBox(width: 4),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6.0),
+                            child: Text(
+                              'V',
+                              style: GoogleFonts.outfit(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   )
@@ -337,12 +348,12 @@ class _StatusCardState extends ConsumerState<StatusCard> {
               ),
               const SizedBox(height: 6),
               Text(
-                widget.voltage < 160 ? "CRITICAL ALERT" : "SYSTEM ACTIVE",
+                widget.voltage < 100 ? "GRID OFFLINE" : "SYSTEM ACTIVE",
                 style: GoogleFonts.outfit(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
-                  color: widget.voltage < 160
+                  color: widget.voltage < 100
                       ? Colors.red
                       : theme.colorScheme.primary,
                 ),
