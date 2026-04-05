@@ -113,26 +113,32 @@ class HelpSupportScreen extends ConsumerWidget {
                   _buildExpandableTile(
                     context,
                     "Getting Started",
-                    "1. Power On: Connect your ESP32 device to a power source.\n2. Wi-Fi Sync: Ensure your phone is connected to the internet. The app will automatically sync with your configured Firebase switches.\n3. Indicators: The glowing border around the dashboard indicates system status.",
+                    "1. Power On: Connect your ESP32 device to a power source.\n2. Wi-Fi Sync: Ensure your phone is connected to the internet. The app will automatically sync with your configured Firebase switches.\n3. Indicators: The glowing border around the dashboard indicates system status and connection health.",
                     1,
                   ),
                   _buildExpandableTile(
                     context,
-                    "Using Voice Control",
-                    "Features a built-in smart assistant.\n\n• Tap the mic icon on the bottom bar.\n• Say commands like 'Turn on kitchen lights', 'Switch off relay 1', or 'Toggle fan'.\n• The assistant will speak back to confirm your action.",
+                    "Nebula Security & Persistence",
+                    "Nebula Core v1.2.0 uses a unified background engine for 24/7 reliability.\n\n• Security Mode: Monitoring is active even if the app is closed. High-priority foreground services ensure real-time alerts.\n• Persistence: Schedules are stored in Firebase and synced to the local Android system alarm manager. They will trigger even after a device reboot.",
                     2,
                   ),
                   _buildExpandableTile(
                     context,
-                    "Troubleshooting",
-                    "• Switch Not Responding: Check your internet connection or use the 'Retry' button.\n• Offline: Ensure your phone and ESP32 are connected to the network.\n• Reset: In rare cases, restart the ESP32 device.",
+                    "Smart Automation Hub",
+                    "Control your environment effortlessly.\n\n• Custom Hub: Accessible via the clock icon in the Smart Switch tab.\n• Multi-Select: Long press any schedule to enter management mode for bulk deletions.\n• Unique Identifiers: Each schedule has a unique color signature for easy visual tracking.",
                     3,
                   ),
                   _buildExpandableTile(
                     context,
-                    "Firebase Setup Guide",
-                    "1. Project Creation: Visit console.firebase.google.com and create a project.\n2. Add App: Register an Android/iOS app to get the configuration.\n3. Realtime Database: Enable it and set rules to { \".read\": true, \".write\": true } for testing.\n4. Config Import: Copy the Database URL and API keys into the Nebula Setup screen.",
+                    "Using Voice Control",
+                    "Features a built-in smart assistant with neural feedback.\n\n• Tap the mic icon on the bottom bar.\n• Say commands like 'Turn on kitchen lights', 'Switch off relay 1', or 'Toggle fan'.\n• The assistant will speak back to confirm your action using haptic-synced feedback.",
                     4,
+                  ),
+                  _buildExpandableTile(
+                    context,
+                    "Firebase Setup Guide",
+                    "1. Project Creation: Visit console.firebase.google.com.\n2. Add App: Register an Android app and download google-services.json.\n3. Realtime Database: Enable it and set rules to { \".read\": true, \".write\": true }.\n4. Config Import: Copy the Database URL and API keys into the Nebula Setup screen.",
+                    5,
                   ),
 
                   const SizedBox(height: 50),
@@ -150,7 +156,7 @@ class HelpSupportScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "v1.2.0+19 • Production Stable",
+                          "v1.2.0+34.5 • Industrial Reliability",
                           style: GoogleFonts.outfit(
                             color: Colors.white.withOpacity(0.1),
                             fontSize: 10,

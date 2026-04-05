@@ -113,7 +113,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // DYNAMIC LED FLASH BACKGROUND
+        // DYNAMIC LED FLASH BACKGROUND (No shadows to prevent bleeding)
         _buildLedGlow(
           statusColor,
           isConnected,
@@ -122,7 +122,9 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
           animationsEnabled,
         ),
 
-        Container(
+        AnimatedContainer(
+          duration: 400.ms,
+          curve: Curves.easeOutQuart,
           margin: EdgeInsets.only(
             top:
                 (16.h * pScale).toDouble() + MediaQuery.of(context).padding.top,
@@ -167,6 +169,12 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                       .shimmer(
                         duration: 2.seconds,
                         color: Colors.white.withOpacity(0.5),
+                      )
+                      .rotate(
+                        begin: -0.05,
+                        end: 0.05,
+                        duration: 3.seconds,
+                        curve: Curves.easeInOut,
                       ),
 
                   SizedBox(width: (8.w * pScale).toDouble()),
@@ -224,13 +232,10 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                 height: (40.h * scale).toDouble(),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular((30 * scale).toDouble()),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.15),
-                      blurRadius: (20 * scale).toDouble(),
-                      spreadRadius: (5 * scale).toDouble(),
-                    ),
-                  ],
+                  color: color.withOpacity(
+                    0.08,
+                  ), // Slightly boosted opacity since shadow is gone
+                  boxShadow: const [], // Shadow removed to stop bleeding
                 ),
               )
               .animate(
@@ -243,6 +248,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                 duration: (appOk && devOk) ? 2.seconds : 500.ms,
                 curve: Curves.easeInOut,
               )
+              .shimmer(duration: 4.seconds, color: color.withOpacity(0.1))
               .fadeIn(duration: 1.seconds),
     );
   }
@@ -255,17 +261,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     return Container(
           width: (5.w * scale).toDouble(),
           height: (5.w * scale).toDouble(),
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.6),
-                blurRadius: (6 * scale).toDouble(),
-                spreadRadius: (1 * scale).toDouble(),
-              ),
-            ],
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         )
         .animate(
           onPlay: (c) => c.repeat(reverse: true),

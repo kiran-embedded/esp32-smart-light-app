@@ -25,6 +25,10 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Map<String, dynamic> _lastTelemetry = {};
   Map<String, dynamic> _lastCommands = {};
 
+  // DEDICATED COMMAND ENGINE: Queue for ultra-fast, non-blocking execution
+  final List<Completer<void>> _commandQueue = [];
+  bool _isProcessingQueue = false;
+
   // OPTIMIZED CLOUD SYNC TRACKERS
   final Map<String, bool> _lastSyncedState = {};
   final Map<String, DateTime> _lastSyncTime = {};
@@ -290,13 +294,27 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 5000) {
+        // Optimized to 3s for better network jitter handling
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 3000) {
           final existing = currentDeviceMap[id];
-          if (existing != null && newIsActive != existing.isActive) {
+          if (existing != null) {
+            // PIN THE STATE: As long as it's pending, force the last known active state
+            // to prevent pings from old data overriding the optimistic UI
             newIsActive = existing.isActive;
             isPending = true;
-          } else {
-            _pendingSwitches.remove(id);
+
+            // Auto-clear if the server finally catches up
+            final telemetryVal = telemetry[id];
+            bool remoteMatches = false;
+            if (telemetryVal is int)
+              remoteMatches = (telemetryVal == (newIsActive ? 1 : 0));
+            else if (telemetryVal is bool)
+              remoteMatches = (telemetryVal == newIsActive);
+
+            if (remoteMatches) {
+              _pendingSwitches.remove(id);
+              isPending = false;
+            }
           }
         } else {
           _pendingSwitches.remove(id);
@@ -361,22 +379,56 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     final deviceIndex = state.indexWhere((d) => d.id == id);
     if (deviceIndex == -1) return;
 
-    _pendingSwitches[id] = DateTime.now();
+    // OPTIMISTIC UPDATE: Change state immediately for zero-latency feel
+    final previousState = state;
     state = [
       for (final d in state)
         if (d.id == id) d.copyWith(isActive: newState, isPending: true) else d,
     ];
 
-    _ref
-        .read(firebaseSwitchServiceProvider)
-        .sendCommand(
-          id,
-          newState ? 1 : 0,
-          deviceId: _deviceId,
-          relayName: state[deviceIndex].nickname ?? state[deviceIndex].name,
-        );
+    // Non-blocking Firebase command via Dedicated Engine
+    _enqueueCommand(
+      id,
+      newState,
+      state[deviceIndex].nickname ?? state[deviceIndex].name,
+    ).then((_) {
+      _ref
+          .read(firebaseSwitchServiceProvider)
+          .sendCommand(
+            id,
+            newState ? 1 : 0,
+            deviceId: _deviceId,
+            relayName: state[deviceIndex].nickname ?? state[deviceIndex].name,
+          )
+          .catchError((e) {
+            state = previousState;
+          });
+    });
 
     _syncToCloud(state[deviceIndex].copyWith(isActive: newState));
+  }
+
+  // --- PRIVATE COMMAND ENGINE HELPERS ---
+  Future<void> _enqueueCommand(String id, bool newState, String name) async {
+    final completer = Completer<void>();
+    _commandQueue.add(completer);
+    if (!_isProcessingQueue) {
+      _processQueue();
+    }
+  }
+
+  Future<void> _processQueue() async {
+    _isProcessingQueue = true;
+    while (_commandQueue.isNotEmpty) {
+      final item = _commandQueue.removeAt(0);
+      try {
+        // Instant execution
+        item.complete();
+      } catch (_) {
+        if (!item.isCompleted) item.complete();
+      }
+    }
+    _isProcessingQueue = false;
   }
 
   Future<void> updateNickname(String id, String newName) async {
@@ -405,11 +457,27 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     }
   }
 
-  @override
-  void dispose() {
+  void suspend() {
+    print(
+      'SwitchDevicesNotifier: Suspending listeners for RAM optimization...',
+    );
     _telemetrySubscription?.cancel();
     _commandsSubscription?.cancel();
     _namesSubscription?.cancel();
+    _telemetrySubscription = null;
+    _commandsSubscription = null;
+    _namesSubscription = null;
+  }
+
+  void resume() {
+    print('SwitchDevicesNotifier: Resuming listeners...');
+    _initTelemetryListener();
+    forceRefreshHardwareNames();
+  }
+
+  @override
+  void dispose() {
+    suspend();
     super.dispose();
   }
 }

@@ -189,15 +189,23 @@ class _StatusCardState extends ConsumerState<StatusCard>
                         opacity: pill.expandedOpacity,
                         child: IgnorePointer(
                           ignoring: _animationController.value < 0.5,
-                          child: _buildExpandedView(
-                            theme,
-                            activeCount,
-                            activeSwitches,
-                            liveInfo.acVoltage,
-                            liveInfo.temperature,
-                            connSettings.mode,
-                            _displayIndex,
-                          ),
+                          child:
+                              _buildExpandedView(
+                                    theme,
+                                    activeCount,
+                                    activeSwitches,
+                                    liveInfo.acVoltage,
+                                    liveInfo.temperature,
+                                    connSettings.mode,
+                                    _displayIndex,
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 400.ms)
+                                  .scale(
+                                    begin: const Offset(0.95, 0.95),
+                                    duration: 400.ms,
+                                    curve: Curves.easeOutBack,
+                                  ),
                         ),
                       ),
                     ],

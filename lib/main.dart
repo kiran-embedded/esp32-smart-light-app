@@ -8,6 +8,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'core/theme/app_theme.dart';
+import 'providers/switch_schedule_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/intro/cinematic_splash_screen.dart';
@@ -232,7 +233,13 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(firebaseSwitchServiceProvider).preWarmConnection();
+      ref.read(switchDevicesProvider.notifier).resume();
+      ref.read(switchScheduleProvider.notifier).resume();
       _checkForAlarm();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      ref.read(switchDevicesProvider.notifier).suspend();
+      ref.read(switchScheduleProvider.notifier).suspend();
     }
   }
 
@@ -240,7 +247,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
     const alarmChannel = MethodChannel('com.iot.nebulacontroller/alarm');
     try {
       final String? zone = await alarmChannel.invokeMethod('getZone');
-      if (zone != null && mounted) {
+      if (zone != null && zone.isNotEmpty && zone != "null" && mounted) {
         // Navigate to AlarmScreen
         Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => AlarmScreen(zone: zone)),

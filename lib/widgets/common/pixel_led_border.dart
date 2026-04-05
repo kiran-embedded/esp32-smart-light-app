@@ -113,10 +113,12 @@ class _PixelLedPainter extends CustomPainter {
 
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * 2.5
+      ..strokeWidth =
+          strokeWidth *
+          1.2 // Laser-thin (was 1.5)
       ..maskFilter = mode == NeonAnimationMode.thinLine
           ? null
-          : const MaskFilter.blur(BlurStyle.normal, 8);
+          : const MaskFilter.blur(BlurStyle.normal, 1.0); // Pin-point (was 3)
 
     switch (mode) {
       case NeonAnimationMode.sweep:

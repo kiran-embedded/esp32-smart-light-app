@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../services/haptic_service.dart';
 import '../../services/sound_service.dart';
@@ -36,6 +37,7 @@ import '../../services/google_assistant_service.dart';
 
 import '../settings/settings_screen.dart';
 import 'security_view.dart';
+import '../../widgets/scheduler/scheduler_settings_popup.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -298,6 +300,61 @@ class DashboardView extends ConsumerWidget {
 
     return Stack(
       children: [
+        // ULTRA-PREMIUM FLOATING AURA: Subtle, deep background movement
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: IgnorePointer(
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -100,
+                    left: -100,
+                    child:
+                        Container(
+                              width: 300,
+                              height: 300,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: theme.colorScheme.primary.withOpacity(
+                                  0.03,
+                                ),
+                              ),
+                            )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .move(
+                              begin: const Offset(0, 0),
+                              end: const Offset(100, 150),
+                              duration: 12.seconds,
+                              curve: Curves.easeInOut,
+                            ),
+                  ),
+                  Positioned(
+                    bottom: -50,
+                    right: -50,
+                    child:
+                        Container(
+                              width: 250,
+                              height: 250,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: theme.colorScheme.secondary.withOpacity(
+                                  0.03,
+                                ),
+                              ),
+                            )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .move(
+                              begin: const Offset(0, 0),
+                              end: const Offset(-80, -120),
+                              duration: 15.seconds,
+                              curve: Curves.easeInOut,
+                            ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
         SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -308,43 +365,81 @@ class DashboardView extends ConsumerWidget {
                 SizedBox(height: layout.verticalOffset),
                 SizedBox(height: 65.h), // Base spacing for AppBar area
                 Transform.scale(
-                  scale: layout.pillScale,
-                  child: const ConnectionStatusPill(),
-                ),
-                SizedBox(height: layout.gaps[0]),
-                RepaintBoundary(
-                  child: Transform.scale(
-                    scale: layout.roboScale,
-                    child: const RoboAssistant(
-                      eyesOnly: true,
-                      autoTuneEnabled: false,
+                      scale: layout.pillScale,
+                      child: const ConnectionStatusPill(),
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(
+                      begin: const Offset(1, 1),
+                      end: const Offset(1.02, 1.02),
+                      duration: 2.seconds,
+                      curve: Curves.easeInOut,
                     ),
-                  ),
-                ),
+                SizedBox(height: layout.pillScale == 1.0 ? 0 : layout.gaps[0]),
+                RepaintBoundary(
+                      child: Transform.scale(
+                        scale: layout.roboScale,
+                        child: const RoboAssistant(
+                          eyesOnly: true,
+                          autoTuneEnabled: false,
+                        ),
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 500.ms)
+                    .slideY(
+                      begin: 0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
                 SizedBox(height: layout.gaps[1]),
                 RepaintBoundary(
-                  child: Transform.scale(
-                    scale: layout.timeScale,
-                    child: const TimeDateWidget(),
-                  ),
-                ),
+                      child: Transform.scale(
+                        scale: layout.timeScale,
+                        child: const TimeDateWidget(),
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(delay: 100.ms, duration: 500.ms)
+                    .slideY(
+                      begin: 0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
                 SizedBox(height: layout.gaps[2]),
                 RepaintBoundary(
-                  child: Transform.scale(
-                    scale: layout.statusScale,
-                    child: StatusCard(
-                      voltage: liveInfo.acVoltage,
-                      systemState: systemState,
+                      child: Transform.scale(
+                        scale: layout.statusScale,
+                        child: StatusCard(
+                          voltage: liveInfo.acVoltage,
+                          systemState: systemState,
+                        ),
+                      ),
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .moveY(
+                      begin: 0,
+                      end: -4,
+                      duration: 3.seconds,
+                      curve: Curves.easeInOut,
                     ),
-                  ),
-                ),
                 SizedBox(height: layout.gaps[3]),
                 RepaintBoundary(
-                  child: Transform.scale(
-                    scale: layout.actionScale,
-                    child: const _ActionButtons(),
-                  ),
-                ),
+                      child: Transform.scale(
+                        scale: layout.actionScale,
+                        child: const _ActionButtons(),
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(delay: 200.ms, duration: 500.ms)
+                    .slideY(
+                      begin: 0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
                 SizedBox(height: layout.gaps[4]),
               ],
             ),
@@ -612,14 +707,21 @@ class _GlassButtonState extends State<_GlassButton> {
         child: Container(
           height: 80,
           decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
                 color: widget.theme.colorScheme.primary.withOpacity(
-                  isNeon ? 0.35 : 0.1,
+                  isNeon ? 0.5 : 0.1,
                 ),
-                blurRadius: isNeon ? 20 : 10,
-                spreadRadius: isNeon ? -2 : -4,
+                blurRadius: isNeon ? 3 : 2, // Pin-point
+                spreadRadius: 0,
               ),
+              if (isNeon)
+                BoxShadow(
+                  color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 1,
+                  spreadRadius: 0,
+                ),
             ],
           ),
           child: PixelLedBorder(
@@ -647,7 +749,15 @@ class _GlassButtonState extends State<_GlassButton> {
                       ).createShader(bounds);
                     },
                     blendMode: BlendMode.srcIn,
-                    child: Icon(widget.icon, color: Colors.white, size: 30),
+                    child: Icon(widget.icon, color: Colors.white, size: 30)
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.1, 1.1),
+                          duration: 2.seconds,
+                          curve: Curves.easeInOut,
+                        )
+                        .shimmer(duration: 3.seconds, color: Colors.white24),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -742,22 +852,52 @@ class _ControlViewState extends ConsumerState<ControlView> {
                 ),
               ),
             ),
-            trailing: IconButton(
-              icon: Icon(
-                Icons.history_rounded,
-                color: theme.colorScheme.primary,
-              ),
-              onPressed: () {
-                HapticService.medium();
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (context) => const HistorySheet(
-                    deviceId: AppConstants.defaultDeviceId,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.history_rounded,
+                    color: theme.colorScheme.primary,
                   ),
-                );
-              },
+                  onPressed: () {
+                    HapticService.medium();
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (context) => const HistorySheet(
+                        deviceId: AppConstants.defaultDeviceId,
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                      icon: Icon(
+                        Icons.alarm_add_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                      onPressed: () {
+                        HapticService.selection();
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => const SchedulerSettingsPopup(
+                            initialDeviceId: AppConstants.defaultDeviceId,
+                          ),
+                        );
+                      },
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(
+                      begin: const Offset(1, 1),
+                      end: const Offset(1.1, 1.1),
+                      duration: 2.seconds,
+                      curve: Curves.easeInOut,
+                    )
+                    .shimmer(duration: 3.seconds, color: Colors.white24),
+              ],
             ),
           ),
         ),

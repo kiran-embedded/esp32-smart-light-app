@@ -64,7 +64,8 @@ class MainActivity : FlutterActivity() {
                     val deviceId = call.argument<String>("deviceId")
                     
                     if (node != null && state != null && deviceId != null) {
-                        val intent = android.content.Intent(this, NativeAlarmService::class.java).apply {
+                        val intent = Intent(this@MainActivity, SecurityForegroundService::class.java).apply {
+                            action = "com.iot.nebulacontroller.ALARM_TRIGGER"
                             putExtra("targetNode", node)
                             putExtra("targetState", state)
                             putExtra("deviceId", deviceId)

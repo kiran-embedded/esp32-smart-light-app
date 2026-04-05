@@ -64,51 +64,89 @@ class SprinklingWatermark extends ConsumerWidget {
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              versionAsync.when(
-                data: (version) => Text(
-                  "Version $version",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.25),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
+              versionAsync
+                  .when(
+                    data: (version) => Text(
+                      "Version $version",
+                      style: GoogleFonts.outfit(
+                        color: Colors.white.withOpacity(0.5), // Brighter
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, s) => Text(
+                      "Version 1.2.0+34.5",
+                      style: GoogleFonts.outfit(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                  )
+                  .animate()
+                  .shimmer(
+                    duration: 3.seconds,
+                    color: accentColor.withOpacity(0.3),
                   ),
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (e, s) => Text(
-                  "Version 1.2.0+34.5",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.25),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 12,
-                    height: 1,
-                    color: accentColor.withOpacity(0.15),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    "2026 KIRAN EMBEDDED GITHUB",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white.withOpacity(0.12),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 3.0,
+                    width: 20,
+                    height: 1.5,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          accentColor.withOpacity(0),
+                          accentColor.withOpacity(0.4),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 15),
+                  Text(
+                        "2026 KIRAN EMBEDDED GITHUB",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white.withOpacity(0.4), // Brighter
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4.0,
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .shimmer(duration: 2500.ms, color: Colors.white24)
+                      .custom(
+                        duration: 2.seconds,
+                        builder: (context, value, child) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: accentColor.withOpacity(0.1 * value),
+                                blurRadius: 10 * value,
+                                spreadRadius: 1 * value,
+                              ),
+                            ],
+                          ),
+                          child: child,
+                        ),
+                      ),
+                  const SizedBox(width: 15),
                   Container(
-                    width: 12,
-                    height: 1,
-                    color: accentColor.withOpacity(0.15),
+                    width: 20,
+                    height: 1.5,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          accentColor.withOpacity(0.4),
+                          accentColor.withOpacity(0),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

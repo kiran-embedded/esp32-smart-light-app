@@ -59,34 +59,39 @@ class _SchedulerSettingsPopupState
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Container(
-        width: double.infinity,
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: BoxDecoration(
-          color: const Color(0xFF0D0F14), // Deep Space Blue-Black
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
-          border: Border.all(
-            color: Theme.of(context).primaryColor.withOpacity(0.2),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.8),
-              blurRadius: 40,
-              spreadRadius: 5,
+    const amoledBlack = Color(0xFF0A0A0A);
+
+    return Material(
+      color: Colors.transparent,
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Container(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.height * 0.9,
+          decoration: BoxDecoration(
+            color: amoledBlack,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.08),
+              width: 1.2,
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            _buildDragHandle(),
-            _buildHeader(),
-            Expanded(child: RepaintBoundary(child: _buildSchedulesList())),
-            _buildFooterButton(),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 40,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              _buildDragHandle(),
+              _buildHeader(),
+              Expanded(child: _buildSchedulesList()),
+              _buildFooterButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -136,8 +141,8 @@ class _SchedulerSettingsPopupState
                                       ? const Color(0xFFFF4D4D)
                                       : Theme.of(context).primaryColor)
                                   .withOpacity(0.4),
-                          blurRadius: 15,
-                          spreadRadius: 2,
+                          blurRadius: 4, // Pin-point (was 15)
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
@@ -155,8 +160,8 @@ class _SchedulerSettingsPopupState
                                         ? const Color(0xFFFF4D4D)
                                         : Theme.of(context).primaryColor)
                                     .withOpacity(0.2 * value),
-                            blurRadius: 20 * value,
-                            spreadRadius: 5 * value,
+                            blurRadius: 6 * value, // Pin-point (was 20)
+                            spreadRadius: 0,
                           ),
                         ],
                       ),
@@ -385,12 +390,14 @@ class _SchedulerSettingsPopupState
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           decoration: BoxDecoration(
             color: isSelected
-                ? primaryColor.withOpacity(0.15)
-                : const Color(0xFF151921), // Theme-blended solid dark
-            borderRadius: BorderRadius.circular(28),
+                ? primaryColor.withOpacity(0.05)
+                : const Color(0xFF111418), // Clean Titanium Surface
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isSelected ? primaryColor : Colors.white.withOpacity(0.08),
-              width: 1.5,
+              color: isSelected
+                  ? primaryColor.withOpacity(0.5)
+                  : Colors.white.withOpacity(0.05),
+              width: 1.2,
             ),
           ),
           child: Row(
@@ -422,33 +429,38 @@ class _SchedulerSettingsPopupState
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: [
-                              Colors.white,
-                              Colors.white.withOpacity(0.7),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ).createShader(bounds),
-                          child: Text(
-                            timeStr,
-                            style: GoogleFonts.outfit(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: s.isEnabled
-                                  ? Colors.white
-                                  : Colors.white54,
-                              letterSpacing: -0.5,
+                              shaderCallback: (bounds) => LinearGradient(
+                                colors: [
+                                  Colors.white,
+                                  Colors.white.withOpacity(0.7),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ).createShader(bounds),
+                              child: Text(
+                                timeStr,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: s.isEnabled
+                                      ? Colors.white
+                                      : Colors.white54,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .shimmer(
+                              duration: 4.seconds,
+                              color: Colors.white12,
                             ),
-                          ),
-                        ),
                         const SizedBox(width: 6),
                         Text(
                           amPm,
                           style: GoogleFonts.outfit(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white, // Bright AM/PM
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -583,7 +595,9 @@ class _SchedulerSettingsPopupState
                               strokeWidth: 2,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: const Color(
+                                    0xFF151515,
+                                  ), // Solid dark grey
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
@@ -709,11 +723,24 @@ class _SchedulerSettingsPopupState
     return child
         .animate()
         .fadeIn(
-          delay: (index * 30).ms, // Faster stagger
-          duration: 400.ms, // Snappier fade
-          curve: Curves.easeOutQuad,
+          delay: (index * 50).ms,
+          duration: 600.ms,
+          curve: Curves.easeOutCubic,
         )
-        .slideY(begin: 0.1, duration: 400.ms, curve: Curves.easeOutQuad);
+        .scale(
+          begin: const Offset(0.9, 0.9),
+          end: const Offset(1, 1),
+          delay: (index * 50).ms,
+          duration: 600.ms,
+          curve: Curves.easeOutBack,
+        )
+        .slideY(
+          begin: 0.2,
+          end: 0,
+          delay: (index * 50).ms,
+          duration: 600.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
@@ -747,6 +774,15 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
       _selectedTime = TimeOfDay.now();
       _selectedNode = widget.initialDeviceId ?? 'relay1';
       _targetState = true;
+      _selectedDays = [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+      ]; // Fix: Initialize for new schedules
     }
   }
 
@@ -809,9 +845,9 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
       height: 180,
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1F26),
+        color: const Color(0xFF111418),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -832,7 +868,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
             style: GoogleFonts.outfit(
               fontSize: 40,
               fontWeight: FontWeight.bold,
-              color: Colors.white24,
+              color: Colors.white.withOpacity(0.2),
             ),
           ),
           _buildTimeColumn(
@@ -935,9 +971,9 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: const Color(0xFF1A1F26),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.06), width: 1),
+        border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
       ),
       child: Row(
         children: [
@@ -1012,24 +1048,13 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
                     color: active
                         ? Theme.of(context)
                               .primaryColor // Dynamic Theme
-                        : Colors.white.withOpacity(0.05),
+                        : const Color(0xFF1A1F26),
                     border: Border.all(
                       color: active
                           ? Theme.of(context).primaryColor
-                          : Colors.white.withOpacity(0.1),
-                      width: 1.5,
+                          : Colors.white.withOpacity(0.05),
+                      width: 1,
                     ),
-                    boxShadow: active
-                        ? [
-                            BoxShadow(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.4),
-                              blurRadius: 4,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : [],
                   ),
                   child: Center(
                     child: Text(
@@ -1210,60 +1235,36 @@ class _BaseSheet extends StatelessWidget {
   Widget _buildSaveButton(ThemeData theme) {
     return Container(
           width: double.infinity,
-          height: 64,
+          height: 60,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              colors: [
-                theme.primaryColor, // Dynamic Theme
-                theme.primaryColor.withOpacity(0.6),
-              ],
+            borderRadius: BorderRadius.circular(20),
+            color: theme.primaryColor.withOpacity(0.1),
+            border: Border.all(
+              color: theme.primaryColor.withOpacity(0.5),
+              width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.primaryColor.withOpacity(0.3),
-                blurRadius: 10, // Moderate glow for button
-                spreadRadius: -2,
-                offset: const Offset(0, 5),
-              ),
-            ],
           ),
           child: Material(
             color: Colors.transparent,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: Colors.transparent, // Glass effect managed by gradient
-              ),
-              child: InkWell(
-                onTap: onSave,
-                borderRadius: BorderRadius.circular(24),
-                child: Center(
-                  child:
-                      Text(
-                            'CONFIRM AUTOMATION',
-                            style: GoogleFonts.outfit(
-                              color:
-                                  Colors.white, // Locked to white for contrast
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              letterSpacing: 2,
-                            ),
-                          )
-                          .animate(onPlay: (c) => c.repeat(reverse: true))
-                          .scale(
-                            begin: const Offset(1, 1),
-                            end: const Offset(1.02, 1.02),
-                            duration: 1.seconds,
-                            curve: Curves.easeInOut,
-                          ),
+            child: InkWell(
+              onTap: onSave,
+              borderRadius: BorderRadius.circular(20),
+              child: Center(
+                child: Text(
+                  'CONFIRM AUTOMATION',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: 2,
+                  ),
                 ),
               ),
             ),
           ),
         )
         .animate(onPlay: (c) => c.repeat(reverse: true))
-        .shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.1));
+        .shimmer(duration: 3.seconds, color: Colors.white10);
   }
 }
 
@@ -1286,62 +1287,45 @@ class _NodePill extends StatelessWidget {
       padding: const EdgeInsets.only(right: 12),
       child:
           GestureDetector(
-                onTap: () {
-                  HapticService.selection();
-                  onTap(id);
-                },
-                child: AnimatedContainer(
-                  duration: 250.ms,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
+            onTap: () {
+              HapticService.selection();
+              onTap(id);
+            },
+            child: AnimatedContainer(
+              duration: 250.ms,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Theme.of(context).primaryColor.withOpacity(0.1)
+                    : const Color(0xFF151921),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? Theme.of(context).primaryColor.withOpacity(0.5)
+                      : Colors.white.withOpacity(0.05),
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: GoogleFonts.outfit(
                     color: isSelected
-                        ? Theme.of(context).primaryColor.withOpacity(
-                            0.15,
-                          ) // Dynamic Theme Glass
-                        : Colors.white.withOpacity(0.04),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected
-                          ? Theme.of(context).primaryColor.withOpacity(0.5)
-                          : Colors.white.withOpacity(0.08),
-                      width: 1.5,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.15),
-                              blurRadius: 4,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Text(
-                    label.toUpperCase(),
-                    style: GoogleFonts.outfit(
-                      color: isSelected
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.3),
-                      fontWeight: isSelected
-                          ? FontWeight.w900
-                          : FontWeight.w600,
-                      fontSize: 12,
-                      letterSpacing: 1,
-                    ),
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.4),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
                   ),
                 ),
-              )
-              .animate(target: isSelected ? 1 : 0)
-              .scale(
-                begin: const Offset(1, 1),
-                end: const Offset(1.05, 1.05),
-                duration: 200.ms,
-                curve: Curves.easeOutBack,
               ),
+            ),
+          ).animate().scale(
+            begin: const Offset(0.95, 0.95),
+            end: const Offset(1, 1),
+            duration: 200.ms,
+            curve: Curves.easeOutBack,
+          ),
     );
   }
 }
@@ -1376,18 +1360,15 @@ class _ActionPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? activeColor.withOpacity(0.15)
-              : Colors.white.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(20),
+              ? activeColor.withOpacity(0.1)
+              : const Color(0xFF111418),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? activeColor.withOpacity(0.4)
-                : Colors.white.withOpacity(0.06),
-            width: 1.5,
+                ? activeColor.withOpacity(0.5)
+                : Colors.white.withOpacity(0.05),
+            width: 1,
           ),
-          boxShadow: isSelected
-              ? [BoxShadow(color: activeColor.withOpacity(0.1), blurRadius: 10)]
-              : [],
         ),
         child: Center(
           child: Text(

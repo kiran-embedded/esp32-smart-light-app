@@ -99,11 +99,11 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
               width: 1.5,
             ),
             boxShadow: [
-              if (widget.isActive && !performanceMode)
+              if (widget.isActive)
                 BoxShadow(
-                  color: widget.activeColor.withOpacity(0.3),
-                  blurRadius: 20,
-                  spreadRadius: -5,
+                  color: widget.activeColor.withOpacity(0.35),
+                  blurRadius: 6,
+                  spreadRadius: 0,
                 ),
             ],
           ),
@@ -117,7 +117,9 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
                     builder: (context, child) {
                       return Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28.r * displayScale),
+                          borderRadius: BorderRadius.circular(
+                            28.r * displayScale,
+                          ),
                           gradient: RadialGradient(
                             center: Alignment.center,
                             radius: 1.5,
@@ -140,30 +142,30 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
                 children: [
                   // Icon with glow
                   Container(
-                    padding: EdgeInsets.all(12 * displayScale),
-                    decoration: BoxDecoration(
-                      color: widget.isActive
-                          ? widget.activeColor.withOpacity(0.2)
-                          : Colors.white.withOpacity(0.05),
-                      shape: BoxShape.circle,
-                      boxShadow: widget.isActive && !performanceMode
-                          ? [
-                              BoxShadow(
-                                color: widget.activeColor.withOpacity(0.4),
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Icon(
-                      widget.icon,
-                      color: widget.isActive
-                          ? widget.activeColor
-                          : Colors.white.withOpacity(0.6),
-                      size: 28 * displayScale,
-                    ),
-                  )
+                        padding: EdgeInsets.all(12 * displayScale),
+                        decoration: BoxDecoration(
+                          color: widget.isActive
+                              ? widget.activeColor.withOpacity(0.2)
+                              : Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                          boxShadow: widget.isActive && !performanceMode
+                              ? [
+                                  BoxShadow(
+                                    color: widget.activeColor.withOpacity(0.4),
+                                    blurRadius: 15,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Icon(
+                          widget.icon,
+                          color: widget.isActive
+                              ? widget.activeColor
+                              : Colors.white.withOpacity(0.6),
+                          size: 28 * displayScale,
+                        ),
+                      )
                       .animate(
                         onPlay: (c) {
                           if (widget.isActive && !performanceMode) {
@@ -214,5 +216,3 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
     );
   }
 }
-
-

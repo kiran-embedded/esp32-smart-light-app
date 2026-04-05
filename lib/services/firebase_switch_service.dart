@@ -139,60 +139,76 @@ class FirebaseSwitchService {
     }
   }
 
-  /// Write a command strictly to /devices/{deviceId}/commands/{relayKey}
-  /// value: 0 = OFF, 1 = ON
-  /// NON-BLOCKING: This method returns immediately while the command sends in the background.
-  /// Includes internal retry logic and connection reset.
-  void sendCommand(
+  /// Write commands strictly to /devices/{deviceId}/commands/
+  /// values: Map of relayKey to value (0 = OFF, 1 = ON)
+  /// NON-BLOCKING: Returns immediately while the command sends in the background.
+  Future<void> sendCommands(
+    Map<String, int> relayUpdates, {
+    String? deviceId,
+    String? relayName, // Optional if multiple, usually null
+    String triggeredBy = 'app',
+  }) async {
+    if (relayUpdates.isEmpty) return;
+    final id = deviceId ?? AppConstants.defaultDeviceId;
+    final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
+
+    // 1. Batch execute commands
+    _executeBatchCommandsWithRetry(path, relayUpdates);
+
+    // 2. Log History asynchronously
+    unawaited(() async {
+      try {
+        final logPath = 'devices/$id/logs';
+        final batch = <String, dynamic>{};
+        final now = DateTime.now().toIso8601String();
+
+        for (var entry in relayUpdates.entries) {
+          final logRef = _database.child(logPath).push();
+          batch[logRef.key!] = {
+            'id': logRef.key,
+            'relayId': entry.key,
+            'relayName': relayName ?? entry.key,
+            'state': entry.value == 1,
+            'timestamp': now,
+            'triggeredBy': triggeredBy,
+          };
+        }
+        await _database.child(logPath).update(batch);
+      } catch (e) {
+        print('History batch logging failed: $e');
+      }
+    }());
+  }
+
+  /// Legacy method for single command
+  Future<void> sendCommand(
     String relayKey,
     int value, {
     String? deviceId,
     String? relayName,
     String triggeredBy = 'app',
-  }) {
-    final id = deviceId ?? AppConstants.defaultDeviceId;
-    final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
+  }) => sendCommands(
+    {relayKey: value},
+    deviceId: deviceId,
+    relayName: relayName,
+    triggeredBy: triggeredBy,
+  );
 
-    // 1. Fire and forget command
-    _executeCommandWithRetry(path, relayKey, value);
-
-    // 2. Log History
-    try {
-      final logPath = 'devices/$id/logs';
-      final logRef = _database.child(logPath).push();
-      final bool state = value == 1;
-
-      logRef.set({
-        'id': logRef.key,
-        'relayId': relayKey,
-        'relayName': relayName ?? relayKey,
-        'state': state,
-        'timestamp': DateTime.now().toIso8601String(),
-        'triggeredBy': triggeredBy,
-      });
-    } catch (e) {
-      print('History logging failed: $e');
-    }
-  }
-
-  Future<void> _executeCommandWithRetry(
+  Future<void> _executeBatchCommandsWithRetry(
     String path,
-    String key,
-    int value, {
+    Map<String, int> updates, {
     int retryCount = 0,
   }) async {
     try {
-      await _database.child(path).update({key: value});
+      await _database.child(path).update(updates);
     } catch (e) {
-      print('Background command failed (Attempt ${retryCount + 1}): $e');
+      print('Background batch command failed (Attempt ${retryCount + 1}): $e');
       if (retryCount < 2) {
-        // Retry logic: Wait 1s and try again once more after a connection reset
         if (retryCount == 0) await resetConnection();
         await Future.delayed(Duration(seconds: 1 * (retryCount + 1)));
-        return _executeCommandWithRetry(
+        return _executeBatchCommandsWithRetry(
           path,
-          key,
-          value,
+          updates,
           retryCount: retryCount + 1,
         );
       }

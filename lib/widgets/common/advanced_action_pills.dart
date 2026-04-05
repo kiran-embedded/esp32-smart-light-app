@@ -89,7 +89,8 @@ class _SuperSegmentQuickToggle extends ConsumerWidget {
         HapticService.medium();
         final service = ref.read(firebaseSwitchServiceProvider);
         final target = !allActive;
-        for (var s in switches) service.sendCommand(s.id, target ? 0 : 1);
+        final updates = {for (var s in switches) s.id: target ? 1 : 0};
+        service.sendCommands(updates, triggeredBy: 'app_master');
       },
     );
   }
@@ -481,7 +482,17 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                     color: blendedColor.withOpacity(0.35 * glowIntensity),
                     width: 1.2,
                   ),
-                  boxShadow: [], // Always off for 90 FPS
+                  boxShadow: performanceMode
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: blendedColor.withOpacity(
+                              0.25 * glowIntensity,
+                            ),
+                            blurRadius: 5 * scale,
+                            spreadRadius: 0,
+                          ),
+                        ],
                 ),
                 child: Container(
                   decoration: BoxDecoration(

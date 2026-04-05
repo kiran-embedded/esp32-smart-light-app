@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/haptic_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/switch_provider.dart';
@@ -59,41 +60,52 @@ class SwitchGrid extends ConsumerWidget {
         itemBuilder: (context, index) {
           final device = devices[index];
           return RepaintBoundary(
-            child: SwitchTile(
-              device: device,
-              onTap: () {
-                HapticService.selection();
-                ref
-                    .read(switchDevicesProvider.notifier)
-                    .toggleSwitch(device.id);
+            child:
+                SwitchTile(
+                      device: device,
+                      onTap: () {
+                        HapticService.selection();
+                        ref
+                            .read(switchDevicesProvider.notifier)
+                            .toggleSwitch(device.id);
 
-                // Sound Effect
-                final soundService = ref.read(soundServiceProvider);
-                if (!device.isActive) {
-                  soundService.playSwitchOn();
-                } else {
-                  soundService.playSwitchOff();
-                }
+                        // Sound Effect
+                        final soundService = ref.read(soundServiceProvider);
+                        if (!device.isActive) {
+                          soundService.playSwitchOn();
+                        } else {
+                          soundService.playSwitchOff();
+                        }
 
-                // Trigger robo reaction
-                robo.triggerRoboReaction(ref, robo.RoboReaction.nod);
+                        // Trigger robo reaction
+                        robo.triggerRoboReaction(ref, robo.RoboReaction.nod);
 
-                // Voice feedback
-                final voiceService = ref.read(voiceServiceProvider);
-                final status = !device.isActive ? 'on' : 'off';
-                voiceService.speak('${device.name} is $status.');
-              },
-              onLongPress: () {
-                HapticService.medium();
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) =>
-                      SchedulerSettingsPopup(initialDeviceId: device.id),
-                );
-              },
-            ),
+                        // Voice feedback
+                        final voiceService = ref.read(voiceServiceProvider);
+                        final status = !device.isActive ? 'on' : 'off';
+                        voiceService.speak('${device.name} is $status.');
+                      },
+                      onLongPress: () {
+                        HapticService.medium();
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => SchedulerSettingsPopup(
+                            initialDeviceId: device.id,
+                          ),
+                        );
+                      },
+                    )
+                    .animate()
+                    .fadeIn(delay: (index * 50).ms, duration: 600.ms)
+                    .scale(
+                      begin: const Offset(0.9, 0.9),
+                      end: const Offset(1, 1),
+                      delay: (index * 50).ms,
+                      duration: 600.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
           );
         },
       ),

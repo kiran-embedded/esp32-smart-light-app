@@ -1,57 +1,36 @@
-# 🌌 NEBULA CORE — Version 1.2.0+31
+# 🌌 NEBULA CORE — Version 1.2.0+35.5
 
-**Release Date:** January 20, 2026
-**Build ID:** `NC-ANDROID-REL-30`
-**Update Size:** UI REFINEMENT & VISIBILITY OVERHAUL
-**Priority:** RECOMMENDED
+**Release Date:** April 5, 2026
+**Build ID:** `NC-ANDROID-REL-35.5`
+**Update Size:** NEON UI REFINEMENT & SOLID DESIGN SYSTEM
+**Priority:** MANDATORY
 
 ---
 
-## 🚀 WHAT'S NEW: THE VISIBILITY UPDATE
-This release brings the Automation Hub to perfection with OLED-optimized visuals, enhanced visibility, and unique visual identifiers for each schedule.
+## 🚀 WHAT'S NEW: THE UI REFINEMENT UPDATE
+This release refines the "Neon" aesthetic and standardizes a high-performance, solid-black design system for maximum efficiency.
 
-### 🖤 OLED Black UI (Hardcoded)
-*   **Pure Black Background**: Hardcoded `Colors.black` - no longer affected by theme changes
-*   **Zero Blur**: Removed all blur effects for rock-solid 90FPS performance
-*   **Premium Contrast**: High-contrast borders and text for maximum readability
+### 🌈 Refined Neon Glow
+*   **Tightened Shadows**: Redesigned the glow effect on all Action Pills to eliminate "bleeding". It is now a sharp, bordered neon glow.
+*   **Border-Centric**: Shifted from broad shadows to a tight, high-contrast border glow for a more professional "Pro" look.
 
-### *The "Ultimate Precision & History" Update*
+### 🖤 Solid Design System
+*   **Zero Blur Architecture**: Removed all remaining `FrostedGlass` and `BackdropFilter` effects from the Automation & Scheduler hubs.
+*   **AMOLED Pure Black**: Standardized on `#0A0A0A` and `#151515` solid surfaces for 100% lag-free performance.
 
-We are proud to introduce version 1.2.0+31 of the Nebula Core ecosystem. This release focuses on stability, optimized scheduling, and full switch activity tracking.
-
-### 🏷️ Device Rename Functionality
-*   **Edit from Hub**: Tap the Edit icon in the Automation Hub header to rename any device
-*   **Firebase Sync**: Name changes instantly sync across all devices via Firebase
-*   **Persistent**: Renamed devices maintain their custom names across app restarts
-
-### 🎨 Unique Clock Colors
-*   **Visual Identity**: Each schedule now has a unique vibrant clock icon color
-*   **Color Hash**: Colors are deterministically generated from schedule ID
-*   **Easy Recognition**: Quickly identify schedules at a glance by their color
-
-### ⚪ Enhanced Visibility
-*   **Bright AM/PM**: Changed from grey to white for better readability
-*   **High-Contrast Pills**: ON pills now use white, OFF pills use red
-*   **Monochrome Border**: Create Schedule button features elegant white/grey dot-moving animation
-
-### 🛡️ Stability Improvements
-*   **Crash Fix**: Hardened `NativeAlarmService` with comprehensive error handling
-*   **WakeLock Optimization**: Improved background task reliability
+### 🔋 Extreme RAM Save (Finalized)
+*   **Lifecycle Suspension**: Added deep lifecycle management that suspends non-essential Firebase listeners in the background, slashing RAM footprint when minimized.
 
 ---
 
 ## 📋 TECHNICAL CHANGELOG
-*   `[UI]` **Background**: Hardcoded OLED black background (no theme dependency)
-*   `[UI]` **Clock Icons**: Unique HSV-based color per schedule ID
-*   `[UI]` **Text**: Brightened AM/PM text from grey to white
-*   `[UI]` **Pills**: Changed ON/OFF pills to white/red for better contrast
-*   `[UI]` **Border**: Updated Create Schedule button to white/grey gradient
-*   `[FEAT]` **Rename**: Restored device renaming with Firebase sync
-*   `[FIX]` **Crash**: Added try-catch wrapper in `NativeAlarmService.onStartCommand`
-*   `[PERF]` **Blur**: Removed all blur effects for 90FPS smoothness
-*   `[CORE]` **Version**: Bumped to `v1.2.0+30`
+*   `[UI]` **Aesthetics**: Refined Neon shadows in `AdvancedPillBase` and `PremiumActionPill`.
+*   `[UI]` **Optimization**: Removed all glass/blur from `SchedulerSettingsPopup` and `SmartScheduleCard`.
+*   `[PERF]` **RAM**: Implemented background listener suspension in `SwitchDevicesNotifier` and `SwitchScheduleNotifier`.
+*   `[PERF]` **Latency**: Refactored command engine to support batch execution for 0ms master toggles.
+*   `[CORE]` **Version**: Bumped to `v1.2.0+37`.
 
 ---
 
 **DEPLOYMENT STATUS: ACTIVE**
-*Nebula Core - Precise. Beautiful. Efficient.*
+*Nebula Core - Sharp. Solid. Efficient.*

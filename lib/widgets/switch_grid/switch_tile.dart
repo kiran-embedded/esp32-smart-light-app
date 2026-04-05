@@ -557,8 +557,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             ? [
                 BoxShadow(
                   color: effectiveColor.withOpacity(0.4),
-                  blurRadius: 12,
-                  spreadRadius: 1,
+                  blurRadius: 8,
+                  spreadRadius: 0,
                 ),
               ]
             : (isLight || blendingEnabled
@@ -1067,9 +1067,9 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 boxShadow: isActive
                     ? [
                         BoxShadow(
-                          color: color.withOpacity(0.5),
-                          blurRadius: 20,
-                          spreadRadius: -5,
+                          color: color.withOpacity(0.6),
+                          blurRadius: 8,
+                          spreadRadius: 0,
                         ),
                       ]
                     : [],

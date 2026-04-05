@@ -108,9 +108,20 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
     }
   }
 
+  void suspend() {
+    print('SwitchScheduleNotifier: Suspending listeners...');
+    _subscription?.cancel();
+    _subscription = null;
+  }
+
+  void resume() {
+    print('SwitchScheduleNotifier: Resuming listeners...');
+    _initListener();
+  }
+
   @override
   void dispose() {
-    _subscription?.cancel();
+    suspend();
     super.dispose();
   }
 }

@@ -47,9 +47,9 @@ class SmartScheduleCard extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.1),
-            blurRadius: 40,
-            spreadRadius: -10,
+            color: theme.colorScheme.primary.withOpacity(0.05),
+            blurRadius: 15,
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -221,15 +221,16 @@ class SmartScheduleCard extends ConsumerWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.5),
+                      theme.colorScheme.primary.withOpacity(0.6),
                       theme.colorScheme.primary,
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.4),
-                      blurRadius: 10,
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 1,
                     ),
                   ],
                 ),
