@@ -70,6 +70,25 @@ class SecurityService {
         });
   }
 
+  Stream<Map<String, bool>> get activePeriodsStream {
+    return _database
+        .ref('devices/$deviceId/security/activePeriods')
+        .onValue
+        .map((event) {
+          final data = event.snapshot.value as Map<dynamic, dynamic>?;
+          if (data == null) {
+            return {
+              'morning': true,
+              'afternoon': true,
+              'evening': true,
+              'night': true,
+              'midnight': true,
+            };
+          }
+          return Map<String, bool>.from(data);
+        });
+  }
+
   Future<void> setArmedState(bool armed) async {
     await _database.ref('devices/$deviceId/security/isArmed').set(armed);
   }
@@ -82,6 +101,12 @@ class SecurityService {
     await _database
         .ref('devices/$deviceId/security/autoLightOnMotion')
         .set(enabled);
+  }
+
+  Future<void> setPeriodActive(String period, bool isActive) async {
+    await _database
+        .ref('devices/$deviceId/security/activePeriods/$period')
+        .set(isActive);
   }
 
   Future<void> acknowledgeAlert(String sensorName) async {

@@ -26,8 +26,19 @@ class SecurityForegroundService : Service() {
     private var databaseListener: ValueEventListener? = null
     private var isArmedListener: ValueEventListener? = null
     private var isArmed: Boolean = true
-    private val deviceId = "79215788"
+    private var schedulesListener: ValueEventListener? = null
+    private var deviceId: String = ""
+    private var databaseUrl: String = ""
     private var mediaPlayer: MediaPlayer? = null
+    
+    private var activePeriods: Map<String, Boolean> = mapOf(
+        "morning" to true,
+        "afternoon" to true,
+        "evening" to true,
+        "night" to true,
+        "midnight" to true
+    )
+    private var activePeriodsListener: ValueEventListener? = null
 
     // Guard: prevent re-triggering alarm on every Firebase snapshot
     private var alarmAlreadyTriggered = false
@@ -72,26 +83,36 @@ class SecurityForegroundService : Service() {
 
     private fun writeToFirebase(deviceId: String, node: String, state: Boolean) {
         val targetVal = if (state) 1 else 0
-        val db = FirebaseDatabase.getInstance()
-        val ref = db.getReference("devices/$deviceId/commands")
+        
+        // Resolve dynamic Database URL
+        val db = if (databaseUrl.isNotEmpty()) FirebaseDatabase.getInstance(databaseUrl) else FirebaseDatabase.getInstance()
+        
+        // Use EXACT deviceId passed from the Flutter Native Intent to ensure correct Firebase node targeting.
+        // Prevent fallbacks to stale SharedPreferences keys.
+        val actualDeviceId = deviceId.replace("\"", "")
+        
+        val ref = db.getReference("devices/$actualDeviceId/commands")
+        
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
 
         // Resolve Nickname from SharedPreferences
-        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val nicknamesJson = prefs.getString("flutter.switch_nicknames", null)
         var relayName = node
         try {
             if (nicknamesJson != null) {
-                val json = org.json.JSONObject(nicknamesJson)
+                val cleanJson = if (nicknamesJson.startsWith("\"")) nicknamesJson.substring(1, nicknamesJson.length - 1).replace("\\\"", "\"") else nicknamesJson
+                val json = org.json.JSONObject(cleanJson)
                 if (json.has(node)) {
                     relayName = json.getString(node)
                 }
             }
         } catch (e: Exception) {}
 
-        ref.child(node).setValue(targetVal).addOnCompleteListener { task ->
+        val updates = mapOf(node to targetVal)
+        ref.updateChildren(updates).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Log.d("SecurityService", "Success: $node ($relayName) to $targetVal")
-                logHistory(db, deviceId, node, relayName, state)
+                logHistory(db, actualDeviceId, node, relayName, state)
                 showCompletionNotification(relayName, state)
             }
         }
@@ -139,13 +160,19 @@ class SecurityForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         try {
+            val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            deviceId = prefs.getString("flutter.esp32_device_id", "79215788")?.replace("\"", "") ?: "79215788"
+            databaseUrl = prefs.getString("flutter.firebase_database_url", "")?.replace("\"", "") ?: ""
+            
+            Log.d("SecurityService", "Init with DeviceId: $deviceId, URL: $databaseUrl")
+
             if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {
                 com.google.firebase.FirebaseApp.initializeApp(this)
             }
             startForegroundNotification()
             startFirebaseListener()
         } catch (e: Exception) {
-            Log.e("SecurityService", "CRITICAL ONCREATE ERROR: \${e.message}", e)
+            Log.e("SecurityService", "CRITICAL ONCREATE ERROR: ${e.message}", e)
         }
     }
 
@@ -192,7 +219,8 @@ class SecurityForegroundService : Service() {
     }
 
     private fun setupListeners() {
-        val db = FirebaseDatabase.getInstance().getReference("devices/$deviceId/security")
+        val fb = if (databaseUrl.isNotEmpty()) FirebaseDatabase.getInstance(databaseUrl) else FirebaseDatabase.getInstance()
+        val db = fb.getReference("devices/$deviceId/security")
 
         // 1. Listen for Armed state
         isArmedListener = db.child("isArmed").addValueEventListener(object : ValueEventListener {
@@ -226,8 +254,26 @@ class SecurityForegroundService : Service() {
                 }
 
                 if (anyTriggered && !alarmAlreadyTriggered) {
-                    alarmAlreadyTriggered = true
-                    triggerNativeAlarm(sensorName)
+                    // Time-based check
+                    val calendar = java.util.Calendar.getInstance()
+                    val hour = calendar.get(java.util.Calendar.HOUR_OF_DAY)
+                    
+                    val period = when (hour) {
+                        in 6..11 -> "morning"
+                        in 12..16 -> "afternoon"
+                        in 17..19 -> "evening"
+                        in 20..23 -> "night"
+                        else -> "midnight" // 0..5
+                    }
+                    
+                    val isPeriodEnabled = activePeriods[period] ?: true
+                    
+                    if (isPeriodEnabled) {
+                        alarmAlreadyTriggered = true
+                        triggerNativeAlarm(sensorName)
+                    } else {
+                        Log.d("SecurityService", "Sensor triggered, but alarm skipped. Period ($period) is disabled.")
+                    }
                 } else if (!anyTriggered) {
                     // All sensors cleared — reset trigger guard
                     alarmAlreadyTriggered = false
@@ -237,6 +283,99 @@ class SecurityForegroundService : Service() {
                 Log.e("SecurityService", "DB Error: ${error.message}")
             }
         })
+        
+        // 3. Listen for Schedules to build background triggers
+        val schedulesRef = fb.getReference("devices/$deviceId/schedules")
+        schedulesListener = schedulesRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                Log.d("SecurityService", "Schedules Updated: Syncing AlarmManager...")
+                syncSchedulesWithAlarmManager(snapshot)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+
+        // 4. Listen for Active Periods (Time-Based Alarm Control)
+        val activePeriodsRef = fb.getReference("devices/$deviceId/security/activePeriods")
+        activePeriodsListener = activePeriodsRef.addValueEventListener(object : ValueEventListener {
+            @Suppress("UNCHECKED_CAST")
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val data = snapshot.value as? Map<String, Boolean>
+                if (data != null) {
+                    activePeriods = data
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    private fun syncSchedulesWithAlarmManager(snapshot: DataSnapshot) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val calendar = java.util.Calendar.getInstance()
+        val currentDay = calendar.get(java.util.Calendar.DAY_OF_WEEK) // 1=Sun, 2=Mon...
+        // Map Java Calendar day to our 1=Mon...7=Sun
+        val ourDay = if (currentDay == 1) 7 else currentDay - 1
+        
+        val nowHour = calendar.get(java.util.Calendar.HOUR_OF_DAY)
+        val nowMin = calendar.get(java.util.Calendar.MINUTE)
+        
+        for (scheduleSnap in snapshot.children) {
+            try {
+                val hour = scheduleSnap.child("hour").getValue(Int::class.java) ?: continue
+                val minute = scheduleSnap.child("minute").getValue(Int::class.java) ?: continue
+                val isEnabled = scheduleSnap.child("isEnabled").getValue(Boolean::class.java) ?: true
+                val days = scheduleSnap.child("days").value as? List<Int> ?: emptyList()
+                
+                if (!isEnabled || !days.contains(ourDay)) continue
+                
+                // If schedule for today is still ahead
+                if (hour > nowHour || (hour == nowHour && minute > nowMin)) {
+                    scheduleNativeAlarm(scheduleSnap)
+                }
+            } catch (e: Exception) {
+                Log.e("SecurityService", "Schedule sync error: ${e.message}")
+            }
+        }
+    }
+
+    private fun scheduleNativeAlarm(snap: DataSnapshot) {
+        val hour = snap.child("hour").getValue(Int::class.java)!!
+        val minute = snap.child("minute").getValue(Int::class.java)!!
+        val relayId = snap.child("relayId").getValue(String::class.java)!!
+        val state = snap.child("targetState").getValue(Boolean::class.java) ?: true
+        
+        val calendar = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, hour)
+            set(java.util.Calendar.MINUTE, minute)
+            set(java.util.Calendar.SECOND, 0)
+        }
+        
+        val intent = Intent(this, SecurityForegroundService::class.java).apply {
+            action = "com.iot.nebulacontroller.ALARM_TRIGGER"
+            putExtra("targetNode", relayId)
+            putExtra("targetState", state)
+            putExtra("deviceId", deviceId)
+        }
+        
+        val pendingIntent = android.app.PendingIntent.getService(
+            this, relayId.hashCode() + hour * 60 + minute,
+            intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                android.app.AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+        } else {
+            alarmManager.setExact(
+                android.app.AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+        }
+        Log.d("SecurityService", "Scheduled Alarm for $relayId at $hour:$minute")
     }
 
     private fun triggerNativeAlarm(sensorName: String) {
@@ -349,6 +488,12 @@ class SecurityForegroundService : Service() {
         val db = FirebaseDatabase.getInstance().getReference("devices/$deviceId/security")
         databaseListener?.let { db.child("sensors").removeEventListener(it) }
         isArmedListener?.let { db.child("isArmed").removeEventListener(it) }
+        schedulesListener?.let { 
+            FirebaseDatabase.getInstance().getReference("devices/$deviceId/schedules").removeEventListener(it)
+        }
+        activePeriodsListener?.let {
+            FirebaseDatabase.getInstance().getReference("devices/$deviceId/security/activePeriods").removeEventListener(it)
+        }
         stopAlarmSound()
         super.onDestroy()
     }

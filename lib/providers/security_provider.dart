@@ -37,6 +37,7 @@ class SecurityState {
   final bool isAlarmActive;
   final int masterLightLevel;
   final bool autoLightOnMotion;
+  final Map<String, bool> activePeriods;
 
   SecurityState({
     required this.sensors,
@@ -46,6 +47,13 @@ class SecurityState {
     this.isAlarmActive = false,
     this.masterLightLevel = 0,
     this.autoLightOnMotion = false,
+    this.activePeriods = const {
+      'morning': true,
+      'afternoon': true,
+      'evening': true,
+      'night': true,
+      'midnight': true,
+    },
   });
 
   SecurityState copyWith({
@@ -56,6 +64,7 @@ class SecurityState {
     bool? isAlarmActive,
     int? masterLightLevel,
     bool? autoLightOnMotion,
+    Map<String, bool>? activePeriods,
   }) {
     return SecurityState(
       sensors: sensors ?? this.sensors,
@@ -65,6 +74,7 @@ class SecurityState {
       isAlarmActive: isAlarmActive ?? this.isAlarmActive,
       masterLightLevel: masterLightLevel ?? this.masterLightLevel,
       autoLightOnMotion: autoLightOnMotion ?? this.autoLightOnMotion,
+      activePeriods: activePeriods ?? this.activePeriods,
     );
   }
 }
@@ -80,6 +90,7 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
   StreamSubscription? _armedSub;
   StreamSubscription? _ldrSub;
   StreamSubscription? _logsSub;
+  StreamSubscription? _periodsSub;
 
   SecurityNotifier(this._service, this._soundService, this._voiceService)
     : super(SecurityState(sensors: {}, isArmed: true, logs: [])) {
@@ -150,6 +161,11 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
     _service.autoLightStream.listen((enabled) {
       state = state.copyWith(autoLightOnMotion: enabled);
     });
+
+    _periodsSub?.cancel();
+    _periodsSub = _service.activePeriodsStream.listen((periods) {
+      state = state.copyWith(activePeriods: periods);
+    });
   }
 
   void _handleAlarmTrigger(String zone) {
@@ -186,6 +202,10 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
     await _service.setAutoLightOnMotion(newState);
   }
 
+  Future<void> setPeriodActive(String period, bool isActive) async {
+    await _service.setPeriodActive(period, isActive);
+  }
+
   Future<void> acknowledge(String sensorName) async {
     await _service.acknowledgeAlert(sensorName);
   }
@@ -216,6 +236,7 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
     _armedSub?.cancel();
     _ldrSub?.cancel();
     _logsSub?.cancel();
+    _periodsSub?.cancel();
     super.dispose();
   }
 }

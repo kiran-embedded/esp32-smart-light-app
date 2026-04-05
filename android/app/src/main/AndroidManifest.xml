@@ -45,11 +45,11 @@
     
     <application
         android:label="nebula_core"
-        android:name="${applicationName}"
+        android:name=".NebulaApplication"
         android:icon="@mipmap/launcher_icon">
-        <receiver android:name=".NativeAlarmReceiver" android:exported="false" />
-        <receiver android:name=".AlarmReceiver" android:exported="false" />
-        <receiver android:name=".BootReceiver" android:exported="true">
+        <receiver android:name=".NativeAlarmReceiver" android:exported="false" android:process=":security" />
+        <receiver android:name=".AlarmReceiver" android:exported="false" android:process=":security" />
+        <receiver android:name=".BootReceiver" android:exported="true" android:process=":security">
 
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -58,6 +58,7 @@
         <service 
             android:name=".NativeAlarmService" 
             android:exported="false" 
+            android:process=":security"
             android:foregroundServiceType="dataSync|location" />
 
         <service
@@ -72,7 +73,8 @@
 
         <service
             android:name=".FCMService"
-            android:exported="false">
+            android:exported="false"
+            android:process=":security">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>

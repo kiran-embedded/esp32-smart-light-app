@@ -68,6 +68,8 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                   children: [
                     _buildMasterLDR(securityState),
                     const SizedBox(height: 12),
+                    _buildActivePeriods(context, securityState, ref),
+                    const SizedBox(height: 12),
                     _buildNeuralAutomationCard(context, ref, securityState),
                   ],
                 ),
@@ -264,6 +266,143 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
             style: GoogleFonts.outfit(fontSize: 10.sp, color: Colors.white38),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActivePeriods(
+    BuildContext context,
+    SecurityState state,
+    WidgetRef ref,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 12, bottom: 8),
+          child: Text(
+            "ALARM ACTIVE SCHEDULE",
+            style: GoogleFonts.outfit(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w800,
+              color: Colors.white38,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Column(
+            children: [
+              _buildIosRowCell(
+                'morning',
+                Icons.wb_twilight,
+                'Morning (06:00 - 11:59)',
+                state,
+                ref,
+              ),
+              const Divider(color: Colors.white10, height: 1, indent: 48),
+              _buildIosRowCell(
+                'afternoon',
+                Icons.wb_sunny,
+                'Afternoon (12:00 - 16:59)',
+                state,
+                ref,
+              ),
+              const Divider(color: Colors.white10, height: 1, indent: 48),
+              _buildIosRowCell(
+                'evening',
+                Icons.nights_stay_outlined,
+                'Evening (17:00 - 19:59)',
+                state,
+                ref,
+              ),
+              const Divider(color: Colors.white10, height: 1, indent: 48),
+              _buildIosRowCell(
+                'night',
+                Icons.nightlight_round,
+                'Night (20:00 - 23:59)',
+                state,
+                ref,
+              ),
+              const Divider(color: Colors.white10, height: 1, indent: 48),
+              _buildIosRowCell(
+                'midnight',
+                Icons.star,
+                'Midnight (00:00 - 05:59)',
+                state,
+                ref,
+                isLast: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIosRowCell(
+    String periodKey,
+    IconData icon,
+    String label,
+    SecurityState state,
+    WidgetRef ref, {
+    bool isLast = false,
+  }) {
+    final isActive = state.activePeriods[periodKey] ?? true;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticService.selection();
+        ref
+            .read(securityProvider.notifier)
+            .setPeriodActive(periodKey, !isActive);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.blueAccent.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: isActive ? Colors.blueAccent : Colors.white38,
+                size: 18.sp,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isActive ? Colors.white : Colors.white54,
+                ),
+              ),
+            ),
+            Switch.adaptive(
+              value: isActive,
+              activeColor: Colors.blueAccent,
+              onChanged: (_) {
+                HapticService.selection();
+                ref
+                    .read(securityProvider.notifier)
+                    .setPeriodActive(periodKey, !isActive);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
