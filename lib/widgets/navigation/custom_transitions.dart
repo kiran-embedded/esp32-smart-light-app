@@ -26,14 +26,7 @@ class IOSTransitionBuilder extends PageTransitionsBuilder {
       position: primaryTranslation,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 40,
-              spreadRadius: -10,
-              offset: const Offset(-20, 0),
-            ),
-          ],
+          boxShadow: const [],
         ),
         child: child,
       ),

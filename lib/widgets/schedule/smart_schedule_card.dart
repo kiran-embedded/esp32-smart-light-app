@@ -45,13 +45,7 @@ class SmartScheduleCard extends ConsumerWidget {
           color: theme.colorScheme.primary.withOpacity(0.3),
           width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.05),
-            blurRadius: 15,
-            spreadRadius: 0,
-          ),
-        ],
+        boxShadow: const [],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32 * scale),
@@ -226,13 +220,7 @@ class SmartScheduleCard extends ConsumerWidget {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 12,
-                      spreadRadius: 1,
-                    ),
-                  ],
+                  boxShadow: const [],
                 ),
               ),
             ),
@@ -248,9 +236,7 @@ class SmartScheduleCard extends ConsumerWidget {
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: Colors.black26, blurRadius: 4),
-                    ],
+                    boxShadow: const [],
                   ),
                 ),
               ),
@@ -430,13 +416,7 @@ class _PulseDotState extends State<_PulseDot> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: widget.color.withOpacity(0.5 + 0.5 * _controller.value),
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withOpacity(0.3 * _controller.value),
-                blurRadius: 10 * widget.scale,
-                spreadRadius: 2 * widget.scale,
-              ),
-            ],
+            boxShadow: const [],
           ),
         );
       },

@@ -453,7 +453,7 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
         scale: _isPressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 80),
         curve: Curves.easeOutBack,
         child: AnimatedBuilder(
           animation: Listenable.merge([_breathingController, _glowController]),
@@ -482,17 +482,7 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                     color: blendedColor.withOpacity(0.35 * glowIntensity),
                     width: 1.2,
                   ),
-                  boxShadow: performanceMode
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: blendedColor.withOpacity(
-                              0.25 * glowIntensity,
-                            ),
-                            blurRadius: 5 * scale,
-                            spreadRadius: 0,
-                          ),
-                        ],
+                  boxShadow: const [],
                 ),
                 child: Container(
                   decoration: BoxDecoration(
@@ -525,13 +515,7 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                                   decoration: BoxDecoration(
                                     color: blendedColor,
                                     shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: blendedColor.withOpacity(0.4),
-                                        blurRadius: 4,
-                                        spreadRadius: 1,
-                                      ),
-                                    ],
+                                    boxShadow: const [],
                                   ),
                                 )
                                 .animate(onPlay: (c) => c.repeat(reverse: true))

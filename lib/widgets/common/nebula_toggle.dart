@@ -35,7 +35,7 @@ class _NebulaToggleState extends ConsumerState<NebulaToggle>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 80),
     );
 
     _position = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
@@ -106,14 +106,7 @@ class _NebulaToggleState extends ConsumerState<NebulaToggle>
                       )!,
                       width: 1.5,
                     ),
-                    boxShadow: [
-                      if (!perfMode && t > 0.1)
-                        BoxShadow(
-                          color: activeCol.withOpacity(0.25 * t),
-                          blurRadius: 10,
-                          spreadRadius: -2,
-                        ),
-                    ],
+                    boxShadow: const [],
                   ),
                 ),
 
@@ -136,19 +129,7 @@ class _NebulaToggleState extends ConsumerState<NebulaToggle>
                           Color.lerp(Colors.grey.shade600, activeCol, t)!,
                         ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                        if (!perfMode && t > 0.5)
-                          BoxShadow(
-                            color: activeCol.withOpacity(0.4),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                      ],
+                      boxShadow: const [],
                     ),
                     child: Center(
                       child: Container(
@@ -157,14 +138,7 @@ class _NebulaToggleState extends ConsumerState<NebulaToggle>
                         decoration: BoxDecoration(
                           color: t > 0.5 ? activeCol : Colors.transparent,
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            if (t > 0.5 && !perfMode)
-                              BoxShadow(
-                                color: activeCol,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                          ],
+                          boxShadow: const [],
                         ),
                       ),
                     ),

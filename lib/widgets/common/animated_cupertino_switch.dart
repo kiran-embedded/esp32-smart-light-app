@@ -32,15 +32,7 @@ class _AnimatedCupertinoSwitchState
     final child = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          if (widget.value && !isPerfMode)
-            BoxShadow(
-              color: (widget.activeColor ?? theme.colorScheme.primary)
-                  .withOpacity(0.3),
-              blurRadius: 12,
-              spreadRadius: 2,
-            ),
-        ],
+        boxShadow: const [],
       ),
       child: CupertinoSwitch(
         value: widget.value,
@@ -62,7 +54,7 @@ class _AnimatedCupertinoSwitchState
         ScaleEffect(
           begin: const Offset(1, 1),
           end: const Offset(1.1, 1.1),
-          duration: 150.ms,
+          duration: 0.ms,
           curve: Curves.easeOutBack,
         ),
       ],

@@ -57,7 +57,7 @@ class AnimatedNavIcon extends ConsumerWidget {
         return iconWidget
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .custom(
-              duration: 300.ms,
+              duration: 80.ms,
               builder: (context, value, child) {
                 // Glitch effect: slight random offsets could be simulated,
                 // but here we use shake + color tinting loop
@@ -82,7 +82,7 @@ class AnimatedNavIcon extends ConsumerWidget {
             .scale(
               begin: const Offset(1, 1),
               end: const Offset(1.1, 1.1),
-              duration: 200.ms,
+              duration: 80.ms,
             );
 
       // 2. CRIMSON VAMPIRE: Organic Heartbeat
@@ -94,11 +94,11 @@ class AnimatedNavIcon extends ConsumerWidget {
               begin: const Offset(1.0, 1.0),
               end: const Offset(1.25, 1.25),
               curve: Curves.easeInOutSine, // Smooth organic pulse
-              duration: 800.ms,
+              duration: 80.ms,
             )
             .tint(
               color: const Color(0xFFFF0000),
-              duration: 800.ms,
+              duration: 80.ms,
               curve: Curves.easeInOut,
             ); // Pulse redder
 
@@ -111,13 +111,13 @@ class AnimatedNavIcon extends ConsumerWidget {
               begin: 10,
               end: 0,
               curve: Curves.easeOutBack, // Overshoot enter
-              duration: 600.ms,
+              duration: 80.ms,
             )
             .scale(
               begin: const Offset(0.5, 0.5),
               end: const Offset(1.0, 1.0),
               curve: Curves.elasticOut, // Bouncy pop
-              duration: 800.ms,
+              duration: 80.ms,
             )
             .shimmer(
               duration: 1200.ms,
@@ -135,7 +135,7 @@ class AnimatedNavIcon extends ConsumerWidget {
                 opacity: value ? 1.0 : 0.0, // Hard blink like a cursor
                 child: child,
               ),
-              duration: 500.ms, // 1s cycle
+              duration: 80.ms, // 1s cycle
             )
             .scale(end: const Offset(1.1, 1.1), duration: 0.ms); // Static scale
 
@@ -146,14 +146,14 @@ class AnimatedNavIcon extends ConsumerWidget {
             .animate()
             .flip(
               direction: Axis.horizontal,
-              duration: 400.ms,
+              duration: 80.ms,
               curve: Curves.easeInOutBack,
             ) // Spin into view
             .then() // After spin
             .shakeX(
               hz: 8,
               amount: 2,
-              duration: 300.ms,
+              duration: 80.ms,
             ); // Mechanical lock jiggle
 
       // 6. LIQUID GLASS: Jelly / Morph
@@ -164,14 +164,14 @@ class AnimatedNavIcon extends ConsumerWidget {
             .scaleXY(
               begin: 0.5,
               end: 1.2,
-              duration: 400.ms,
+              duration: 80.ms,
               curve: Curves.easeOut,
             )
             .then()
             .scaleXY(
               begin: 1.2,
               end: 1.0,
-              duration: 600.ms,
+              duration: 80.ms,
               curve: Curves.elasticOut,
             ); // Wobble settle
 
@@ -183,10 +183,10 @@ class AnimatedNavIcon extends ConsumerWidget {
             .moveY(
               begin: -20,
               end: 0,
-              duration: 600.ms,
+              duration: 80.ms,
               curve: Curves.bounceOut,
             ) // Fall and bounce
-            .fadeIn(duration: 200.ms);
+            .fadeIn(duration: 80.ms);
 
       // 8. DARK SPACE: Zero-G Float
       // Slow, eerie, rotating.
@@ -269,15 +269,7 @@ class AnimatedNavIcon extends ConsumerWidget {
               builder: (context, value, child) => Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(
-                        0xFF00BFA5,
-                      ).withValues(alpha: (1 - value) * 0.5),
-                      blurRadius: value * 20,
-                      spreadRadius: value * 10,
-                    ),
-                  ],
+                  boxShadow: const [],
                 ),
                 child: child,
               ),
@@ -296,7 +288,7 @@ class AnimatedNavIcon extends ConsumerWidget {
             .scale(
               begin: const Offset(1, 1),
               end: const Offset(1.2, 1.2),
-              duration: 400.ms,
+              duration: 80.ms,
               curve: Curves.elasticOut,
             );
 
@@ -325,12 +317,12 @@ class AnimatedNavIcon extends ConsumerWidget {
               hz: 10,
               offset: const Offset(3, 3),
               rotation: 0.1,
-              duration: 800.ms,
+              duration: 80.ms,
             ) // Heavy Glitch
-            .saturate(begin: 1.0, end: 3.0, duration: 500.ms)
-            .tint(color: Colors.white, duration: 100.ms) // Flash
+            .saturate(begin: 1.0, end: 3.0, duration: 80.ms)
+            .tint(color: Colors.white, duration: 80.ms) // Flash
             .then(delay: 200.ms)
-            .tint(color: const Color(0xFFEB00FF), duration: 500.ms);
+            .tint(color: const Color(0xFFEB00FF), duration: 80.ms);
 
       // 10. LIGHT / SOFT DARK / DARK NEON: Professional Elevation
       // Subtle rise.
@@ -344,16 +336,16 @@ class AnimatedNavIcon extends ConsumerWidget {
             .moveY(
               begin: 5,
               end: 0,
-              duration: 300.ms,
+              duration: 80.ms,
               curve: Curves.easeOutQuad,
             )
             .scale(
               begin: const Offset(0.8, 0.8),
               end: const Offset(1.1, 1.1),
-              duration: 300.ms,
+              duration: 80.ms,
             )
             .custom(
-              duration: 500.ms,
+              duration: 80.ms,
               curve: Curves.easeInOut,
               builder: (context, value, child) {
                 return Transform.translate(

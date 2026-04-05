@@ -75,13 +75,7 @@ class _SchedulerSettingsPopupState
               color: Colors.white.withOpacity(0.08),
               width: 1.2,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 40,
-                spreadRadius: 0,
-              ),
-            ],
+            boxShadow: const [],
           ),
           child: Column(
             children: [
@@ -134,17 +128,7 @@ class _SchedulerSettingsPopupState
                         ],
                       ),
                       borderRadius: BorderRadius.circular(2),
-                      boxShadow: [
-                        BoxShadow(
-                          color:
-                              (_isMultiSelectMode
-                                      ? const Color(0xFFFF4D4D)
-                                      : Theme.of(context).primaryColor)
-                                  .withOpacity(0.4),
-                          blurRadius: 4, // Pin-point (was 15)
-                          spreadRadius: 0,
-                        ),
-                      ],
+                      boxShadow: const [],
                     ),
                   )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
@@ -153,17 +137,7 @@ class _SchedulerSettingsPopupState
                     duration: 1500.ms,
                     builder: (context, value, child) => Container(
                       decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                (_isMultiSelectMode
-                                        ? const Color(0xFFFF4D4D)
-                                        : Theme.of(context).primaryColor)
-                                    .withOpacity(0.2 * value),
-                            blurRadius: 6 * value, // Pin-point (was 20)
-                            spreadRadius: 0,
-                          ),
-                        ],
+                        boxShadow: const [],
                       ),
                       child: child,
                     ),
@@ -231,7 +205,7 @@ class _SchedulerSettingsPopupState
                     size: 26,
                   ),
                   onPressed: _deleteSelected,
-                ).animate().shake(duration: 500.ms)
+                ).animate().shake(duration: 80.ms)
               else
                 IconButton(
                       icon: Icon(
@@ -567,7 +541,7 @@ class _SchedulerSettingsPopupState
 
   Widget _buildFooterButton() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 10, 20, Responsive.paddingBottom + 20),
+      padding: EdgeInsets.fromLTRB(20, 10, 20, Responsive.paddingBottom + 12),
       child:
           Material(
                 color: Colors.transparent,
@@ -724,21 +698,21 @@ class _SchedulerSettingsPopupState
         .animate()
         .fadeIn(
           delay: (index * 50).ms,
-          duration: 600.ms,
+          duration: 80.ms,
           curve: Curves.easeOutCubic,
         )
         .scale(
           begin: const Offset(0.9, 0.9),
           end: const Offset(1, 1),
           delay: (index * 50).ms,
-          duration: 600.ms,
+          duration: 80.ms,
           curve: Curves.easeOutBack,
         )
         .slideY(
           begin: 0.2,
           end: 0,
           delay: (index * 50).ms,
-          duration: 600.ms,
+          duration: 80.ms,
           curve: Curves.easeOutCubic,
         );
   }
@@ -923,7 +897,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
                   final isSelected = val == (currentValue % max);
                   return Center(
                     child: AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 80),
                       style: GoogleFonts.outfit(
                         fontSize: isSelected ? 30 : 22,
                         fontWeight: isSelected
@@ -1040,7 +1014,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
                   );
                 },
                 child: AnimatedContainer(
-                  duration: 250.ms,
+                  duration: 80.ms,
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
@@ -1112,20 +1086,14 @@ class _BaseSheet extends StatelessWidget {
                       color: Colors.white.withOpacity(0.15),
                       width: 1.5,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.6),
-                        blurRadius: 50,
-                        spreadRadius: 15,
-                      ),
-                    ],
+                    boxShadow: const [],
                   ),
                   padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
                   child: Column(
                     children: [
                       _buildDragHandle()
                           .animate()
-                          .fadeIn(duration: 400.ms)
+                          .fadeIn(duration: 80.ms)
                           .scale(begin: const Offset(0.5, 1)),
                       const SizedBox(height: 24),
                       Row(
@@ -1143,16 +1111,11 @@ class _BaseSheet extends StatelessWidget {
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: theme.primaryColor.withOpacity(0.3),
-                                  blurRadius: 2,
-                                ),
-                              ],
+                              boxShadow: const [],
                             ),
                           ).animate().scaleY(
                             begin: 0,
-                            duration: 400.ms,
+                            duration: 80.ms,
                             curve: Curves.easeOutBack,
                           ),
                           const SizedBox(width: 12),
@@ -1192,7 +1155,7 @@ class _BaseSheet extends StatelessWidget {
                           child: RepaintBoundary(
                             child: child
                                 .animate()
-                                .fadeIn(delay: 200.ms, duration: 600.ms)
+                                .fadeIn(delay: 200.ms, duration: 80.ms)
                                 .moveY(begin: 20, end: 0),
                           ),
                         ),
@@ -1214,7 +1177,7 @@ class _BaseSheet extends StatelessWidget {
               .slideY(
                 begin: 0.2,
                 end: 0,
-                duration: 700.ms,
+                duration: 80.ms,
                 curve: Curves.easeOutQuart,
               )
               .fadeIn(),
@@ -1292,7 +1255,7 @@ class _NodePill extends StatelessWidget {
               onTap(id);
             },
             child: AnimatedContainer(
-              duration: 250.ms,
+              duration: 80.ms,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected
@@ -1323,7 +1286,7 @@ class _NodePill extends StatelessWidget {
           ).animate().scale(
             begin: const Offset(0.95, 0.95),
             end: const Offset(1, 1),
-            duration: 200.ms,
+            duration: 80.ms,
             curve: Curves.easeOutBack,
           ),
     );
@@ -1356,7 +1319,7 @@ class _ActionPill extends StatelessWidget {
         onTap(state);
       },
       child: AnimatedContainer(
-        duration: 250.ms,
+        duration: 80.ms,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: isSelected
@@ -1437,7 +1400,7 @@ class _BreathingToggleState extends State<_BreathingToggle>
       child: RepaintBoundary(
         child: AnimatedScale(
           scale: _isTapped ? 0.94 : 1.0,
-          duration: 150.ms,
+          duration: 80.ms,
           curve: Curves.easeOutCirc,
           child: AnimatedBuilder(
             animation: _glowController,
@@ -1500,7 +1463,7 @@ class _BreathingToggleState extends State<_BreathingToggle>
                         ),
                       ),
                     AnimatedPositioned(
-                      duration: 400.ms,
+                      duration: 80.ms,
                       curve: Curves.elasticOut,
                       left: widget.value ? 26.0 : 4.0,
                       child: Container(
@@ -1509,13 +1472,7 @@ class _BreathingToggleState extends State<_BreathingToggle>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          boxShadow: const [],
                         ),
                       ),
                     ),
@@ -1572,13 +1529,7 @@ class _StaggeredHelpDialog extends StatelessWidget {
           color: const Color(0xFF1E1E22), // Unify background
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: Colors.white.withOpacity(0.08)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 40,
-              spreadRadius: -10,
-            ),
-          ],
+          boxShadow: const [],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1681,11 +1632,11 @@ class _StaggeredHelpDialog extends StatelessWidget {
                   begin: const Offset(0.9, 0.9),
                   end: const Offset(1, 1),
                   curve: Curves.easeOutBack,
-                  duration: 400.ms,
+                  duration: 80.ms,
                 ),
           ],
         ),
       ),
-    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).fadeIn();
+    ).animate().scale(duration: 80.ms, curve: Curves.easeOutBack).fadeIn();
   }
 }

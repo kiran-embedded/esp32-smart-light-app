@@ -51,7 +51,7 @@ class _NebulaOrbState extends State<NebulaOrb> with TickerProviderStateMixin {
         Icons.check_circle,
         color: Colors.greenAccent,
         size: 80,
-      ).animate().scale(duration: 400.ms, curve: Curves.elasticOut).fadeIn();
+      ).animate().scale(duration: 80.ms, curve: Curves.elasticOut).fadeIn();
     }
 
     final double size = widget.isListening ? 120 : 100;
@@ -83,13 +83,7 @@ class _NebulaOrbState extends State<NebulaOrb> with TickerProviderStateMixin {
                       ],
                       stops: const [0.0, 0.33, 0.66, 1.0],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.cyanAccent.withOpacity(0.5),
-                        blurRadius: widget.isProcessing ? 50 : 30,
-                        spreadRadius: widget.isProcessing ? 10 : 2,
-                      ),
-                    ],
+                    boxShadow: const [],
                   ),
                   child: Container(
                     decoration: const BoxDecoration(shape: BoxShape.circle),

@@ -50,7 +50,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     _pressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: Duration.zero,
     );
 
     _pressAnimation = Tween<double>(
@@ -71,7 +71,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     _rippleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: Duration.zero,
     );
     _rippleAnimation = CurvedAnimation(
       parent: _rippleController,
@@ -127,9 +127,10 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     _rippleController.forward(from: 0);
     HapticService.feedback(ref.read(hapticStyleProvider));
 
-    await _pressController.forward();
+    // Fire toggle immediately — zero delay
     widget.onTap();
-    await _pressController.reverse();
+    // Run press animation concurrently (non-blocking)
+    _pressController.forward().then((_) => _pressController.reverse());
 
     Future.delayed(const Duration(seconds: 10), () {
       if (mounted) setState(() => _isInteracted = false);
@@ -231,18 +232,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                         return Transform.scale(
                           scale: 1.0 - (_pressController.value * 0.05),
                           child: Container(
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(
-                                    0.8,
-                                  ), // Deep projection
-                                  blurRadius: 40,
-                                  offset: const Offset(0, 20),
-                                  spreadRadius: -15,
-                                ),
-                              ],
-                            ),
+                            decoration: BoxDecoration(boxShadow: const []),
                             child: _buildStyleDispatcher(
                               style,
                               theme,
@@ -263,7 +253,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
           ),
         )
         .animate()
-        .fadeIn(duration: 400.ms, delay: 100.ms)
+        .fadeIn(duration: 80.ms, delay: 100.ms)
         .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack);
   }
 
@@ -546,7 +536,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               : Colors.white.withOpacity(0.1));
 
     Widget container = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: Duration.zero,
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: isActive ? effectiveColor : offColor,
@@ -644,12 +634,12 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             children: [
               // Liquid Background
               AnimatedAlign(
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.elasticOut,
+                duration: Duration.zero,
+                curve: Curves.easeOutQuart,
                 alignment: isActive ? Alignment.center : Alignment.bottomLeft,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOutBack,
+                  duration: Duration.zero,
+                  curve: Curves.easeOutQuart,
                   width: isActive ? 400 : 20, // Overseized to fill
                   height: isActive ? 400 : 20,
                   decoration: BoxDecoration(
@@ -704,7 +694,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     final isActive = widget.device.isActive;
 
     Widget container = AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
+      duration: Duration.zero,
       decoration: BoxDecoration(
         color: blendingEnabled
             ? (Colors.black.withOpacity(0.3)) // Darker tint for glass
@@ -725,29 +715,11 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 end: Alignment.bottomRight,
                 colors: [const Color(0xFF353535), const Color(0xFF252525)],
               ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.6),
-            offset: const Offset(4, 4),
-            blurRadius: 8,
-          ),
-          if (!blendingEnabled) // Only show highlight reflection if opaque
-            BoxShadow(
-              color: Colors.white.withOpacity(0.1),
-              offset: const Offset(-2, -2),
-              blurRadius: 4,
-            ),
-          if (blendingEnabled) // Glass edge highlight
-            BoxShadow(
-              color: Colors.white.withOpacity(0.2),
-              offset: const Offset(-1, -1),
-              blurRadius: 2,
-            ),
-        ],
+        boxShadow: const [],
       ),
       child: Center(
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: Duration.zero,
           width: 80.r,
           height: 80.r,
           decoration: BoxDecoration(
@@ -757,29 +729,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       ? const Color(0xFF1F1F1F).withOpacity(0.8)
                       : Colors.black.withOpacity(0.2))
                 : const Color(0xFF1F1F1F),
-            boxShadow: [
-              // Inset shadow uses opposite offsets for pressed effect
-              BoxShadow(
-                color: isActive
-                    ? Colors.black.withOpacity(0.8)
-                    : Colors.black.withOpacity(0.5),
-                offset: isActive ? const Offset(3, 3) : const Offset(2, 2),
-                blurRadius: isActive ? 4 : 6,
-                spreadRadius: 0,
-              ),
-              if (isActive)
-                BoxShadow(
-                  color: color.withOpacity(0.6),
-                  blurRadius: 20,
-                  spreadRadius: -2,
-                ),
-              if (!isActive)
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.05),
-                  offset: const Offset(-2, -2),
-                  blurRadius: 4,
-                ),
-            ],
+            boxShadow: const [],
           ),
           child: Center(
             child: Icon(
@@ -870,7 +820,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 // Glitch scale effect for icon
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 1.0, end: isActive ? 1.05 : 1.0),
-                  duration: const Duration(milliseconds: 100),
+                  duration: Duration.zero,
                   builder: (context, scale, child) {
                     return Transform.scale(
                       scale:
@@ -948,7 +898,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     }
 
     Widget container = AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      duration: Duration.zero,
       decoration: BoxDecoration(
         color: baseColor,
         borderRadius: BorderRadius.circular(24),
@@ -1047,7 +997,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
             // Dynamic Border & Fill
             AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+              duration: Duration.zero,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
@@ -1135,25 +1085,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               )
             : null,
         color: blendingEnabled ? Colors.black.withOpacity(0.4) : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.8),
-            offset: const Offset(3, 3),
-            blurRadius: 5,
-          ),
-          if (!blendingEnabled)
-            BoxShadow(
-              color: Colors.white.withOpacity(0.1),
-              offset: const Offset(-1, -1),
-              blurRadius: 2,
-            ),
-          if (blendingEnabled) // Glass highlight
-            BoxShadow(
-              color: Colors.white.withOpacity(0.2),
-              offset: const Offset(-1, -1),
-              blurRadius: 2,
-            ),
-        ],
+        boxShadow: const [],
         border: Border.all(color: const Color(0xFF555555), width: 1),
       ),
       child: Stack(
@@ -1177,13 +1109,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                     gradient: LinearGradient(
                       colors: [Colors.grey, Colors.black],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
-                        blurRadius: 1,
-                        offset: const Offset(1, 1),
-                      ),
-                    ],
+                    boxShadow: const [],
                   ),
                 ),
               ),
@@ -1194,7 +1120,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             top: 8,
             right: 8,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 100),
+              duration: Duration.zero,
               width: 8.r,
               height: 8.r,
               decoration: BoxDecoration(
@@ -1220,18 +1146,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                         : const Color(0xFF181818),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white.withOpacity(0.05)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withOpacity(0.05),
-                        offset: const Offset(-2, -2),
-                        blurRadius: 4,
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.8),
-                        offset: const Offset(2, 2),
-                        blurRadius: 4,
-                      ),
-                    ],
+                    boxShadow: const [],
                   ),
                   child: Icon(
                     isActive ? iconInfo.iconOn : iconInfo.iconOff,
@@ -1421,7 +1336,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               // Glitchy Icon
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 100),
+                duration: Duration.zero,
                 builder: (context, value, child) {
                   return ShaderMask(
                     shaderCallback: (bounds) => LinearGradient(
@@ -1487,8 +1402,8 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     final isActive = widget.device.isActive;
 
     Widget container = AnimatedContainer(
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.elasticOut,
+      duration: Duration.zero,
+      curve: Curves.easeOutQuart,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         color: blendingEnabled
@@ -1509,17 +1424,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                     : [const Color(0xFF424242), const Color(0xFF212121)],
               )
             : null,
-        boxShadow: [
-          BoxShadow(
-            color: isActive
-                ? color.withOpacity(0.6)
-                : (blendingEnabled
-                      ? Colors.black.withOpacity(0.1)
-                      : Colors.black45),
-            blurRadius: isActive ? 20 : 5,
-            spreadRadius: isActive ? 2 : 0,
-          ),
-        ],
+        boxShadow: const [],
         border: blendingEnabled
             ? Border.all(color: Colors.white.withOpacity(0.2))
             : null,

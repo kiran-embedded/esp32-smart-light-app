@@ -29,13 +29,7 @@ class GlobalFpsMeter extends ConsumerWidget {
                     : Colors.cyanAccent.withOpacity(0.3),
                 width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              boxShadow: const [],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -48,17 +42,7 @@ class GlobalFpsMeter extends ConsumerWidget {
                         ? Colors.redAccent
                         : Colors.greenAccent,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            (stats.fps < 55
-                                    ? Colors.redAccent
-                                    : Colors.greenAccent)
-                                .withOpacity(0.5),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ],
+                    boxShadow: const [],
                   ),
                 ),
                 SizedBox(width: 8.w),

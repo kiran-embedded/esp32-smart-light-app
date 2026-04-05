@@ -16,9 +16,9 @@ class PixelLedBorder extends ConsumerStatefulWidget {
     super.key,
     required this.child,
     this.borderRadius = 0,
-    this.strokeWidth = 2.0,
+    this.strokeWidth = 1.5,
     this.colors = const [Colors.blue, Colors.purple, Colors.red],
-    this.duration = const Duration(seconds: 2),
+    this.duration = const Duration(seconds: 4),
     this.mode,
   });
 
@@ -115,10 +115,10 @@ class _PixelLedPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth =
           strokeWidth *
-          1.2 // Laser-thin (was 1.5)
+          1.1 // Fine-tuned (was 1.25)
       ..maskFilter = mode == NeonAnimationMode.thinLine
           ? null
-          : const MaskFilter.blur(BlurStyle.normal, 1.0); // Pin-point (was 3)
+          : const MaskFilter.blur(BlurStyle.normal, 1.0); // Pin-point (was 1.5)
 
     switch (mode) {
       case NeonAnimationMode.sweep:

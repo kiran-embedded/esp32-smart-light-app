@@ -41,7 +41,7 @@ class _StatusCardState extends ConsumerState<StatusCard>
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 80),
     );
 
     _animationController.addListener(() {
@@ -126,7 +126,7 @@ class _StatusCardState extends ConsumerState<StatusCard>
         onTap: _handleTap,
         child: AnimatedScale(
           scale: _isPressed ? 0.96 : 1.0,
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 80),
           curve: Curves.easeOutCubic,
           child: Container(
             width: pill.width,
@@ -134,17 +134,11 @@ class _StatusCardState extends ConsumerState<StatusCard>
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(pill.radius),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
+              boxShadow: const [],
             ),
             child: PixelLedBorder(
               borderRadius: pill.radius,
-              strokeWidth: 1.5,
+              strokeWidth: 1.0, // Thin neon
               duration: const Duration(seconds: 4),
               colors: [
                 theme.colorScheme.primary,
@@ -200,10 +194,10 @@ class _StatusCardState extends ConsumerState<StatusCard>
                                     _displayIndex,
                                   )
                                   .animate()
-                                  .fadeIn(duration: 400.ms)
+                                  .fadeIn(duration: 80.ms)
                                   .scale(
                                     begin: const Offset(0.95, 0.95),
-                                    duration: 400.ms,
+                                    duration: 80.ms,
                                     curve: Curves.easeOutBack,
                                   ),
                         ),
@@ -342,12 +336,7 @@ class _StatusCardState extends ConsumerState<StatusCard>
                         decoration: BoxDecoration(
                           color: Colors.greenAccent,
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.greenAccent.withOpacity(0.5),
-                              blurRadius: 5,
-                            ),
-                          ],
+                          boxShadow: const [],
                         ),
                       )
                       .animate(onPlay: (c) => c.repeat())

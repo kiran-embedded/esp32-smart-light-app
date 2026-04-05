@@ -151,15 +151,7 @@ class _ActionTileState extends State<_ActionTile>
                         0.5 * _pulseController.value,
                       ),
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: widget.color.withOpacity(
-                            0.3 * _pulseController.value,
-                          ),
-                          blurRadius: 10 * widget.scale,
-                          spreadRadius: 2 * widget.scale,
-                        ),
-                      ],
+                      boxShadow: const [],
                     ),
                   );
                 },

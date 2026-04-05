@@ -88,7 +88,7 @@ class _NadeCalibrationOverlayState extends State<_NadeCalibrationOverlay> {
       child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 800),
+          duration: const Duration(milliseconds: 80),
           builder: (context, value, child) {
             return Opacity(
               opacity: value,
@@ -104,12 +104,7 @@ class _NadeCalibrationOverlayState extends State<_NadeCalibrationOverlay> {
               color: Colors.black.withOpacity(0.9),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.cyanAccent.withOpacity(0.5)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.cyanAccent.withOpacity(0.2),
-                  blurRadius: 10,
-                ),
-              ],
+              boxShadow: const [],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

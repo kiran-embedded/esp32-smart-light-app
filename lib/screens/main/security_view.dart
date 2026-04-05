@@ -74,7 +74,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               ),
             ),
 
-            SliverToBoxAdapter(child: SizedBox(height: 32.h)),
+            SliverToBoxAdapter(child: SizedBox(height: 24.h)),
 
             // SENSOR GRID HEADER
             SliverPadding(
@@ -346,7 +346,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 notifier.toggleArmed();
               },
               child: AnimatedContainer(
-                duration: 300.ms,
+                duration: 80.ms,
                 height: 56.h,
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -455,13 +455,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               decoration: BoxDecoration(
                 color: Colors.redAccent,
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.redAccent.withOpacity(0.5),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-                ],
+                boxShadow: const [],
               ),
               child: const Icon(
                 Icons.sos_rounded,
@@ -507,7 +501,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                   )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
                   .scale(
-                    duration: 500.ms,
+                    duration: 80.ms,
                     begin: const Offset(0.8, 0.8),
                     end: const Offset(1.2, 1.2),
                   ),
@@ -695,7 +689,7 @@ class _SensorCardState extends State<_SensorCard> {
                           ),
                         )
                         .animate(onPlay: (c) => c.repeat())
-                        .scale(duration: 600.ms)
+                        .scale(duration: 80.ms)
                         .fadeOut(),
                 ],
               ),

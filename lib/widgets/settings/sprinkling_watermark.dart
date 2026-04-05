@@ -35,26 +35,20 @@ class SprinklingWatermark extends ConsumerWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: accentColor.withOpacity(0.4),
-                          boxShadow: [
-                            BoxShadow(
-                              color: accentColor.withOpacity(0.2),
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ],
+                          boxShadow: const [],
                         ),
                       )
                       .animate(onPlay: (c) => c.repeat())
                       .fadeIn(
                         delay: (random.nextDouble() * 2000).ms,
-                        duration: 800.ms,
+                        duration: 80.ms,
                       )
                       .move(
                         begin: const Offset(0, 0),
                         end: Offset(0, -10 - (random.nextDouble() * 15)),
                         duration: (2000 + random.nextDouble() * 1000).ms,
                       )
-                      .fadeOut(duration: 800.ms),
+                      .fadeOut(duration: 80.ms),
               left: (MediaQuery.of(context).size.width / 2) + x,
               top: 30 + y,
             );
@@ -124,13 +118,7 @@ class SprinklingWatermark extends ConsumerWidget {
                         builder: (context, value, child) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: accentColor.withOpacity(0.1 * value),
-                                blurRadius: 10 * value,
-                                spreadRadius: 1 * value,
-                              ),
-                            ],
+                            boxShadow: const [],
                           ),
                           child: child,
                         ),

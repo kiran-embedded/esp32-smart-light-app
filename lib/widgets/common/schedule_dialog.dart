@@ -124,13 +124,7 @@ class _ScheduleDialogState extends ConsumerState<ScheduleDialog> {
             color: theme.colorScheme.primary.withOpacity(0.3),
             width: 1.2,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 20,
-              spreadRadius: 5,
-            ),
-          ],
+          boxShadow: const [],
         ),
         child: SingleChildScrollView(
           child: Column(

@@ -37,13 +37,7 @@ class HeroVoltageMeter extends ConsumerWidget {
             height: 140 * coreScale,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: voltageColor.withOpacity(0.15),
-                  blurRadius: 40 * coreScale,
-                  spreadRadius: 10 * coreScale,
-                ),
-              ],
+              boxShadow: const [],
             ),
           ),
 

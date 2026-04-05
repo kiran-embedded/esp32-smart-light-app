@@ -30,7 +30,7 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay>
     super.initState();
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 80),
     );
     _slideController.forward();
     _startListening();

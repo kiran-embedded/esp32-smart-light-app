@@ -98,12 +98,12 @@ class SwitchGrid extends ConsumerWidget {
                       },
                     )
                     .animate()
-                    .fadeIn(delay: (index * 50).ms, duration: 600.ms)
+                    .fadeIn(delay: (index * 50).ms, duration: 80.ms)
                     .scale(
                       begin: const Offset(0.9, 0.9),
                       end: const Offset(1, 1),
                       delay: (index * 50).ms,
-                      duration: 600.ms,
+                      duration: 80.ms,
                       curve: Curves.easeOutCubic,
                     ),
           );

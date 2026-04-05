@@ -24,13 +24,7 @@ class VoiceVisualizer extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.cyanAccent,
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.cyanAccent.withOpacity(0.5),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
+                boxShadow: const [],
               ),
             )
             .animate(

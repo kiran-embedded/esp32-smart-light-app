@@ -36,7 +36,7 @@ class TimeDateWidget extends ConsumerWidget {
               letterSpacing: 3.0,
               color: theme.colorScheme.primary.withOpacity(0.8),
             ),
-          ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.5, end: 0),
+          ).animate().fadeIn(duration: 80.ms).slideY(begin: -0.5, end: 0),
           const SizedBox(height: 4),
         ],
 
@@ -103,7 +103,7 @@ class TimeDateWidget extends ConsumerWidget {
               ),
             ),
           ],
-        ).animate().fadeIn(delay: 400.ms, duration: 600.ms),
+        ).animate().fadeIn(delay: 400.ms, duration: 80.ms),
       ],
     );
   }
@@ -121,16 +121,7 @@ class TimeDateWidget extends ConsumerWidget {
               (isNight ? theme.colorScheme.tertiary : theme.colorScheme.primary)
                   .withOpacity(0.2),
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color:
-                  (isNight
-                          ? theme.colorScheme.tertiary
-                          : theme.colorScheme.primary)
-                      .withOpacity(0.4),
-              blurRadius: 15,
-            ),
-          ],
+          boxShadow: const [],
         ),
         child:
             Icon(

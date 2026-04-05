@@ -25,13 +25,7 @@ class HistorySheet extends ConsumerWidget {
           color: theme.colorScheme.primary.withOpacity(0.2),
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.5),
-            blurRadius: 40,
-            spreadRadius: 10,
-          ),
-        ],
+        boxShadow: const [],
       ),
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
       child: Column(

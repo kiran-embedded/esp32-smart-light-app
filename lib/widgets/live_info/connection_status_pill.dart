@@ -113,17 +113,8 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // DYNAMIC LED FLASH BACKGROUND (No shadows to prevent bleeding)
-        _buildLedGlow(
-          statusColor,
-          isConnected,
-          isConnected,
-          pScale,
-          animationsEnabled,
-        ),
-
         AnimatedContainer(
-          duration: 400.ms,
+          duration: 80.ms,
           curve: Curves.easeOutQuart,
           margin: EdgeInsets.only(
             top:
@@ -131,7 +122,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
           ),
           child: PixelLedBorder(
             borderRadius: (30 * pScale).toDouble(),
-            strokeWidth: (1.5 * pScale).toDouble(),
+            strokeWidth: (1.0 * pScale).toDouble(), // Thin matched neon
             duration: const Duration(seconds: 4),
             colors: themeColors,
             child: Container(
@@ -142,6 +133,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular((30 * pScale).toDouble()),
+                boxShadow: const [], // No shadow bleeding
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -181,7 +173,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
 
                   // Status Text (Animated Switcher)
                   AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 80),
                     transitionBuilder:
                         (Widget child, Animation<double> animation) {
                           return FadeTransition(
@@ -218,41 +210,6 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     );
   }
 
-  Widget _buildLedGlow(
-    Color color,
-    bool appOk,
-    bool devOk,
-    double scale,
-    bool animationsEnabled,
-  ) {
-    return Positioned(
-      child:
-          Container(
-                width: (160.w * scale).toDouble(),
-                height: (40.h * scale).toDouble(),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular((30 * scale).toDouble()),
-                  color: color.withOpacity(
-                    0.08,
-                  ), // Slightly boosted opacity since shadow is gone
-                  boxShadow: const [], // Shadow removed to stop bleeding
-                ),
-              )
-              .animate(
-                onPlay: (c) => c.repeat(reverse: true),
-                autoPlay: animationsEnabled,
-              )
-              .scale(
-                begin: const Offset(0.95, 0.95),
-                end: const Offset(1.05, 1.05),
-                duration: (appOk && devOk) ? 2.seconds : 500.ms,
-                curve: Curves.easeInOut,
-              )
-              .shimmer(duration: 4.seconds, color: color.withOpacity(0.1))
-              .fadeIn(duration: 1.seconds),
-    );
-  }
-
   Widget _buildStatusIndicator(
     Color color,
     double scale,
@@ -267,7 +224,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
           onPlay: (c) => c.repeat(reverse: true),
           autoPlay: animationsEnabled,
         )
-        .fade(begin: 0.3, end: 1.0, duration: 800.ms);
+        .fade(begin: 0.3, end: 1.0, duration: 80.ms);
   }
 
   Widget _buildAppSyncDot(
@@ -307,7 +264,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-              ).animate(onPlay: (c) => c.repeat()).fade(duration: 400.ms),
+              ).animate(onPlay: (c) => c.repeat()).fade(duration: 80.ms),
             ),
         ],
       ),

@@ -950,13 +950,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         color: const Color(0xFF0A0A0A).withOpacity(0.8),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: primaryColor.withOpacity(0.3), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withOpacity(0.1),
-            blurRadius: 20,
-            spreadRadius: 1,
-          ),
-        ],
+        boxShadow: const [],
       ),
       child: Row(
         children: [
@@ -1024,13 +1018,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   decoration: BoxDecoration(
                     color: Colors.redAccent,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.redAccent.withOpacity(0.5),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                      ),
-                    ],
+                    boxShadow: const [],
                   ),
                   child: const Text(
                     'INSTALL',
@@ -1088,10 +1076,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         .animate()
         .fadeIn(
           delay: (index * 30).ms, // Faster stagger
-          duration: 400.ms, // Snappier fade
+          duration: 80.ms, // Snappier fade
           curve: Curves.easeOutQuad,
         )
-        .slideY(begin: 0.1, duration: 400.ms, curve: Curves.easeOutQuad);
+        .slideY(begin: 0.1, duration: 80.ms, curve: Curves.easeOutQuad);
   }
 
   void _showHapticPicker(BuildContext context, WidgetRef ref) {
@@ -1885,7 +1873,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ref.read(displaySettingsProvider.notifier).setFontScale(scale);
         },
         child: AnimatedContainer(
-          duration: 200.ms,
+          duration: 80.ms,
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: isSelected
@@ -2010,13 +1998,7 @@ class _PremiumSectionHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(2),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.5),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ],
+              boxShadow: const [],
             ),
           ),
           const SizedBox(width: 10),
@@ -2055,13 +2037,7 @@ class _PremiumGroupedContainer extends ConsumerWidget {
             : const Color(0xFF151515),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.08 * glowIntensity),
-            blurRadius: 30 * glowIntensity,
-            spreadRadius: -5,
-          ),
-        ],
+        boxShadow: const [],
       ),
       child: Column(children: children),
     );
@@ -2153,13 +2129,7 @@ class _ScannerLineAnimationState extends State<_ScannerLineAnimation>
               child: Container(
                 height: 2,
                 decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.5),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
+                  boxShadow: const [],
                   gradient: LinearGradient(
                     colors: [
                       Colors.transparent,

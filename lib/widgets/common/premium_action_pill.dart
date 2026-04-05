@@ -70,7 +70,7 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
         scale: _isPressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 100),
+        duration: const Duration(milliseconds: 80),
         curve: Curves.easeOutCubic,
         child: Container(
           padding: EdgeInsets.symmetric(
@@ -98,14 +98,7 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
                   : Colors.white.withOpacity(0.1),
               width: 1.5,
             ),
-            boxShadow: [
-              if (widget.isActive)
-                BoxShadow(
-                  color: widget.activeColor.withOpacity(0.35),
-                  blurRadius: 6,
-                  spreadRadius: 0,
-                ),
-            ],
+            boxShadow: const [],
           ),
           child: Stack(
             children: [
@@ -148,15 +141,7 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
                               ? widget.activeColor.withOpacity(0.2)
                               : Colors.white.withOpacity(0.05),
                           shape: BoxShape.circle,
-                          boxShadow: widget.isActive && !performanceMode
-                              ? [
-                                  BoxShadow(
-                                    color: widget.activeColor.withOpacity(0.4),
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                  ),
-                                ]
-                              : null,
+                          boxShadow: const [],
                         ),
                         child: Icon(
                           widget.icon,

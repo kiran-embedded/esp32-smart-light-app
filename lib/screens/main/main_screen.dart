@@ -224,42 +224,50 @@ class _MainScreenState extends ConsumerState<MainScreen>
   }
 
   Widget _buildBottomNav(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.8),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.primary.withOpacity(0.2),
-            width: 1.5,
-          ),
+    final themeColors = [
+      theme.colorScheme.primary,
+      theme.colorScheme.secondary,
+      theme.colorScheme.tertiary,
+      theme.colorScheme.primary,
+    ];
+
+    return PixelLedBorder(
+      borderRadius: 24.r,
+      strokeWidth: 0.5, // Subtle neon — emphasis moved to top
+      colors: themeColors,
+      duration: const Duration(seconds: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0A0A0A).withOpacity(0.85),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          boxShadow: const [],
         ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Container(
-          height: 65.h,
-          child: BottomNavigationBar(
-            currentIndex: _currentPage,
-            onTap: _onBottomNavTapped,
-            backgroundColor: Colors.transparent,
-            selectedItemColor: theme.colorScheme.primary,
-            unselectedItemColor: Colors.white.withOpacity(0.3),
-            showSelectedLabels: true,
-            showUnselectedLabels: false,
-            selectedLabelStyle: GoogleFonts.outfit(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.2.w,
+        child: SafeArea(
+          top: false,
+          child: Container(
+            height: 65.h,
+            child: BottomNavigationBar(
+              currentIndex: _currentPage,
+              onTap: _onBottomNavTapped,
+              backgroundColor: Colors.transparent,
+              selectedItemColor: theme.colorScheme.primary,
+              unselectedItemColor: Colors.white.withOpacity(0.3),
+              showSelectedLabels: true,
+              showUnselectedLabels: false,
+              selectedLabelStyle: GoogleFonts.outfit(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2.w,
+              ),
+              elevation: 0,
+              type: BottomNavigationBarType.fixed,
+              items: [
+                _buildNavItem(Icons.dashboard_rounded, 'CORE', 0),
+                _buildNavItem(Icons.grid_view_rounded, 'GRID', 1),
+                _buildNavItem(Icons.security_rounded, 'SECURITY', 2),
+                _buildNavItem(Icons.settings_suggest_rounded, 'SETUP', 3),
+              ],
             ),
-            elevation: 0,
-            type: BottomNavigationBarType.fixed,
-            items: [
-              _buildNavItem(Icons.dashboard_rounded, 'CORE', 0),
-              _buildNavItem(Icons.grid_view_rounded, 'GRID', 1),
-              _buildNavItem(Icons.security_rounded, 'SECURITY', 2),
-              _buildNavItem(Icons.settings_suggest_rounded, 'SETUP', 3),
-            ],
           ),
         ),
       ),
@@ -301,60 +309,7 @@ class DashboardView extends ConsumerWidget {
     return Stack(
       children: [
         // ULTRA-PREMIUM FLOATING AURA: Subtle, deep background movement
-        Positioned.fill(
-          child: RepaintBoundary(
-            child: IgnorePointer(
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -100,
-                    left: -100,
-                    child:
-                        Container(
-                              width: 300,
-                              height: 300,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: theme.colorScheme.primary.withOpacity(
-                                  0.03,
-                                ),
-                              ),
-                            )
-                            .animate(onPlay: (c) => c.repeat(reverse: true))
-                            .move(
-                              begin: const Offset(0, 0),
-                              end: const Offset(100, 150),
-                              duration: 12.seconds,
-                              curve: Curves.easeInOut,
-                            ),
-                  ),
-                  Positioned(
-                    bottom: -50,
-                    right: -50,
-                    child:
-                        Container(
-                              width: 250,
-                              height: 250,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: theme.colorScheme.secondary.withOpacity(
-                                  0.03,
-                                ),
-                              ),
-                            )
-                            .animate(onPlay: (c) => c.repeat(reverse: true))
-                            .move(
-                              begin: const Offset(0, 0),
-                              end: const Offset(-80, -120),
-                              duration: 15.seconds,
-                              curve: Curves.easeInOut,
-                            ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        const Positioned.fill(child: SizedBox.shrink()),
         SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -365,16 +320,9 @@ class DashboardView extends ConsumerWidget {
                 SizedBox(height: layout.verticalOffset),
                 SizedBox(height: 65.h), // Base spacing for AppBar area
                 Transform.scale(
-                      scale: layout.pillScale,
-                      child: const ConnectionStatusPill(),
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scale(
-                      begin: const Offset(1, 1),
-                      end: const Offset(1.02, 1.02),
-                      duration: 2.seconds,
-                      curve: Curves.easeInOut,
-                    ),
+                  scale: layout.pillScale,
+                  child: const ConnectionStatusPill(),
+                ),
                 SizedBox(height: layout.pillScale == 1.0 ? 0 : layout.gaps[0]),
                 RepaintBoundary(
                       child: Transform.scale(
@@ -386,11 +334,11 @@ class DashboardView extends ConsumerWidget {
                       ),
                     )
                     .animate()
-                    .fadeIn(duration: 500.ms)
+                    .fadeIn(duration: 80.ms)
                     .slideY(
                       begin: 0.1,
                       end: 0,
-                      duration: 500.ms,
+                      duration: 80.ms,
                       curve: Curves.easeOutCubic,
                     ),
                 SizedBox(height: layout.gaps[1]),
@@ -401,11 +349,11 @@ class DashboardView extends ConsumerWidget {
                       ),
                     )
                     .animate()
-                    .fadeIn(delay: 100.ms, duration: 500.ms)
+                    .fadeIn(delay: 100.ms, duration: 80.ms)
                     .slideY(
                       begin: 0.1,
                       end: 0,
-                      duration: 500.ms,
+                      duration: 80.ms,
                       curve: Curves.easeOutCubic,
                     ),
                 SizedBox(height: layout.gaps[2]),
@@ -433,11 +381,11 @@ class DashboardView extends ConsumerWidget {
                       ),
                     )
                     .animate()
-                    .fadeIn(delay: 200.ms, duration: 500.ms)
+                    .fadeIn(delay: 200.ms, duration: 80.ms)
                     .slideY(
                       begin: 0.1,
                       end: 0,
-                      duration: 500.ms,
+                      duration: 80.ms,
                       curve: Curves.easeOutCubic,
                     ),
                 SizedBox(height: layout.gaps[4]),
@@ -450,6 +398,7 @@ class DashboardView extends ConsumerWidget {
           left: 0,
           right: 0,
           child: PremiumAppBar(
+            glowIntensity: liveInfo.acVoltage >= 180 ? 0.7 : 0.3,
             title: ShaderMask(
               shaderCallback: (Rect bounds) {
                 return LinearGradient(
@@ -703,26 +652,12 @@ class _GlassButtonState extends State<_GlassButton> {
       },
       child: AnimatedScale(
         scale: _isPressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 100),
+        duration: const Duration(milliseconds: 80),
         child: Container(
           height: 80,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: widget.theme.colorScheme.primary.withOpacity(
-                  isNeon ? 0.5 : 0.1,
-                ),
-                blurRadius: isNeon ? 3 : 2, // Pin-point
-                spreadRadius: 0,
-              ),
-              if (isNeon)
-                BoxShadow(
-                  color: widget.theme.colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 1,
-                  spreadRadius: 0,
-                ),
-            ],
+            boxShadow: const [],
           ),
           child: PixelLedBorder(
             colors: themeColors,
@@ -825,6 +760,7 @@ class _ControlViewState extends ConsumerState<ControlView> {
           left: 0,
           right: 0,
           child: PremiumAppBar(
+            glowIntensity: 0.5,
             title: ShaderMask(
               shaderCallback: (Rect bounds) {
                 return LinearGradient(

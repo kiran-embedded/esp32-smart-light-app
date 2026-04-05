@@ -74,7 +74,7 @@ class _AiAssistantDialogState extends ConsumerState<AiAssistantDialog> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 80),
           curve: Curves.easeOut,
         );
       }
@@ -225,9 +225,9 @@ class _AiAssistantDialogState extends ConsumerState<AiAssistantDialog> {
                             .scale(
                               begin: const Offset(1, 1),
                               end: const Offset(1.5, 1.5),
-                              duration: 600.ms,
+                              duration: 80.ms,
                             )
-                            .fadeOut(duration: 600.ms),
+                            .fadeOut(duration: 80.ms),
                         const SizedBox(width: 4),
                         Text(
                           'Speaking...',
@@ -523,17 +523,7 @@ class _AiAssistantDialogState extends ConsumerState<AiAssistantDialog> {
                                     ],
                                   ),
                             shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    (_isListening
-                                            ? Colors.redAccent
-                                            : Colors.deepPurpleAccent)
-                                        .withOpacity(0.4),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
+                            boxShadow: const [],
                           ),
                           child: Icon(
                             _isListening
@@ -549,7 +539,7 @@ class _AiAssistantDialogState extends ConsumerState<AiAssistantDialog> {
                         .scale(
                           begin: const Offset(1, 1),
                           end: const Offset(1.2, 1.2),
-                          duration: 400.ms,
+                          duration: 80.ms,
                           curve: Curves.elasticOut,
                         )
                         .shimmer(

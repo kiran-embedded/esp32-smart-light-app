@@ -220,7 +220,7 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildLogoShards(),
-                        SizedBox(height: 30.h),
+                        SizedBox(height: 24.h),
 
                         // Scene 4: Typography
                         Opacity(
@@ -302,13 +302,7 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
                     child: Container(
                       height: 1,
                       decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.cyan.withOpacity(0.5),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          ),
-                        ],
+                        boxShadow: const [],
                         gradient: const LinearGradient(
                           colors: [
                             Colors.transparent,
@@ -352,25 +346,7 @@ class _CinematicSplashScreenState extends ConsumerState<CinematicSplashScreen>
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.cyan.withOpacity(0.3 * _logoReveal.value),
-                      blurRadius: 30,
-                      offset: const Offset(-3, 0),
-                    ),
-                    BoxShadow(
-                      color: Colors.pinkAccent.withOpacity(
-                        0.3 * _logoReveal.value,
-                      ),
-                      blurRadius: 30,
-                      offset: const Offset(3, 0),
-                    ),
-                    // Adding a central "White Core" glow
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.2 * _logoReveal.value),
-                      blurRadius: 15,
-                    ),
-                  ],
+                  boxShadow: const [],
                 ),
                 child: Center(
                   child: Image.asset(

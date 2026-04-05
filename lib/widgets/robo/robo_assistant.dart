@@ -113,7 +113,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
 
     _reactionController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 80),
     );
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
@@ -122,7 +122,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
 
     _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 80),
     );
     _entranceAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _entranceController, curve: Curves.elasticOut),
@@ -135,7 +135,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
 
     _jumpController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 80),
     );
     _jumpAnimation = Tween<double>(begin: 0, end: -40).animate(
       CurvedAnimation(parent: _jumpController, curve: Curves.easeInOut),
@@ -143,7 +143,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
 
     _pupilController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 80),
     );
     _pupilAnimation =
         Tween<Offset>(begin: Offset.zero, end: const Offset(0.3, 0)).animate(
@@ -359,13 +359,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
                           height: 20,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(40),
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryColor.withOpacity(0.5),
-                                blurRadius: 25,
-                                spreadRadius: 8,
-                              ),
-                            ],
+                            boxShadow: const [],
                           ),
                         ),
                       ),
@@ -464,13 +458,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
               color: color.withOpacity(eyeOpacity * 0.8),
               width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(eyeOpacity * glowIntensity * 0.6),
-                blurRadius: 10 * glowIntensity,
-                spreadRadius: 1 * glowIntensity,
-              ),
-            ],
+            boxShadow: const [],
           ),
           child: eyeOpacity > 0
               ? Stack(
@@ -484,13 +472,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: color,
-                          boxShadow: [
-                            BoxShadow(
-                              color: color,
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ],
+                          boxShadow: const [],
                         ),
                       ),
                     ),
@@ -512,13 +494,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: color.withOpacity(0.6 * ringGlow), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3 * ringGlow),
-            blurRadius: 8 * ringGlow,
-            spreadRadius: 1,
-          ),
-        ],
+        boxShadow: const [],
       ),
     );
   }
@@ -539,12 +515,7 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
             color: theme.colorScheme.primary.withOpacity(0.5),
             width: 1.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              blurRadius: 15,
-            ),
-          ],
+          boxShadow: const [],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

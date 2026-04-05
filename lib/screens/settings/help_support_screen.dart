@@ -85,7 +85,7 @@ class HelpSupportScreen extends ConsumerWidget {
                       Icons.help_outline_rounded,
                       size: 80,
                       color: Colors.white.withOpacity(0.1),
-                    ).animate().scale(duration: 800.ms).fadeIn(),
+                    ).animate().scale(duration: 80.ms).fadeIn(),
                   ),
                 ],
               ),
@@ -185,13 +185,7 @@ class HelpSupportScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
             borderRadius: BorderRadius.circular(2),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.4),
-                blurRadius: 6,
-                spreadRadius: 1,
-              ),
-            ],
+            boxShadow: const [],
           ),
         ),
         const SizedBox(width: 10),
@@ -282,13 +276,7 @@ class HelpSupportScreen extends ConsumerWidget {
           color: Colors.white.withOpacity(0.03),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: Colors.white.withOpacity(0.06), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.03),
-              blurRadius: 20,
-              spreadRadius: -10,
-            ),
-          ],
+          boxShadow: const [],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +317,7 @@ class HelpSupportScreen extends ConsumerWidget {
           ],
         ),
       ),
-    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).fadeIn();
+    ).animate().scale(duration: 80.ms, curve: Curves.easeOutBack).fadeIn();
   }
 
   Widget _buildExpandableTile(
@@ -382,7 +370,7 @@ class HelpSupportScreen extends ConsumerWidget {
           ),
         )
         .animate()
-        .fadeIn(duration: 500.ms, delay: (index * 80).ms)
+        .fadeIn(duration: 80.ms, delay: (index * 80).ms)
         .slideY(begin: 0.1, end: 0);
   }
 

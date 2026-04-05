@@ -379,6 +379,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     final deviceIndex = state.indexWhere((d) => d.id == id);
     if (deviceIndex == -1) return;
 
+    _pendingSwitches[id] = DateTime.now();
+
     // OPTIMISTIC UPDATE: Change state immediately for zero-latency feel
     final previousState = state;
     state = [

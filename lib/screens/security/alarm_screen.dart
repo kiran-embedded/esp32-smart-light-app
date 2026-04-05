@@ -110,14 +110,14 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
                   .scale(
                     begin: const Offset(0.8, 0.8),
                     end: const Offset(1.2, 1.2),
-                    duration: 800.ms,
+                    duration: 80.ms,
                     curve: Curves.easeInOut,
                   )
                   .then()
                   .scale(
                     begin: const Offset(1.2, 1.2),
                     end: const Offset(0.8, 0.8),
-                    duration: 800.ms,
+                    duration: 80.ms,
                   ),
 
               const SizedBox(height: 40),
@@ -137,7 +137,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
                     ),
                   ],
                 ),
-              ).animate().fade(duration: 500.ms).slideY(begin: 0.2, end: 0),
+              ).animate().fade(duration: 80.ms).slideY(begin: 0.2, end: 0),
 
               const SizedBox(height: 10),
 
@@ -150,7 +150,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
                   fontWeight: FontWeight.w500,
                   letterSpacing: 2,
                 ),
-              ).animate().fade(delay: 300.ms, duration: 500.ms),
+              ).animate().fade(delay: 300.ms, duration: 80.ms),
 
               const Spacer(),
 
@@ -203,14 +203,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
               border: Border.all(color: color, width: 2),
-              boxShadow: [
-                if (isPrimary)
-                  BoxShadow(
-                    color: color.withOpacity(0.3),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-              ],
+              boxShadow: const [],
             ),
             child: Icon(icon, color: color, size: 36),
           ),

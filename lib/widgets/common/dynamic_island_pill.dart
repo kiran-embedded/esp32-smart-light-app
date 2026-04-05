@@ -66,7 +66,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
         HapticService.selection();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 600),
+        duration: const Duration(milliseconds: 80),
         curve: const Cubic(0.2, 0.9, 0.4, 1.0),
         width: _isExpanded ? 260 : 100, // Compact 100px for iPhone pill look
         height: _isExpanded ? 48 : 32, // Sleek 32px height
@@ -81,13 +81,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
             ),
             width: 1.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              blurRadius: _isExpanded ? 15 : 10,
-              spreadRadius: 1,
-            ),
-          ],
+          boxShadow: const [], // Zero bleeding
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -107,7 +101,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
               crossFadeState: _isExpanded
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 80),
             ),
 
             // Subtle Shimmer removed for static look
@@ -130,13 +124,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFFFD0054).withOpacity(isMoving ? 0.8 : 0.4),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFD0054).withOpacity(isMoving ? 0.6 : 0.2),
-            blurRadius: isMoving ? 6 : 3,
-            spreadRadius: isMoving ? 1 : 0,
-          ),
-        ],
+        boxShadow: const [],
       ),
     );
   }
@@ -279,15 +267,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: active ? Colors.greenAccent : Colors.white10,
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                    color: Colors.greenAccent.withOpacity(0.5),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [],
+          boxShadow: const [],
         ),
       ),
     );

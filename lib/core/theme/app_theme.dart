@@ -1085,13 +1085,7 @@ class GlassmorphicDecoration {
         color: borderColor ?? Colors.white.withOpacity(0.15),
         width: borderWidth,
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: blur,
-          spreadRadius: -8,
-        ),
-      ],
+      boxShadow: const [],
     );
   }
 }

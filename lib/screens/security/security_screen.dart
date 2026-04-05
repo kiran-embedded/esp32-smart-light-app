@@ -244,7 +244,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                             ),
                           )
                           .animate()
-                          .fadeIn(duration: 400.ms, delay: (index * 50).ms)
+                          .fadeIn(duration: 80.ms, delay: (index * 50).ms)
                           .slideY(
                             begin: 0.1,
                             end: 0,
@@ -363,7 +363,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         },
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 80),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isActive
