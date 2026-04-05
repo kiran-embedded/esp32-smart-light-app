@@ -50,7 +50,7 @@ class HapticService {
           // "Butter" - Very short, crisp
           if (_hasCustomSupport) {
             // Fallback for custom support but no amplitude control
-            Vibration.vibrate(duration: 10);
+            Vibration.vibrate(duration: 10, amplitude: 40);
           } else {
             HapticFeedback.lightImpact(); // System standard
           }
@@ -59,7 +59,7 @@ class HapticService {
         case HapticStyle.medium:
           // "Smooth" - Noticeable bump
           if (_hasCustomSupport) {
-            Vibration.vibrate(duration: 25, amplitude: 60);
+            Vibration.vibrate(duration: 25, amplitude: 80);
           } else {
             HapticFeedback.mediumImpact();
           }
@@ -68,7 +68,7 @@ class HapticService {
         case HapticStyle.heavy:
           // "Pulse" - Strong, undeniable vibration
           if (_hasCustomSupport) {
-            Vibration.vibrate(duration: 50, amplitude: 128);
+            Vibration.vibrate(duration: 50, amplitude: 160);
           } else {
             HapticFeedback.heavyImpact();
           }

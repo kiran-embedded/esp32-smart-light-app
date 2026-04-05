@@ -66,7 +66,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               sliver: SliverToBoxAdapter(
                 child: Column(
                   children: [
-                    _buildMasterLDR(securityState),
+                    _buildMasterLDR(context, securityState, ref),
                     const SizedBox(height: 12),
                     _buildActivePeriods(context, securityState, ref),
                     const SizedBox(height: 12),
@@ -164,11 +164,15 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
     );
   }
 
-  Widget _buildMasterLDR(SecurityState state) {
+  Widget _buildMasterLDR(
+    BuildContext context,
+    SecurityState state,
+    WidgetRef ref,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
@@ -176,36 +180,108 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                Icons.light_mode_rounded,
-                color: Colors.amberAccent,
-                size: 16.sp,
+              Row(
+                children: [
+                  Icon(
+                    Icons.light_mode_rounded,
+                    color: Colors.amberAccent,
+                    size: 16.sp,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "ECOSYSTEM LDR LINK",
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white38,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                "ECOSYSTEM",
-                style: GoogleFonts.outfit(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white38,
-                  letterSpacing: 1,
-                ),
+              Icon(
+                Icons.sync_rounded,
+                color: Colors.amberAccent.withOpacity(0.5),
+                size: 14.sp,
+              ).animate(onPlay: (c) => c.repeat()).rotate(duration: 4.seconds),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${state.masterLightLevel}%",
+                    style: GoogleFonts.outfit(
+                      fontSize: 32.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    "Ambient Light Node",
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.sp,
+                      color: Colors.white38,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "${state.ldrThreshold}%",
+                    style: GoogleFonts.outfit(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.amberAccent,
+                    ),
+                  ),
+                  Text(
+                    "Trigger Threshold",
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.sp,
+                      color: Colors.white38,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            "${state.masterLightLevel}%",
-            style: GoogleFonts.outfit(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
+          const SizedBox(height: 12),
+          SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: Colors.amberAccent,
+              inactiveTrackColor: Colors.white10,
+              thumbColor: Colors.amberAccent,
+              overlayColor: Colors.amberAccent.withOpacity(0.2),
+              trackHeight: 6,
             ),
-          ),
-          Text(
-            "Ambient Light",
-            style: GoogleFonts.outfit(fontSize: 10.sp, color: Colors.white24),
+            child: Slider(
+              value: state.ldrThreshold.toDouble(),
+              min: 0,
+              max: 100,
+              divisions: 100,
+              onChanged: (val) {
+                // Realistic slide feel intelligence
+                if (val.toInt() % 5 == 0) {
+                  HapticService.light();
+                }
+                ref
+                    .read(securityProvider.notifier)
+                    .updateLdrThreshold(val.toInt());
+              },
+              onChangeEnd: (val) {
+                HapticService.medium();
+              },
+            ),
           ),
         ],
       ),
@@ -246,9 +322,10 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               Switch.adaptive(
                 value: state.autoLightOnMotion,
                 activeColor: Colors.cyanAccent,
-                onChanged: (_) => ref
-                    .read(securityProvider.notifier)
-                    .toggleAutoLightOnMotion(),
+                onChanged: (_) {
+                  HapticService.medium();
+                  ref.read(securityProvider.notifier).toggleAutoLightOnMotion();
+                },
               ),
             ],
           ),
@@ -285,7 +362,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
             style: GoogleFonts.outfit(
               fontSize: 12.sp,
               fontWeight: FontWeight.w800,
-              color: Colors.white38,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 1.2,
             ),
           ),
@@ -301,7 +378,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               _buildIosRowCell(
                 'morning',
                 Icons.wb_twilight,
-                'Morning (06:00 - 11:59)',
+                'Morning (6:00 AM - 11:59 AM)',
                 state,
                 ref,
               ),
@@ -309,7 +386,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               _buildIosRowCell(
                 'afternoon',
                 Icons.wb_sunny,
-                'Afternoon (12:00 - 16:59)',
+                'Afternoon (12:00 PM - 4:59 PM)',
                 state,
                 ref,
               ),
@@ -317,7 +394,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               _buildIosRowCell(
                 'evening',
                 Icons.nights_stay_outlined,
-                'Evening (17:00 - 19:59)',
+                'Evening (5:00 PM - 7:59 PM)',
                 state,
                 ref,
               ),
@@ -325,7 +402,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               _buildIosRowCell(
                 'night',
                 Icons.nightlight_round,
-                'Night (20:00 - 23:59)',
+                'Night (8:00 PM - 11:59 PM)',
                 state,
                 ref,
               ),
@@ -333,7 +410,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               _buildIosRowCell(
                 'midnight',
                 Icons.star,
-                'Midnight (00:00 - 05:59)',
+                'Midnight (12:00 AM - 5:59 AM)',
                 state,
                 ref,
                 isLast: true,
@@ -395,7 +472,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               value: isActive,
               activeColor: Colors.blueAccent,
               onChanged: (_) {
-                HapticService.selection();
+                HapticService.medium();
                 ref
                     .read(securityProvider.notifier)
                     .setPeriodActive(periodKey, !isActive);
@@ -779,19 +856,18 @@ class _SensorCardState extends State<_SensorCard> {
 
     return GestureDetector(
       onLongPress: () {
-        HapticService.heavy();
+        HapticService.pulse();
         _showRenameDialog(context);
       },
       child: Container(
         decoration: BoxDecoration(
-          color: (hasMotion ? Colors.redAccent : Colors.white).withOpacity(
+          color: (hasMotion ? Colors.redAccent : Colors.cyanAccent).withOpacity(
             0.04,
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: (hasMotion ? Colors.redAccent : Colors.white).withOpacity(
-              0.1,
-            ),
+            color: (hasMotion ? Colors.redAccent : Colors.cyanAccent)
+                .withOpacity(hasMotion ? 0.2 : 0.08),
             width: 1,
           ),
         ),
@@ -804,20 +880,35 @@ class _SensorCardState extends State<_SensorCard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: (hasMotion ? Colors.redAccent : Colors.white10)
-                          .withOpacity(0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      hasMotion
-                          ? Icons.motion_photos_on_rounded
-                          : Icons.sensors_rounded,
-                      size: 18.sp,
-                      color: hasMotion ? Colors.redAccent : Colors.white24,
-                    ),
-                  ),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color:
+                              (hasMotion ? Colors.redAccent : Colors.cyanAccent)
+                                  .withOpacity(0.12),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  (hasMotion
+                                          ? Colors.redAccent
+                                          : Colors.cyanAccent)
+                                      .withOpacity(0.15),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          hasMotion
+                              ? Icons.motion_photos_on_rounded
+                              : Icons.sensors_rounded,
+                          size: 18.sp,
+                          color: hasMotion
+                              ? Colors.redAccent
+                              : Colors.cyanAccent,
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .fade(begin: 0.6, end: 1.0, duration: 1.5.seconds),
                   if (hasMotion)
                     Container(
                           width: 8,
