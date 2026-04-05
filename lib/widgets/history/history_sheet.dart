@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../providers/switch_history_provider.dart';
+import '../../providers/switch_provider.dart';
 import '../../core/ui/responsive_layout.dart';
 
 class HistorySheet extends ConsumerWidget {
@@ -118,14 +119,26 @@ class HistorySheet extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Switch ${event.relayId} turned ${isOn ? "ON" : "OFF"}',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14.sp,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final devices = ref.watch(switchDevicesProvider);
+                      final device = devices.firstWhere(
+                        (d) => d.id == event.relayId,
+                        orElse: () => devices.first,
+                      );
+                      final displayName =
+                          event.relayName ?? device.nickname ?? device.name;
+
+                      return Text(
+                        '$displayName turned ${isOn ? "ON" : "OFF"}',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14.sp,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      );
+                    },
                   ),
                   Text(
                     'Triggered via ${event.triggeredBy}',

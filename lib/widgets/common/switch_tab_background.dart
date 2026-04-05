@@ -445,38 +445,62 @@ class _NeonBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawColor(Colors.black, BlendMode.src);
+    // Solid deep black base - no more "spread"
+    canvas.drawColor(const Color(0xFF020408), BlendMode.src);
+
     final rect = Offset.zero & size;
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(0)));
+
+    // Calculate position along the path (0.0 to 1.0)
+    final pathMetrics = path.computeMetrics().first;
+    final length = pathMetrics.length;
+
+    final beadLength = 120.0; // Precise "tiny" neon
+    final currentPos = animation.value * length;
+
+    // Draw the moving bead
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth =
-          20 // Thicker for softer glow
-      ..maskFilter = const MaskFilter.blur(
-        BlurStyle.normal,
-        4,
-      ); // Reduced from 10
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
 
-    final colors = [
-      primary.withOpacity(0.6), // Reduced opacity
-      secondary.withOpacity(0.6),
-      Color.lerp(primary, secondary, 0.5)!.withOpacity(0.3),
-      primary.withOpacity(0.6),
-    ];
-    final stops = [0.0, 0.33, 0.66, 1.0];
+    // Outer Glow (Tight, not spreading)
+    final glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.0
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-    paint.shader = SweepGradient(
-      colors: colors,
-      stops: stops,
-      transform: GradientRotation(animation.value * 2 * pi),
-    ).createShader(rect);
+    // Draw the segment
+    for (int i = 0; i < 2; i++) {
+      final isGlow = i == 0;
+      final p = isGlow ? glowPaint : paint;
 
-    canvas.drawRect(rect.deflate(10), paint);
+      // Gradient for the bead trailing effect
+      final beadStart = (currentPos - beadLength).clamp(0.0, length);
+      final beadEnd = currentPos.clamp(0.0, length);
 
-    // Inner glow
-    paint.strokeWidth = 4;
-    paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    // paint.maskFilter = null; // Removed sharp inner line
-    canvas.drawRect(rect.deflate(10), paint);
+      if (beadEnd > beadStart) {
+        final extractPath = pathMetrics.extractPath(beadStart, beadEnd);
+        p.shader = LinearGradient(
+          colors: [
+            (i == 0 ? primary : primary.withOpacity(0.8)).withOpacity(0.0),
+            (i == 0 ? secondary : secondary.withOpacity(0.9)).withOpacity(
+              isGlow ? 0.4 : 0.7,
+            ),
+          ],
+        ).createShader(extractPath.getBounds());
+        canvas.drawPath(extractPath, p);
+      }
+
+      // Handle wrapping around the corner
+      if (currentPos < beadLength) {
+        final wrapStart = length - (beadLength - currentPos);
+        final extractPathWrap = pathMetrics.extractPath(wrapStart, length);
+        canvas.drawPath(extractPathWrap, p);
+      }
+    }
   }
 
   @override

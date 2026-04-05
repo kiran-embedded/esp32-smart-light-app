@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import '../models/switch_schedule.dart';
 import '../core/constants/app_constants.dart';
 import '../services/scheduler_service.dart';
+import '../services/persistence_service.dart';
 
 class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
   StreamSubscription? _subscription;
@@ -43,7 +44,15 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
 
       // Update state
       state = schedules;
+
+      // PERSIST LOCALLY for Boot/Native access
+      _persistSchedulesLocally(schedules);
     });
+  }
+
+  Future<void> _persistSchedulesLocally(List<SwitchSchedule> schedules) async {
+    final data = schedules.map((s) => s.toJson()).toList();
+    await PersistenceService.saveSchedules(data);
   }
 
   Future<void> addSchedule(SwitchSchedule schedule) async {

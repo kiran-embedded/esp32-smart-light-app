@@ -25,6 +25,10 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Map<String, dynamic> _lastTelemetry = {};
   Map<String, dynamic> _lastCommands = {};
 
+  // OPTIMIZED CLOUD SYNC TRACKERS
+  final Map<String, bool> _lastSyncedState = {};
+  final Map<String, DateTime> _lastSyncTime = {};
+
   bool get isEcoMode {
     final ecoVal = _lastTelemetry['ecoMode'] ?? _lastCommands['ecoMode'];
     return ecoVal == 1 || ecoVal == true;
@@ -243,9 +247,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           .map((key) => key.toString()),
     );
 
-    final currentIds = state.map((d) => d.id).toSet();
-    final allRelayIds = {...currentIds, ...allKeys}.toList();
-
+    final allRelayIds = allKeys.toList();
     allRelayIds.sort((a, b) {
       int? nA = int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), ''));
       int? nB = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), ''));
@@ -301,15 +303,25 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         }
       }
 
-      if (currentDeviceMap.containsKey(id)) {
-        final updated = currentDeviceMap[id]!.copyWith(
+      final existingDevice = currentDeviceMap[id];
+      if (existingDevice != null) {
+        final updated = existingDevice.copyWith(
           isActive: newIsActive,
           isPending: isPending,
           isConnected: isConnected,
           voltage: voltage,
         );
 
-        if (updated.isActive != currentDeviceMap[id]!.isActive && !isPending) {
+        // OPTIMIZED CLOUD SYNC: Only sync if state changed AND 2s passed since last sync for this device
+        final now = DateTime.now();
+        final lastTime = _lastSyncTime[id] ?? DateTime(0);
+        final lastState = _lastSyncedState[id];
+
+        if (updated.isActive != lastState &&
+            !isPending &&
+            now.difference(lastTime).inSeconds > 2) {
+          _lastSyncedState[id] = updated.isActive;
+          _lastSyncTime[id] = now;
           _syncToCloud(updated);
         }
 
@@ -320,7 +332,6 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           'Switch ${id.replaceAll("relay", "")}',
         ).copyWith(isActive: newIsActive, isConnected: isConnected);
 
-        _syncToCloud(device);
         return device;
       }
     }).toList();

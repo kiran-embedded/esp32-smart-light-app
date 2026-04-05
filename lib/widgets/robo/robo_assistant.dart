@@ -3,14 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart'; // Added
-import '../../core/constants/app_constants.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../services/design_advisor_service.dart';
-import '../../services/haptic_service.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_background_provider.dart';
-import '../../providers/animation_provider.dart'; // Added
 import '../../providers/performance_provider.dart';
 
 enum RoboReaction {

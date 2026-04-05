@@ -142,10 +142,16 @@ Future<void> _initCriticalSystems(SharedPreferences prefs) async {
 
 /// Handle secondary initializations in background to ensure instant Splash visibility
 Future<void> _initBackgroundSystems(SharedPreferences prefs) async {
-  // 1. High Refresh Rate (Non-blocking high-frequency unlock)
-  FlutterDisplayMode.setHighRefreshRate().catchError(
-    (e) => debugPrint("HighFPS Error: $e"),
-  );
+  // 1. High Refresh Rate (Non-blocking high-frequency unlock for 90/120fps)
+  try {
+    await FlutterDisplayMode.setHighRefreshRate();
+    final current = await FlutterDisplayMode.active;
+    debugPrint(
+      "🚀 SCHEDULER ENGINE: High Refresh Rate Active: ${current.refreshRate}Hz",
+    );
+  } catch (e) {
+    debugPrint("HighFPS Error: $e");
+  }
 
   // 2. Audio Engine (Initializes in background)
   SoLoud.instance.init().catchError((e) => debugPrint("Audio Init Error: $e"));

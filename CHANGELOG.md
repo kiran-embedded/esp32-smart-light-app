@@ -69,6 +69,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0+34.5] - 2026-04-05
+
+### 🚀 Unified Reliability & UI Polish
+
+#### Added
+- **Unified Background Engine**: Integrated scheduler into the persistent `SecurityForegroundService` for 24/7 reliability.
+- **Sprinkling Watermark**: Premium theme-blended particle animation for version and GitHub footer.
+- **Cupertino Scheduler**: iOS-style time selection with 90FPS performance.
+
+#### Changed
+- **Firebase Sync**: Optimized RTDB writes with 2-second debouncing.
+- **Native Reliability**: 8s WakeLock guard and enhanced Android 14 compatibility.
+
+#### Fixed
+- **Code Restoration**: Resolved critical syntax and structure errors in scheduler popups.
+
+---
+
 ## [1.2.0+32] - 2026-04-04
 
 ### 🚀 The Quantum Release

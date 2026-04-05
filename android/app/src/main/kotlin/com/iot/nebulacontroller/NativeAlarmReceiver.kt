@@ -13,10 +13,12 @@ class NativeAlarmReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         
         try {
-            val serviceIntent = Intent(context, NativeAlarmService::class.java)
-            serviceIntent.putExtras(intent)
+            val serviceIntent = Intent(context, SecurityForegroundService::class.java).apply {
+                action = "com.iot.nebulacontroller.ALARM_TRIGGER"
+                putExtras(intent)
+            }
             
-            Log.d("NativeReceiver", "Forwarding intent to NativeAlarmService")
+            Log.d("NativeReceiver", "Forwarding intent to Unified Security Service")
             
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)

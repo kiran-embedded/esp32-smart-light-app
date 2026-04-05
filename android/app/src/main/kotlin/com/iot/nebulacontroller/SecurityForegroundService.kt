@@ -19,6 +19,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Vibrator
 import android.os.VibrationEffect
+import org.json.JSONObject
 
 class SecurityForegroundService : Service() {
 
@@ -37,8 +38,100 @@ class SecurityForegroundService : Service() {
                 stopAlarmSound()
                 alarmAlreadyTriggered = false // Reset so next real breach triggers again
             }
+            "com.iot.nebulacontroller.ALARM_TRIGGER" -> {
+                handleAlarmTrigger(intent)
+            }
         }
         return START_STICKY
+    }
+
+    private fun handleAlarmTrigger(intent: Intent) {
+        val node = intent.getStringExtra("targetNode")
+        val state = intent.getBooleanExtra("targetState", false)
+        val deviceId = intent.getStringExtra("deviceId") ?: "79215788"
+        
+        Log.d("SecurityService", "Unified Scheduler Trigger: $node -> $state")
+        
+        if (node != null) {
+            performUpdate(deviceId, node, state)
+        }
+    }
+
+    private fun performUpdate(deviceId: String, node: String, state: Boolean) {
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            auth.signInAnonymously().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    writeToFirebase(deviceId, node, state)
+                }
+            }
+        } else {
+            writeToFirebase(deviceId, node, state)
+        }
+    }
+
+    private fun writeToFirebase(deviceId: String, node: String, state: Boolean) {
+        val targetVal = if (state) 1 else 0
+        val db = FirebaseDatabase.getInstance()
+        val ref = db.getReference("devices/$deviceId/commands")
+
+        // Resolve Nickname from SharedPreferences
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val nicknamesJson = prefs.getString("flutter.switch_nicknames", null)
+        var relayName = node
+        try {
+            if (nicknamesJson != null) {
+                val json = org.json.JSONObject(nicknamesJson)
+                if (json.has(node)) {
+                    relayName = json.getString(node)
+                }
+            }
+        } catch (e: Exception) {}
+
+        ref.child(node).setValue(targetVal).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d("SecurityService", "Success: $node ($relayName) to $targetVal")
+                logHistory(db, deviceId, node, relayName, state)
+                showCompletionNotification(relayName, state)
+            }
+        }
+    }
+
+    private fun logHistory(db: FirebaseDatabase, deviceId: String, node: String, relayName: String, state: Boolean) {
+        try {
+            val logRef = db.getReference("devices/$deviceId/logs").push()
+            val timestamp = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", java.util.Locale.US).format(java.util.Date())
+            val logData = mapOf(
+                "id" to (logRef.key ?: "unknown"),
+                "relayId" to node,
+                "relayName" to relayName,
+                "state" to state,
+                "timestamp" to timestamp,
+                "triggeredBy" to "scheduler"
+            )
+            logRef.setValue(logData)
+        } catch (e: Exception) {}
+    }
+
+    private fun showCompletionNotification(relayName: String, state: Boolean) {
+        val channelId = "nebula_automation_notifications"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Automation Results", NotificationManager.IMPORTANCE_DEFAULT)
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+
+        val stateText = if (state) "ON" else "OFF"
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("Schedule Executed")
+            .setContentText("Successfully turned $stateText $relayName")
+            .setSmallIcon(R.mipmap.launcher_icon)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+            
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(relayName.hashCode(), notification)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

@@ -41,6 +41,7 @@ import 'help_support_screen.dart';
 import 'help_center_screen.dart';
 import '../../widgets/robo/robo_assistant.dart';
 import '../../widgets/ai/ai_assistant_dialog.dart';
+import '../../widgets/settings/sprinkling_watermark.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -817,39 +818,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 ),
               ),
 
-              const SizedBox(height: 40),
-              Center(
-                child: ref
-                    .watch(currentVersionProvider)
-                    .when(
-                      data: (version) => Text(
-                        "Version $version",
-                        style: GoogleFonts.outfit(
-                          color: Colors.white.withOpacity(0.2),
-                          fontSize: 12.sp,
-                        ),
-                      ),
-                      loading: () => const SizedBox.shrink(),
-                      error: (e, s) => Text(
-                        "Version 1.2.0+17",
-                        style: GoogleFonts.outfit(
-                          color: Colors.white.withOpacity(0.2),
-                          fontSize: 12.sp,
-                        ),
-                      ),
-                    ),
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: Text(
-                  "2026 Kiran Embedded Github",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.1),
-                    fontSize: 10.sp,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 120),
+              const SizedBox(height: 20),
+              const SprinklingWatermark(),
+              const SizedBox(height: 100),
             ],
           ),
         ),

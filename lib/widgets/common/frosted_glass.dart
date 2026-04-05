@@ -1,8 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/performance_provider.dart';
-import '../../providers/switch_settings_provider.dart';
 
 class FrostedGlass extends ConsumerWidget {
   final Widget child;
@@ -22,8 +19,8 @@ class FrostedGlass extends ConsumerWidget {
     super.key,
     required this.child,
     this.blur = 20,
-    this.opacity = 0.18,
-    this.saturation = 2.2,
+    this.opacity = 0.1, // Unused but kept for API compatibility
+    this.saturation = 1.0,
     this.brightness = 1.0,
     this.radius = const BorderRadius.all(Radius.circular(28)),
     this.border,
@@ -41,13 +38,14 @@ class FrostedGlass extends ConsumerWidget {
       height: height,
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Theme.of(context).colorScheme.surface,
+        // Solid, theme-blended color instead of blur
+        color: color ?? const Color(0xFF121418),
         borderRadius: radius,
         border:
             border ??
             Border.all(
-              color: (color ?? Colors.white).withOpacity(0.08),
-              width: 0.8,
+              color: (color ?? Colors.white).withOpacity(0.05),
+              width: 1.0,
             ),
       ),
       child: child,

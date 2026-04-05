@@ -11,7 +11,6 @@ import '../../providers/switch_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../services/scheduler_service.dart';
 import '../../core/ui/responsive_layout.dart';
-import '../../providers/switch_settings_provider.dart';
 import '../../providers/animation_provider.dart';
 // import '../common/frosted_glass.dart'; // Removed
 import '../common/pixel_led_border.dart';
@@ -66,11 +65,18 @@ class _SchedulerSettingsPopupState
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
-          color: Colors.black, // Pure OLED Black
+          color: const Color(0xFF0D0F14), // Deep Space Blue-Black
           borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
-          border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
+          border: Border.all(
+            color: Theme.of(context).primaryColor.withOpacity(0.2),
+            width: 1.5,
+          ),
           boxShadow: [
-            BoxShadow(color: Colors.black, blurRadius: 40, spreadRadius: 5),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.8),
+              blurRadius: 40,
+              spreadRadius: 5,
+            ),
           ],
         ),
         child: Column(
@@ -380,10 +386,10 @@ class _SchedulerSettingsPopupState
           decoration: BoxDecoration(
             color: isSelected
                 ? primaryColor.withOpacity(0.15)
-                : const Color(0xFF0A0A0A), // Solid OLED dark
+                : const Color(0xFF151921), // Theme-blended solid dark
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: isSelected ? primaryColor : Colors.white.withOpacity(0.12),
+              color: isSelected ? primaryColor : Colors.white.withOpacity(0.08),
               width: 1.5,
             ),
           ),
@@ -513,41 +519,6 @@ class _SchedulerSettingsPopupState
     if (days.isEmpty) return 'Never';
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days.map((d) => dayNames[d - 1]).join(', ');
-  }
-
-  Widget _buildDaySummary(List<int> days) {
-    if (days.length == 7)
-      return Text(
-        'Every Day',
-        style: GoogleFonts.outfit(
-          fontSize: 12,
-          color: Colors.white.withOpacity(0.45),
-          fontWeight: FontWeight.w500,
-        ),
-      );
-    if (days.isEmpty)
-      return Text(
-        'Never',
-        style: GoogleFonts.outfit(
-          fontSize: 12,
-          color: Colors.white.withOpacity(0.45),
-          fontWeight: FontWeight.w500,
-        ),
-      );
-
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    String summary = days.map((d) => dayNames[d - 1]).join(', ');
-    return Flexible(
-      child: Text(
-        summary,
-        style: GoogleFonts.outfit(
-          fontSize: 12,
-          color: Colors.white.withOpacity(0.45),
-          fontWeight: FontWeight.w500,
-        ),
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
   }
 
   Widget _buildSelectionCheck(bool isSelected) {
@@ -776,7 +747,6 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
       _selectedTime = TimeOfDay.now();
       _selectedNode = widget.initialDeviceId ?? 'relay1';
       _targetState = true;
-      _selectedDays = [1, 2, 3, 4, 5, 6, 7];
     }
   }
 
@@ -836,40 +806,103 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
 
   Widget _buildTimePicker() {
     return Container(
-      height: 160,
+      height: 180,
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: const Color(0xFF1A1F26),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: CupertinoTheme(
-          data: const CupertinoThemeData(
-            brightness: Brightness.dark,
-            textTheme: CupertinoTextThemeData(
-              dateTimePickerTextStyle: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildTimeColumn(
+            (value) => setState(
+              () => _selectedTime = TimeOfDay(
+                hour: value,
+                minute: _selectedTime.minute,
+              ),
+            ),
+            _selectedTime.hour,
+            24,
+            'HOUR',
+          ),
+          Text(
+            ':',
+            style: GoogleFonts.outfit(
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
+              color: Colors.white24,
+            ),
+          ),
+          _buildTimeColumn(
+            (value) => setState(
+              () => _selectedTime = TimeOfDay(
+                hour: _selectedTime.hour,
+                minute: value,
+              ),
+            ),
+            _selectedTime.minute,
+            60,
+            'MIN',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeColumn(
+    ValueChanged<int> onChanged,
+    int currentValue,
+    int max,
+    String label,
+  ) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: Colors.white24,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: RepaintBoundary(
+              child: CupertinoPicker.builder(
+                itemExtent: 45,
+                scrollController: FixedExtentScrollController(
+                  initialItem: currentValue,
+                ),
+                onSelectedItemChanged: (index) {
+                  onChanged(index % max);
+                  HapticService.selection(); // Native iOS feel
+                },
+                childCount: 10000, // Pseudo-infinite for smooth loops
+                itemBuilder: (context, index) {
+                  final val = index % max;
+                  final isSelected = val == (currentValue % max);
+                  return Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: GoogleFonts.outfit(
+                        fontSize: isSelected ? 30 : 22,
+                        fontWeight: isSelected
+                            ? FontWeight.w900
+                            : FontWeight.w500,
+                        color: isSelected ? Colors.white : Colors.white24,
+                      ),
+                      child: Text(val.toString().padLeft(2, '0')),
+                    ),
+                  );
+                },
               ),
             ),
           ),
-          child: CupertinoDatePicker(
-            mode: CupertinoDatePickerMode.time,
-            use24hFormat: false,
-            initialDateTime: DateTime(
-              2024,
-              1,
-              1,
-              _selectedTime.hour,
-              _selectedTime.minute,
-            ),
-            onDateTimeChanged: (dt) => setState(
-              () => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute),
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -1519,19 +1552,7 @@ class _BreathingToggleState extends State<_BreathingToggle>
 // Widget to explain Beta status
 // End of file helper classes removed as they are no longer used
 
-// Helper for Staggered Animation
-Widget _animatedSection({
-  required int index,
-  required WidgetRef ref,
-  required Widget child,
-}) {
-  // Use AnimationProvider for staggering
-  final delay = (index * 50).clamp(0, 500); // Cap delay
-  return child
-      .animate()
-      .fadeIn(delay: delay.ms, duration: 400.ms)
-      .slideX(begin: 0.1, end: 0, delay: delay.ms, curve: Curves.easeOut);
-}
+// Breathing Toggle Switch
 
 // Small chips for Days (Mon, Tue...) in the list tile
 // End of file helper classes removed as they are no longer used
