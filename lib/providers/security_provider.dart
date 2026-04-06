@@ -11,12 +11,16 @@ class SensorState {
   final int lastTriggered;
   final int lightLevel;
   final String? nickname;
+  final bool isAlarmEnabled;
+  final int triggerCount;
 
   SensorState({
     required this.status,
     required this.lastTriggered,
     required this.lightLevel,
     this.nickname,
+    this.isAlarmEnabled = true,
+    this.triggerCount = 0,
   });
 
   factory SensorState.fromMap(Map<dynamic, dynamic> map) {
@@ -25,6 +29,8 @@ class SensorState {
       lastTriggered: map['lastTriggered'] ?? 0,
       lightLevel: map['lightLevel'] ?? 0,
       nickname: map['nickname']?.toString(),
+      isAlarmEnabled: map['isAlarmEnabled'] ?? true,
+      triggerCount: map['triggerCount'] ?? 0,
     );
   }
 }
@@ -35,6 +41,7 @@ class SecurityState {
   final List<SecurityLog> logs;
   final int ldrThreshold;
   final bool isAlarmActive;
+  final bool isNodeActive;
   final int masterLightLevel;
   final bool autoLightOnMotion;
   final Map<String, bool> activePeriods;
@@ -54,6 +61,7 @@ class SecurityState {
       'night': true,
       'midnight': true,
     },
+    this.isNodeActive = false,
   });
 
   SecurityState copyWith({
@@ -62,6 +70,7 @@ class SecurityState {
     List<SecurityLog>? logs,
     int? ldrThreshold,
     bool? isAlarmActive,
+    bool? isNodeActive,
     int? masterLightLevel,
     bool? autoLightOnMotion,
     Map<String, bool>? activePeriods,
@@ -72,6 +81,7 @@ class SecurityState {
       logs: logs ?? this.logs,
       ldrThreshold: ldrThreshold ?? this.ldrThreshold,
       isAlarmActive: isAlarmActive ?? this.isAlarmActive,
+      isNodeActive: isNodeActive ?? this.isNodeActive,
       masterLightLevel: masterLightLevel ?? this.masterLightLevel,
       autoLightOnMotion: autoLightOnMotion ?? this.autoLightOnMotion,
       activePeriods: activePeriods ?? this.activePeriods,
@@ -117,7 +127,7 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
           if (last == null || now.difference(last).inSeconds >= 10) {
             _lastTriggerTime[key] = now;
 
-            if (this.state.isArmed) {
+            if (this.state.isArmed && state.isAlarmEnabled) {
               shouldTriggerAlarm = true;
               triggeredZone = key;
             }
@@ -166,6 +176,15 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
     _periodsSub = _service.activePeriodsStream.listen((periods) {
       state = state.copyWith(activePeriods: periods);
     });
+
+    _service.nodeActiveStream.listen((data) {
+      final lastSeen = data['lastSeen'] as int? ?? 0;
+      final status = data['status'] as bool? ?? false;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // If no heartbeat for > 20s, node is internally dead
+      final isAlive = status && (now - lastSeen < 20000);
+      state = state.copyWith(isNodeActive: isAlive);
+    });
   }
 
   void _handleAlarmTrigger(String zone) {
@@ -204,6 +223,12 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
 
   Future<void> setPeriodActive(String period, bool isActive) async {
     await _service.setPeriodActive(period, isActive);
+  }
+
+  Future<void> toggleSensorAlarm(String sensorName) async {
+    final sensor = state.sensors[sensorName];
+    if (sensor == null) return;
+    await _service.setSensorAlarmEnabled(sensorName, !sensor.isAlarmEnabled);
   }
 
   Future<void> acknowledge(String sensorName) async {

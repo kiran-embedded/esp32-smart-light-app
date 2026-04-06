@@ -87,6 +87,27 @@ class HapticService {
 
   static Future<void> selection() async => HapticFeedback.selectionClick();
 
+  static Future<void> variableSelection(double intensity) async {
+    if (!_initialized) await init();
+    if (!_hasVibrator) {
+      await HapticFeedback.selectionClick();
+      return;
+    }
+
+    try {
+      if (_hasCustomSupport) {
+        // Map 0.0-1.0 to 5ms-30ms duration and 20-255 amplitude
+        int duration = (5 + (intensity * 25)).toInt();
+        int amplitude = (20 + (intensity * 235)).toInt();
+        Vibration.vibrate(duration: duration, amplitude: amplitude);
+      } else {
+        await HapticFeedback.selectionClick();
+      }
+    } catch (_) {
+      await HapticFeedback.selectionClick();
+    }
+  }
+
   static Future<void> pulse() async {
     await feedback(HapticStyle.heavy);
   }

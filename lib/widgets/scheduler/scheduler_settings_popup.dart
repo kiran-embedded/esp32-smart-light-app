@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'automation_settings_popup.dart';
 import '../../models/switch_schedule.dart';
 import '../../providers/switch_schedule_provider.dart';
 import '../../providers/switch_provider.dart';
@@ -136,9 +137,7 @@ class _SchedulerSettingsPopupState
                   .custom(
                     duration: 1500.ms,
                     builder: (context, value, child) => Container(
-                      decoration: BoxDecoration(
-                        boxShadow: const [],
-                      ),
+                      decoration: BoxDecoration(boxShadow: const []),
                       child: child,
                     ),
                   ),
@@ -173,6 +172,15 @@ class _SchedulerSettingsPopupState
           ),
           Row(
             children: [
+              // Logic configuration button
+              IconButton(
+                icon: const Icon(
+                  Icons.swap_vert_circle_outlined,
+                  color: Colors.white70,
+                  size: 22,
+                ),
+                onPressed: _showLogicDialog,
+              ),
               // Rename Button (Restored)
               IconButton(
                 icon: const Icon(
@@ -228,6 +236,179 @@ class _SchedulerSettingsPopupState
                       curve: Curves.easeInOut,
                     ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogicDialog() {
+    HapticService.selection();
+    if (widget.initialDeviceId == null) return;
+
+    final deviceId = widget.initialDeviceId!;
+    final relayIndex =
+        int.tryParse(deviceId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white12),
+        ),
+        title: Text(
+          'Logic Configuration',
+          style: GoogleFonts.outfit(color: Colors.white),
+        ),
+        content: Consumer(
+          builder: (context, ref, child) {
+            final hubId = ref
+                .read(switchDevicesProvider.notifier)
+                .currentDeviceId;
+            final asyncData = ref.watch(invertedLogicProvider(hubId));
+
+            return asyncData.when(
+              data: (logicMap) {
+                final isInverted = logicMap[relayIndex] ?? false;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Select how this relay responds to the ON command.',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white54,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      tileColor: isInverted
+                          ? Colors.transparent
+                          : Colors.white.withOpacity(0.05),
+                      title: Text(
+                        'Normal (Active HIGH)',
+                        style: GoogleFonts.outfit(color: Colors.white),
+                      ),
+                      trailing: isInverted
+                          ? null
+                          : const Icon(
+                              Icons.check_circle,
+                              color: Colors.cyanAccent,
+                            ),
+                      onTap: () {
+                        ref
+                            .read(firebaseSwitchServiceProvider)
+                            .updateInvertedLogic(
+                              relayIndex,
+                              false,
+                              deviceId: hubId,
+                            );
+                        HapticService.selection();
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      tileColor: isInverted
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.transparent,
+                      title: Text(
+                        'Inverted (Active LOW)',
+                        style: GoogleFonts.outfit(color: Colors.white),
+                      ),
+                      trailing: isInverted
+                          ? const Icon(
+                              Icons.check_circle,
+                              color: Colors.cyanAccent,
+                            )
+                          : null,
+                      onTap: () {
+                        ref
+                            .read(firebaseSwitchServiceProvider)
+                            .updateInvertedLogic(
+                              relayIndex,
+                              true,
+                              deviceId: hubId,
+                            );
+                        HapticService.selection();
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // AUTOMATION
+                    Text(
+                      'ESP32 Motion AI Engine',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      tileColor: Colors.white.withOpacity(0.05),
+                      title: Text(
+                        'Automation Rules',
+                        style: GoogleFonts.outfit(color: Colors.white),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.cyanAccent,
+                        size: 16,
+                      ),
+                      onTap: () {
+                        HapticService.selection();
+
+                        final devices = ref.read(switchDevicesProvider);
+                        final targetDevice = devices.firstWhere(
+                          (d) => d.id == widget.initialDeviceId!,
+                        );
+
+                        showDialog(
+                          context: context,
+                          barrierColor: Colors.black.withOpacity(0.8),
+                          builder: (context) => AutomationSettingsPopup(
+                            relayIndex: relayIndex,
+                            switchName: targetDevice.name,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox(
+                height: 100,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, __) => const Text(
+                'Error loading logic config',
+                style: TextStyle(color: Colors.red),
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Close',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

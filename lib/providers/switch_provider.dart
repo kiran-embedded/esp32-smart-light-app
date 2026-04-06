@@ -10,6 +10,15 @@ final firebaseSwitchServiceProvider = Provider<FirebaseSwitchService>((ref) {
   return FirebaseSwitchService();
 });
 
+final invertedLogicProvider = StreamProvider.family<Map<int, bool>, String>((
+  ref,
+  deviceId,
+) {
+  return ref
+      .read(firebaseSwitchServiceProvider)
+      .listenToInvertedLogic(deviceId: deviceId);
+});
+
 final switchDevicesProvider =
     StateNotifierProvider<SwitchDevicesNotifier, List<SwitchDevice>>((ref) {
       return SwitchDevicesNotifier(ref);
@@ -48,6 +57,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         _createDefaultDevice('relay4', 'Switch 4'),
         _createDefaultDevice('relay5', 'Switch 5'),
         _createDefaultDevice('relay6', 'Switch 6'),
+        _createDefaultDevice('relay7', 'Switch 7'),
       ]) {
     if (initialNicknames != null) {
       _applyInitialNicknames(initialNicknames);
@@ -368,7 +378,17 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     }
   }
 
+  final Map<String, DateTime> _lastToggleTime = {};
+
   Future<void> toggleSwitch(String id) async {
+    final now = DateTime.now();
+    if (_lastToggleTime.containsKey(id)) {
+      if (now.difference(_lastToggleTime[id]!).inMilliseconds < 400) {
+        return; // Deny double-click rapid glitch
+      }
+    }
+    _lastToggleTime[id] = now;
+
     final deviceIndex = state.indexWhere((d) => d.id == id);
     if (deviceIndex == -1) return;
     final device = state[deviceIndex];

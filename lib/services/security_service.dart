@@ -17,6 +17,16 @@ class SecurityService {
     });
   }
 
+  Stream<Map<String, dynamic>> get nodeActiveStream {
+    return _database.ref('devices/$deviceId/security/nodeActive').onValue.map((
+      event,
+    ) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {'status': false, 'lastSeen': 0};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
   Stream<bool> get isArmedStream {
     return _database.ref('devices/$deviceId/security/isArmed').onValue.map((
       event,
@@ -113,6 +123,12 @@ class SecurityService {
     await _database
         .ref('devices/$deviceId/security/sensors/$sensorName')
         .update({'status': false});
+  }
+
+  Future<void> setSensorAlarmEnabled(String sensorName, bool enabled) async {
+    await _database
+        .ref('devices/$deviceId/security/sensors/$sensorName')
+        .update({'isAlarmEnabled': enabled});
   }
 
   Future<void> renameSensor(String sensorName, String newName) async {

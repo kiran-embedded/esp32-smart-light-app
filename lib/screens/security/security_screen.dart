@@ -184,15 +184,50 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    'Sensors',
-                    style: TextStyle(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Sensors',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: securityState.isNodeActive
+                              ? Colors.green.withOpacity(0.15)
+                              : Colors.redAccent.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: securityState.isNodeActive
+                                ? Colors.green.withOpacity(0.3)
+                                : Colors.redAccent.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          securityState.isNodeActive
+                              ? 'NODE ONLINE'
+                              : 'NODE OFFLINE',
+                          style: TextStyle(
+                            color: securityState.isNodeActive
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -238,9 +273,14 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                               status: state.status,
                               lastTriggered: state.lastTriggered,
                               lightLevel: state.lightLevel,
+                              isAlarmEnabled: state.isAlarmEnabled,
+                              triggerCount: state.triggerCount,
                               onAcknowledge: () => ref
                                   .read(securityProvider.notifier)
                                   .acknowledge(key),
+                              onToggleAlarm: () => ref
+                                  .read(securityProvider.notifier)
+                                  .toggleSensorAlarm(key),
                             ),
                           )
                           .animate()
@@ -300,10 +340,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                           spacing: 12,
                           runSpacing: 12,
                           children: [
-                            _buildTestButton("Living Room"),
-                            _buildTestButton("Kitchen"),
-                            _buildTestButton("Bedroom"),
-                            _buildTestButton("Balcony"),
+                            _buildTestButton("living"),
+                            _buildTestButton("kitchen"),
+                            _buildTestButton("hallway"),
+                            _buildTestButton("garage"),
+                            _buildTestButton("door"),
                           ],
                         ),
                       ],

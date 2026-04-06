@@ -100,6 +100,43 @@ class FirebaseSwitchService {
     return {};
   }
 
+  /// Update the inverted logic boolean at /devices/{id}/commands/invert{X}
+  Future<void> updateInvertedLogic(
+    int relayIndex,
+    bool isInverted, {
+    String? deviceId,
+  }) async {
+    final id = deviceId ?? AppConstants.defaultDeviceId;
+    final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
+
+    // Commands path update to avoid overwriting other relays config
+    await _database.child(path).update({'invert$relayIndex': isInverted});
+  }
+
+  /// Listen reactively to inverted logic state in /devices/{id}/commands
+  Stream<Map<int, bool>> listenToInvertedLogic({String? deviceId}) {
+    final id = deviceId ?? AppConstants.defaultDeviceId;
+    final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
+
+    return _database.child(path).onValue.map((event) {
+      final data = event.snapshot.value;
+      if (data == null || data is! Map) return {};
+      final rawMap = Map<String, dynamic>.from(data);
+      final safeMap = <int, bool>{};
+
+      for (int i = 1; i <= 7; i++) {
+        if (rawMap.containsKey('invert$i')) {
+          final dynamic val = rawMap['invert$i'];
+          // Safely handle booleans, strings, or integers stored natively
+          safeMap[i] = (val == true || val == 1 || val == 'true' || val == '1');
+        } else {
+          safeMap[i] = false;
+        }
+      }
+      return safeMap;
+    });
+  }
+
   /// WAKE-UP CALL: Tiny read to re-activate the socket connection
   /// Using .info/connected is efficient as it doesn't fetch large data.
   /// Includes throttling to prevent spam.
@@ -213,6 +250,45 @@ class FirebaseSwitchService {
         );
       }
     }
+  }
+
+  // --- AUTOMATION ENGINE ---
+  Stream<Map<String, dynamic>> listenToAutomation(
+    int relayIndex, {
+    String deviceId = AppConstants.defaultDeviceId,
+  }) {
+    return _database.child('devices/$deviceId/commands').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {};
+
+      final r = relayIndex + 1;
+      return {
+        'sensor': data['auto_r${r}_sen'] ?? 'kitchen',
+        'duration': data['auto_r${r}_dur'] ?? 60,
+        'ldr': data['auto_r${r}_thr'] ?? 50,
+        'isActive': data['auto_r${r}_act'] ?? false,
+        'timeMode': data['auto_r${r}_tm'] ?? 0,
+      };
+    });
+  }
+
+  Future<void> updateAutomation(
+    int relayIndex,
+    String sensor,
+    int duration,
+    int ldr,
+    bool isActive, [
+    int timeMode = 0,
+  ]) async {
+    final r = relayIndex + 1;
+    final String deviceId = AppConstants.defaultDeviceId;
+    await _database.child('devices/$deviceId/commands').update({
+      'auto_r${r}_sen': sensor,
+      'auto_r${r}_dur': duration,
+      'auto_r${r}_thr': ldr,
+      'auto_r${r}_act': isActive,
+      'auto_r${r}_tm': timeMode,
+    });
   }
 
   static bool _persistenceSet = false;

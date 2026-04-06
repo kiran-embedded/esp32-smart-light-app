@@ -31,13 +31,15 @@ import '../../widgets/history/history_sheet.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../core/ui/global_layout_engine.dart';
-
 import '../../providers/google_home_provider.dart';
 import '../../services/google_assistant_service.dart';
 
 import '../settings/settings_screen.dart';
 import 'security_view.dart';
 import '../../widgets/scheduler/scheduler_settings_popup.dart';
+import '../../widgets/help/help_bot_overlay.dart';
+
+final helpBotVisibleProvider = StateProvider<bool>((ref) => false);
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -218,6 +220,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
               ],
             ),
           ),
+          if (ref.watch(helpBotVisibleProvider))
+            HelpBotOverlay(
+              onComplete: () =>
+                  ref.read(helpBotVisibleProvider.notifier).state = false,
+            ),
         ],
       ),
     );
@@ -433,6 +440,17 @@ class DashboardView extends ConsumerWidget {
               theme: theme,
               temp: liveInfo.temperature,
               iconName: liveInfo.weatherIcon,
+            ),
+            leading: IconButton(
+              icon: const Icon(
+                Icons.help_outline_rounded,
+                color: Colors.white30,
+                size: 20,
+              ),
+              onPressed: () {
+                HapticService.heavy();
+                ref.read(helpBotVisibleProvider.notifier).state = true;
+              },
             ),
           ),
         ),

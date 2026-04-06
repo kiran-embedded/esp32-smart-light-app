@@ -6,6 +6,7 @@ import 'pixel_led_border.dart';
 
 class PremiumAppBar extends ConsumerStatefulWidget {
   final Widget title;
+  final Widget? leading;
   final Widget? trailing;
   final double height;
   final Color backgroundColor;
@@ -15,6 +16,7 @@ class PremiumAppBar extends ConsumerStatefulWidget {
   const PremiumAppBar({
     super.key,
     required this.title,
+    this.leading,
     this.trailing,
     this.height = 65,
     this.backgroundColor = Colors.black,
@@ -68,6 +70,10 @@ class _PremiumAppBarState extends ConsumerState<PremiumAppBar> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        if (widget.leading != null) ...[
+                          widget.leading!,
+                          SizedBox(width: 12.w),
+                        ],
                         Expanded(child: widget.title),
                         if (widget.trailing != null) ...[
                           SizedBox(width: 16.w),

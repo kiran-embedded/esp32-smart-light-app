@@ -14,6 +14,8 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <esp_now.h>
+#include <map>
+#include <time.h>
 
 #include "addons/RTDBHelper.h"
 #include "addons/TokenHelper.h"
@@ -38,8 +40,8 @@
 #define RELAY4 33
 #define RELAY5 32
 #define RELAY6 14
+#define RELAY7 23
 #define VOLTAGE_SENSOR 34
-#define PIR_PIN 13    // PIR Motion Sensor input
 #define BUZZER_PIN 12 // Piezo Buzzer for Alerts
 
 #define LED_PIN_RED 19
@@ -66,7 +68,21 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 String deviceId = "79215788";
-bool relayState[6] = {0, 0, 0, 0, 0, 0};
+bool relayState[7] = {0, 0, 0, 0, 0, 0, 0};
+bool invertedLogic[7] = {0, 0, 0, 0, 0, 0, 0};
+
+// --- DYNAMIC AUTOMATION ENGINE ---
+String autoSensor[7] = {"", "", "", "", "", "", ""};
+int autoDuration[7] = {0, 0, 0, 0, 0, 0, 0};
+int autoThreshold[7] = {0, 0, 0, 0, 0, 0, 0};
+bool autoActive[7] = {false, false, false, false, false, false, false};
+unsigned long autoTriggerTime[7] = {0, 0, 0, 0, 0, 0, 0};
+int autoTimeMode[7] = {0, 0, 0, 0,
+                       0, 0, 0}; // 0: All, 1: Morning, 2: Day, 3: Midnight
+std::map<String, bool> sensorAlarmEnabled;
+std::map<String, int> sensorTriggerCount;
+unsigned long lastSensorSync = 0;
+
 bool updateRelays = false;
 bool forceTelemetry = false;
 
@@ -74,8 +90,6 @@ volatile float sharedVoltage = 0.0;
 unsigned long lastTelemetryTime = 0;
 float lastReportedVoltage = 0;
 unsigned long lastPIRTrigger = 0;
-const int PIR_COOLDOWN = 5000; // 5 second cooldown
-bool lastPIRState = false;
 bool isArmed = true; // Security system state (Cloud controlled)
 
 volatile bool isInternetLive = false;
@@ -218,14 +232,18 @@ void voltageTask(void *pvParameters) {
 
 /* ================= HARDWARE CONTROL ================= */
 void applyRelays() {
-  Serial.printf("Relay CMD: %d %d %d %d %d %d\n", relayState[0], relayState[1],
-                relayState[2], relayState[3], relayState[4], relayState[5]);
-  digitalWrite(RELAY1, relayState[0] ? HIGH : LOW);
-  digitalWrite(RELAY2, relayState[1] ? HIGH : LOW);
-  digitalWrite(RELAY3, relayState[2] ? HIGH : LOW);
-  digitalWrite(RELAY4, relayState[3] ? HIGH : LOW);
-  digitalWrite(RELAY5, relayState[4] ? HIGH : LOW);
-  digitalWrite(RELAY6, relayState[5] ? HIGH : LOW);
+  Serial.printf("Relay CMD: %d %d %d %d %d %d %d | INV: %d %d %d %d %d %d %d\n",
+                relayState[0], relayState[1], relayState[2], relayState[3],
+                relayState[4], relayState[5], relayState[6], invertedLogic[0],
+                invertedLogic[1], invertedLogic[2], invertedLogic[3],
+                invertedLogic[4], invertedLogic[5], invertedLogic[6]);
+  digitalWrite(RELAY1, (relayState[0] != invertedLogic[0]) ? HIGH : LOW);
+  digitalWrite(RELAY2, (relayState[1] != invertedLogic[1]) ? HIGH : LOW);
+  digitalWrite(RELAY3, (relayState[2] != invertedLogic[2]) ? HIGH : LOW);
+  digitalWrite(RELAY4, (relayState[3] != invertedLogic[3]) ? HIGH : LOW);
+  digitalWrite(RELAY5, (relayState[4] != invertedLogic[4]) ? HIGH : LOW);
+  digitalWrite(RELAY6, (relayState[5] != invertedLogic[5]) ? HIGH : LOW);
+  digitalWrite(RELAY7, (relayState[6] != invertedLogic[6]) ? HIGH : LOW);
 }
 
 /* ================= STREAM CALLBACK ================= */
@@ -251,22 +269,82 @@ void streamCallback(FirebaseStream data) {
       relayState[4] = d.intValue;
     if (json->get(d, "relay6"))
       relayState[5] = d.intValue;
+    if (json->get(d, "relay7"))
+      relayState[6] = d.intValue;
+    if (json->get(d, "invert1"))
+      invertedLogic[0] = d.boolValue;
+    if (json->get(d, "invert2"))
+      invertedLogic[1] = d.boolValue;
+    if (json->get(d, "invert3"))
+      invertedLogic[2] = d.boolValue;
+    if (json->get(d, "invert4"))
+      invertedLogic[3] = d.boolValue;
+    if (json->get(d, "invert5"))
+      invertedLogic[4] = d.boolValue;
+    if (json->get(d, "invert6"))
+      invertedLogic[5] = d.boolValue;
+    if (json->get(d, "invert7"))
+      invertedLogic[6] = d.boolValue;
     if (json->get(d, "ecoMode"))
       isEcoMode = d.boolValue;
+
+    updateRelays = true; // Root sync instant apply
   } else {
-    int intVal = data.intData();
-    if (path == "/relay1")
-      relayState[0] = intVal;
-    if (path == "/relay2")
-      relayState[1] = intVal;
-    if (path == "/relay3")
-      relayState[2] = intVal;
-    if (path == "/relay4")
-      relayState[3] = intVal;
-    if (path == "/relay5")
-      relayState[4] = intVal;
-    if (path == "/relay6")
-      relayState[5] = intVal;
+    // Determine type safely based on path PREFIX
+    if (path.startsWith("/relay")) {
+      int intVal = data.intData();
+      if (path == "/relay1")
+        relayState[0] = intVal;
+      if (path == "/relay2")
+        relayState[1] = intVal;
+      if (path == "/relay3")
+        relayState[2] = intVal;
+      if (path == "/relay4")
+        relayState[3] = intVal;
+      if (path == "/relay5")
+        relayState[4] = intVal;
+      if (path == "/relay6")
+        relayState[5] = intVal;
+      if (path == "/relay7")
+        relayState[6] = intVal;
+
+      updateRelays = true;
+    } else if (path.startsWith("/invert")) {
+      bool bVal = data.boolData();
+      if (path == "/invert1")
+        invertedLogic[0] = bVal;
+      if (path == "/invert2")
+        invertedLogic[1] = bVal;
+      if (path == "/invert3")
+        invertedLogic[2] = bVal;
+      if (path == "/invert4")
+        invertedLogic[3] = bVal;
+      if (path == "/invert5")
+        invertedLogic[4] = bVal;
+      if (path == "/invert6")
+        invertedLogic[5] = bVal;
+      if (path == "/invert7")
+        invertedLogic[6] = bVal;
+
+      updateRelays = true;
+    }
+    // --- AUTOMATION ENGINE PARSING ---
+    else if (path.indexOf("/auto_r") != -1) {
+      int rIndex = path.substring(7, 8).toInt() - 1;
+      if (rIndex >= 0 && rIndex < 7) {
+        if (path.endsWith("_sen"))
+          autoSensor[rIndex] = data.stringData();
+        else if (path.endsWith("_dur"))
+          autoDuration[rIndex] = data.intData();
+        else if (path.endsWith("_thr"))
+          autoThreshold[rIndex] = data.intData();
+        else if (path.endsWith("_act"))
+          autoActive[rIndex] = data.boolData();
+        else if (path.endsWith("_tm"))
+          autoTimeMode[rIndex] = data.intData();
+      }
+    }
+
     if (path == "/ecoMode") {
       isEcoMode = data.boolData();
       Serial.printf("MODE CHANGED: %s\n", isEcoMode ? "ECO" : "PERFORMANCE");
@@ -293,12 +371,256 @@ void streamTimeoutCallback(bool timeout) {
 }
 
 /* ================= ESP-NOW CALLBACK ================= */
-void OnDataRecv(const uint8_t *mac, const uint8_t *data, int len) {
+void OnDataRecv(const esp_now_recv_info *info, const uint8_t *data, int len) {
   memcpy(&incomingData, data, sizeof(incomingData));
   Serial.printf("🛰 MESH RECV: %s | Motion: %d | LDR: %d\n",
                 incomingData.sensorId, incomingData.motion,
                 incomingData.lightLevel);
   meshDataPending = true;
+}
+
+/* ================= FIREBASE TASK (CORE 0) ================= */
+void firebaseTelemetryTask(void *pvParameters) {
+  for (;;) {
+    // --- WIFI AUTO RECONNECT (Second Layer Defense) ---
+    static unsigned long lastWiFiCheck = 0;
+    if (millis() - lastWiFiCheck > 20000) {
+      lastWiFiCheck = millis();
+      if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("⚠ WiFi Reconnecting...");
+        WiFi.disconnect();
+        WiFi.begin(WIFI_SSID, WIFI_PASS);
+      }
+    }
+
+    // --- TELEMETRY / HEARTBEAT ---
+    static unsigned long lastTeleCheck = 0;
+    if (millis() - lastTeleCheck >
+        (isEcoMode ? 2000 : 500)) { // Polling throttle
+      lastTeleCheck = millis();
+      float currentV = sharedVoltage;
+      bool timeExpired = (millis() - lastTelemetryTime > reportInterval);
+      bool significantChange = (abs(currentV - lastReportedVoltage) > 3.0);
+
+      if (forceTelemetry || timeExpired || significantChange) {
+        if (Firebase.ready() && isInternetLive) {
+          FirebaseJson j;
+          j.set("relay1", relayState[0]);
+          j.set("relay2", relayState[1]);
+          j.set("relay3", relayState[2]);
+          j.set("relay4", relayState[3]);
+          j.set("relay5", relayState[4]);
+          j.set("relay6", relayState[5]);
+          j.set("relay7", relayState[6]);
+          j.set("voltage", currentV);
+          j.set("ecoMode", isEcoMode);
+          j.set("lastSeen", millis());
+          forceTelemetry = false;
+
+          if (Firebase.RTDB.updateNode(
+                  &fbTele, ("devices/" + deviceId + "/telemetry").c_str(),
+                  &j)) {
+            lastTelemetryTime = millis();
+            lastReportedVoltage = currentV;
+            lastCloudActivity = millis(); // Refresh deadman
+          } else {
+            isInternetLive = false; // Fallback sync
+          }
+        }
+      }
+    }
+
+    // --- DEADMAN'S SWITCH LOGIC ---
+    if (millis() - lastCloudActivity > DEADMAN_TIMEOUT_MS) {
+      if (!safetyTripped) {
+        Serial.println(
+            "⛔ DEADMAN TRIP: No Cloud Contact for 2 mins. Halting.");
+        relayState[0] = false;
+        relayState[1] = false;
+        relayState[2] = false;
+        relayState[3] = false;
+        relayState[4] = false;
+        relayState[5] = false;
+        relayState[6] = false;
+        updateRelays = true; // Signal Core 1 to toggle relays instantly
+        safetyTripped = true;
+      }
+
+      // Auto Reset if Deadman is tripped for 5 minutes
+      if (millis() - lastCloudActivity > (DEADMAN_TIMEOUT_MS + 300000)) {
+        Serial.println("☢ DEADMAN REBOOT!");
+        ESP.restart();
+      }
+    } else {
+      safetyTripped = false;
+    }
+
+    // --- AUTOMATION ENGINE: AUTO-OFF TIMERS ---
+    for (int i = 0; i < 7; i++) {
+      if (autoActive[i] && autoDuration[i] > 0 && relayState[i] == 1 &&
+          autoTriggerTime[i] > 0) {
+        if (millis() - autoTriggerTime[i] >
+            (unsigned long)autoDuration[i] * 1000UL) {
+          Serial.printf("⏳ AUTOMATION: Auto-Turning OFF Relay %d after %ds\n",
+                        i + 1, autoDuration[i]);
+          relayState[i] = 0;
+          autoTriggerTime[i] = 0;
+          updateRelays = true;
+        }
+      }
+    }
+
+    // --- MESH BRIDGE FORWARDING ---
+    if (meshDataPending) {
+      if (strcmp(incomingData.sensorId, "ping") == 0) {
+        // It's a heartbeat from Node
+        if (Firebase.ready() && isInternetLive) {
+          Firebase.RTDB.setInt(
+              &fbTele,
+              ("devices/" + deviceId + "/security/nodeActive/lastSeen").c_str(),
+              millis());
+          Firebase.RTDB.setBool(
+              &fbTele,
+              ("devices/" + deviceId + "/security/nodeActive/status").c_str(),
+              true);
+        }
+      } else {
+        // It's motion data
+        if (Firebase.ready() && isInternetLive) {
+          FirebaseJson meshJson;
+          meshJson.set("status", incomingData.motion);
+          meshJson.set("lightLevel", incomingData.lightLevel);
+          meshJson.set("lastTriggered", millis());
+
+          String nodePath = "devices/" + deviceId + "/security/sensors/" +
+                            String(incomingData.sensorId);
+
+          // Update trigger count locally and sync
+          if (incomingData.motion) {
+            sensorTriggerCount[incomingData.sensorId]++;
+            meshJson.set("triggerCount",
+                         sensorTriggerCount[incomingData.sensorId]);
+          }
+
+          if (Firebase.RTDB.updateNode(&fbTele, nodePath.c_str(), &meshJson)) {
+
+            // --- AUTOMATION ENGINE: MOTION TRIGGERS ---
+            if (incomingData.motion) {
+              for (int i = 0; i < 7; i++) {
+                if (autoActive[i] &&
+                    autoSensor[i] == String(incomingData.sensorId)) {
+
+                  // Time-of-Day Gating
+                  bool timeMatch = true;
+                  if (autoTimeMode[i] > 0) {
+                    struct tm timeinfo;
+                    if (getLocalTime(&timeinfo)) {
+                      int hour = timeinfo.tm_hour;
+                      if (autoTimeMode[i] == 1) { // Morning: 6-12
+                        timeMatch = (hour >= 6 && hour < 12);
+                      } else if (autoTimeMode[i] == 2) { // Day: 12-18
+                        timeMatch = (hour >= 12 && hour < 18);
+                      } else if (autoTimeMode[i] == 3) { // Midnight: 18-6
+                        timeMatch = (hour >= 18 || hour < 6);
+                      }
+                    }
+                  }
+
+                  if (timeMatch &&
+                      incomingData.lightLevel <= autoThreshold[i]) {
+                    // Turn ON Relay
+                    Serial.printf("⚡ AUTOMATION: %s triggered Relay %d (LDR: "
+                                  "%d <= %d)\n",
+                                  incomingData.sensorId, i + 1,
+                                  incomingData.lightLevel, autoThreshold[i]);
+                    relayState[i] = 1;
+                    autoTriggerTime[i] = millis();
+                    updateRelays = true;
+                  }
+                }
+              }
+            }
+
+            // Check if alarm is enabled for THIS specific sensor
+            bool alarmGate = true;
+            if (sensorAlarmEnabled.find(incomingData.sensorId) !=
+                sensorAlarmEnabled.end()) {
+              alarmGate = sensorAlarmEnabled[incomingData.sensorId];
+            }
+
+            if (incomingData.motion && isArmed && alarmGate) {
+              // Local Alert
+              digitalWrite(BUZZER_PIN, HIGH);
+              delay(200);
+              digitalWrite(BUZZER_PIN, LOW);
+
+              triggerActivityLED();
+              // Push log for history
+              FirebaseJson log;
+              log.set("sensor", incomingData.sensorId);
+              log.set("timestamp", millis());
+              Firebase.RTDB.pushJSON(
+                  &fbTele, ("/devices/" + deviceId + "/security/logs").c_str(),
+                  &log);
+            } else if (incomingData.motion) {
+              // Visual only if silenced or disarmed
+              triggerActivityLED();
+            }
+          }
+        }
+      }
+      meshDataPending = false;
+    }
+
+    // Sync Sensor States (Alarm Enabled / Trigger Count)
+    if (millis() - lastSensorSync > 30000) {
+      FirebaseJson sensors;
+      if (Firebase.RTDB.getJSON(
+              &fbConn, ("devices/" + deviceId + "/security/sensors").c_str(),
+              &sensors)) {
+        FirebaseJsonData data;
+        sensors.get(data, "living/isAlarmEnabled");
+        if (data.success)
+          sensorAlarmEnabled["living"] = data.boolValue;
+        sensors.get(data, "living/triggerCount");
+        if (data.success)
+          sensorTriggerCount["living"] = data.intValue;
+
+        sensors.get(data, "kitchen/isAlarmEnabled");
+        if (data.success)
+          sensorAlarmEnabled["kitchen"] = data.boolValue;
+        sensors.get(data, "kitchen/triggerCount");
+        if (data.success)
+          sensorTriggerCount["kitchen"] = data.intValue;
+
+        sensors.get(data, "hallway/isAlarmEnabled");
+        if (data.success)
+          sensorAlarmEnabled["hallway"] = data.boolValue;
+        sensors.get(data, "hallway/triggerCount");
+        if (data.success)
+          sensorTriggerCount["hallway"] = data.intValue;
+
+        sensors.get(data, "garage/isAlarmEnabled");
+        if (data.success)
+          sensorAlarmEnabled["garage"] = data.boolValue;
+        sensors.get(data, "garage/triggerCount");
+        if (data.success)
+          sensorTriggerCount["garage"] = data.intValue;
+
+        sensors.get(data, "door/isAlarmEnabled");
+        if (data.success)
+          sensorAlarmEnabled["door"] = data.boolValue;
+        sensors.get(data, "door/triggerCount");
+        if (data.success)
+          sensorTriggerCount["door"] = data.intValue;
+
+        lastSensorSync = millis();
+      }
+    }
+
+    vTaskDelay(
+        pdMS_TO_TICKS(isEcoMode ? 1000 : 200)); // FreeRTOS non-blocking delay
+  }
 }
 
 /* ================= SETUP ================= */
@@ -311,6 +633,7 @@ void setup() {
   pinMode(RELAY4, OUTPUT);
   pinMode(RELAY5, OUTPUT);
   pinMode(RELAY6, OUTPUT);
+  pinMode(RELAY7, OUTPUT);
 
   digitalWrite(RELAY1, LOW);
   digitalWrite(RELAY2, LOW);
@@ -318,9 +641,9 @@ void setup() {
   digitalWrite(RELAY4, LOW);
   digitalWrite(RELAY5, LOW);
   digitalWrite(RELAY6, LOW);
+  digitalWrite(RELAY7, LOW);
   applyRelays();
 
-  pinMode(PIR_PIN, INPUT); // Initialize PIR pin
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
 
@@ -344,6 +667,10 @@ void setup() {
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\n✅ WiFi Connected");
+
+    // Configure Time Sync (NTP)
+    configTime(19800, 0, "pool.ntp.org", "time.nist.gov"); // GMT+5:30 (India)
+
     xTaskCreatePinnedToCore(connectivityTask, "ConnTask", 2048, NULL, 1, NULL,
                             0);
     triggerActivityLED();
@@ -364,11 +691,13 @@ void setup() {
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
   config.token_status_callback = tokenStatusCallback;
+
+  // --- PERFORMANCE BOOSTER CONFIGURATIONS ---
+  fbStream.setBSSLBufferSize(2048, 512);
   fbStream.setResponseSize(1024);
 
   Firebase.signUp(&config, &auth, "", "");
   Firebase.begin(&config, &auth);
-  // FIREBASE RECONNECT PARAMS
   Firebase.reconnectWiFi(true);
 
   Firebase.RTDB.beginStream(&fbStream,
@@ -393,12 +722,15 @@ void setup() {
     Serial.println("🔗 ESP-NOW Bridge Initialized");
   }
 
+  // --- START DUAL-CORE RTOS TASKS ---
   xTaskCreatePinnedToCore(voltageTask, "VoltageTask", 10000, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(firebaseTelemetryTask, "FirebaseTask", 16384, NULL, 1,
+                          NULL, 0);
 
   lastCloudActivity = millis();
 }
 
-/* ================= LOOP ================= */
+/* ================= LOOP (CORE 1) ================= */
 void loop() {
   animateLEDs();
   ArduinoOTA.handle();
@@ -408,151 +740,5 @@ void loop() {
     updateRelays = false;
   }
 
-  // --- WIFI AUTO RECONNECT (Second Layer Defense) ---
-  static unsigned long lastWiFiCheck = 0;
-  if (millis() - lastWiFiCheck > 20000) {
-    lastWiFiCheck = millis();
-    if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("⚠ WiFi Reconnecting...");
-      WiFi.disconnect();
-      WiFi.begin(WIFI_SSID, WIFI_PASS);
-    }
-  }
-
-  // --- TELEMETRY / HEARTBEAT ---
-  static unsigned long lastTeleCheck = 0;
-  if (millis() - lastTeleCheck > (isEcoMode ? 2000 : 500)) { // Polling throttle
-    lastTeleCheck = millis();
-    float currentV = sharedVoltage;
-    bool timeExpired = (millis() - lastTelemetryTime > reportInterval);
-    bool significantChange = (abs(currentV - lastReportedVoltage) > 3.0);
-
-    if (forceTelemetry || timeExpired || significantChange) {
-      if (Firebase.ready() && isInternetLive) {
-        FirebaseJson j;
-        j.set("relay1", relayState[0]);
-        j.set("relay2", relayState[1]);
-        j.set("relay3", relayState[2]);
-        j.set("relay4", relayState[3]);
-        j.set("relay5", relayState[4]);
-        j.set("relay6", relayState[5]);
-        j.set("voltage", currentV);
-        j.set("ecoMode", isEcoMode);
-        j.set("lastSeen", millis());
-        forceTelemetry = false;
-
-        if (Firebase.RTDB.updateNode(
-                &fbTele, ("devices/" + deviceId + "/telemetry").c_str(), &j)) {
-          lastTelemetryTime = millis();
-          lastReportedVoltage = currentV;
-          lastCloudActivity = millis(); // Refresh deadman
-        } else {
-          isInternetLive = false; // Fallback sync
-        }
-      }
-    }
-  }
-
-  // --- PIR SECURITY LOGIC (ARMED ONLY) ---
-  int pirState = digitalRead(PIR_PIN);
-  if (isArmed && pirState == HIGH) {
-    if (millis() - lastPIRTrigger > PIR_COOLDOWN) {
-      // 1. Hardware Fallback (Local Alert)
-      digitalWrite(BUZZER_PIN, HIGH);
-      delay(200);
-      digitalWrite(BUZZER_PIN, LOW);
-
-      if (Firebase.ready() && isInternetLive) {
-        FirebaseJson sensorData;
-        sensorData.set("status", true);
-        sensorData.set("lastTriggered", millis());
-
-        if (Firebase.RTDB.updateNode(
-                &fbTele,
-                ("devices/" + deviceId + "/security/sensors/kitchen").c_str(),
-                &sensorData)) {
-          Serial.println("🚨 MOTION DETECTED: Kitchen (ARMED)");
-          lastPIRTrigger = millis();
-          triggerActivityLED();
-
-          // Add to log structure
-          FirebaseJson log;
-          log.set("sensor", "Kitchen");
-          log.set("timestamp", millis());
-          Firebase.RTDB.pushJSON(
-              &fbTele, ("/devices/" + deviceId + "/security/logs").c_str(),
-              &log);
-        }
-      } else {
-        // OFFLINE FALLBACK: Direct Buzzer Alarm
-        Serial.println("⚠️ OFFLINE ALERT: Motion Detected!");
-        for (int i = 0; i < 3; i++) {
-          digitalWrite(BUZZER_PIN, HIGH);
-          delay(100);
-          digitalWrite(BUZZER_PIN, LOW);
-          delay(100);
-        }
-        lastPIRTrigger = millis();
-      }
-    }
-  } else if (lastPIRState == HIGH && pirState == LOW) {
-    if (Firebase.ready() && isInternetLive) {
-      Firebase.RTDB.setBool(
-          &fbTele,
-          ("devices/" + deviceId + "/security/sensors/kitchen/status").c_str(),
-          false);
-    }
-  }
-  lastPIRState = pirState;
-
-  // --- DEADMAN'S SWITCH LOGIC ---
-  if (millis() - lastCloudActivity > DEADMAN_TIMEOUT_MS) {
-    if (!safetyTripped) {
-      Serial.println("⛔ DEADMAN TRIP: No Cloud Contact for 2 mins. Halting.");
-      relayState[0] = false;
-      relayState[1] = false;
-      relayState[2] = false;
-      relayState[3] = false;
-      relayState[4] = false;
-      relayState[5] = false;
-      applyRelays();
-      safetyTripped = true;
-    }
-
-    // Auto Reset if Deadman is tripped for 5 minutes
-    if (millis() - lastCloudActivity > (DEADMAN_TIMEOUT_MS + 300000)) {
-      Serial.println("☢ DEADMAN REBOOT!");
-      ESP.restart();
-    }
-  } else {
-    safetyTripped = false;
-  }
-
-  // --- MESH BRIDGE FORWARDING ---
-  if (meshDataPending) {
-    if (isArmed && Firebase.ready() && isInternetLive) {
-      FirebaseJson meshJson;
-      meshJson.set("status", incomingData.motion);
-      meshJson.set("lightLevel", incomingData.lightLevel);
-      meshJson.set("lastTriggered", millis());
-
-      String nodePath = "devices/" + deviceId + "/security/sensors/" +
-                        String(incomingData.sensorId);
-      if (Firebase.RTDB.updateNode(&fbTele, nodePath.c_str(), &meshJson)) {
-        if (incomingData.motion) {
-          triggerActivityLED();
-          // Push log for history
-          FirebaseJson log;
-          log.set("sensor", incomingData.sensorId);
-          log.set("timestamp", millis());
-          Firebase.RTDB.pushJSON(
-              &fbTele, ("/devices/" + deviceId + "/security/logs").c_str(),
-              &log);
-        }
-      }
-    }
-    meshDataPending = false;
-  }
-
-  delay(isEcoMode ? 50 : 5); // Conserve processor when in Eco mode
+  delay(1); // 1ms super-fast polling interval on hardware core
 }
