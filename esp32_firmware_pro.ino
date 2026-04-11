@@ -27,6 +27,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <esp_now.h>
+#include <esp_task_wdt.h>
 #include <map>
 #include <set>
 #include <time.h>
@@ -100,10 +101,6 @@ bool activePeriods[5] = {true, true, true, true, true};
 const char *periodNames[5] = {"morning", "afternoon", "evening", "night",
                               "midnight"};
 std::map<String, int> sensorMode;
-unsigned long lastPanicPulse = 0;
-bool buzzerPending = false;
-unsigned long buzzerStartTime = 0;
-int buzzerDuration = 200;
 
 std::map<String, int> sensorDebounce;
 std::map<String, int> sensorSensitivity;
@@ -624,13 +621,17 @@ void setup() {
   Firebase.RTDB.setIntAsync(
       &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(), 0);
 
-  // === WATCHDOG INITIALIZATION (v3.0.0 Compatible) ===
+  // === WATCHDOG INITIALIZATION (Cross-Core Compatible) ===
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   esp_task_wdt_config_t twdt_config = {
       .timeout_ms = 30000,
       .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
       .trigger_panic = true,
   };
   esp_task_wdt_init(&twdt_config);
+#else
+  esp_task_wdt_init(30, true);
+#endif
   esp_task_wdt_add(NULL);
 
   Firebase.RTDB.deleteNode(
