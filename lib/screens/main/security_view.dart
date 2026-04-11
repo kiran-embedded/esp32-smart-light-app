@@ -317,7 +317,87 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               },
             ),
           ),
+          const SizedBox(height: 12),
+          _buildIndustrialGatingToggle(
+            context,
+            state,
+            ref.read(securityProvider.notifier),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIndustrialGatingToggle(
+    BuildContext context,
+    SecurityState state,
+    SecurityNotifier notifier,
+  ) {
+    final bool isGated = state.ldrSecurity;
+    return GestureDetector(
+      onTap: () {
+        HapticService.heavy();
+        notifier.toggleLdrSecurity();
+      },
+      child: AnimatedContainer(
+        duration: 200.ms,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isGated
+              ? Colors.amberAccent.withOpacity(0.08)
+              : Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isGated
+                ? Colors.amberAccent.withOpacity(0.2)
+                : Colors.white.withOpacity(0.08),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isGated ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                  color: isGated ? Colors.amberAccent : Colors.white38,
+                  size: 16.sp,
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isGated ? "LDR GATING ACTIVE" : "INDUSTRIAL BYPASS",
+                      style: GoogleFonts.outfit(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isGated ? Colors.amberAccent : Colors.white70,
+                      ),
+                    ),
+                    Text(
+                      isGated
+                          ? "Alarms/Relays trigger only in darkness"
+                          : "Alarms/Relays active 24/7 on motion",
+                      style: GoogleFonts.outfit(
+                        fontSize: 8.sp,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            CupertinoSwitch(
+              value: isGated,
+              onChanged: (_) {
+                HapticService.heavy();
+                notifier.toggleLdrSecurity();
+              },
+              activeColor: Colors.amberAccent,
+            ),
+          ],
+        ),
       ),
     );
   }

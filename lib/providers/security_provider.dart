@@ -87,6 +87,7 @@ class SecurityState {
   final Set<String> triggeredSensors;
   final int rssi; // Signal Strength in dBm
   final bool ldrValid; // Sensor Health Status
+  final bool ldrSecurity; // Whether security (Alarm/Relay) is LDR-gated
 
   SecurityState({
     required this.sensors,
@@ -111,6 +112,7 @@ class SecurityState {
     this.triggeredSensors = const {},
     this.rssi = -100,
     this.ldrValid = true,
+    this.ldrSecurity = false,
   });
 
   SecurityState copyWith({
@@ -130,6 +132,7 @@ class SecurityState {
     Set<String>? triggeredSensors,
     int? rssi,
     bool? ldrValid,
+    bool? ldrSecurity,
   }) {
     return SecurityState(
       sensors: sensors ?? this.sensors,
@@ -148,6 +151,7 @@ class SecurityState {
       triggeredSensors: triggeredSensors ?? this.triggeredSensors,
       rssi: rssi ?? this.rssi,
       ldrValid: ldrValid ?? this.ldrValid,
+      ldrSecurity: ldrSecurity ?? this.ldrSecurity,
     );
   }
 }
@@ -169,6 +173,8 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
   StreamSubscription? _activeBreachSub;
   StreamSubscription? _alarmActiveSub;
   StreamSubscription? _calibrationSub;
+  StreamSubscription? _statusSub;
+  StreamSubscription? _ldrSecuritySub;
 
   SecurityNotifier(this._service, this._soundService, this._voiceService)
     : super(SecurityState(sensors: {}, isArmed: false, logs: [])) {
@@ -293,21 +299,16 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
           state = state.copyWith(calibrations: calibrations);
         });
 
-    _service.nodeActiveStream.listen((data) {
+    _statusSub = _service.nodeActiveStream.listen((data) {
       final lastSeen = (data['lastSeen'] as num? ?? 0).toInt();
       final onlineStatus = data['online'] as bool? ?? false;
       final rssi = (data['rssi'] as num? ?? -100).toInt();
-      final ldrValid = data['ldrValid'] as bool? ?? true;
+      final ldrValid = data['ldrOk'] ?? true;
 
-      // Heartbeat Check: ts from ESP might be unix or millis
       bool isAlive = onlineStatus;
       if (lastSeen > 1000000000) {
-        // Unix
         final nowUnix = DateTime.now().millisecondsSinceEpoch ~/ 1000;
         isAlive = onlineStatus && (nowUnix - lastSeen < 30);
-      } else {
-        // Millis-based or no sync
-        isAlive = onlineStatus;
       }
 
       state = state.copyWith(
@@ -316,6 +317,35 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
         ldrValid: ldrValid,
       );
     });
+
+    _service.ldrSecurityStream.listen((val) {
+      state = state.copyWith(ldrSecurity: val);
+    });
+  }
+
+  bool _isSystemActive() {
+    final mode = state.securityMode;
+    final isDark = state.masterLightLevel <= state.ldrThreshold;
+    final now = DateTime.now();
+
+    bool isTimeActive = false;
+    final hour = now.hour;
+    if (hour >= 6 && hour < 12) {
+      isTimeActive = state.activePeriods['morning'] ?? true;
+    } else if (hour >= 12 && hour < 17) {
+      isTimeActive = state.activePeriods['afternoon'] ?? true;
+    } else if (hour >= 17 && hour < 21) {
+      isTimeActive = state.activePeriods['evening'] ?? true;
+    } else if (hour >= 21 || hour < 0) {
+      isTimeActive = state.activePeriods['night'] ?? true;
+    } else {
+      isTimeActive = state.activePeriods['midnight'] ?? true;
+    }
+
+    if (mode == 0) return isDark;
+    if (mode == 1) return isTimeActive;
+    if (mode == 2) return isDark && isTimeActive;
+    return true;
   }
 
   void _handleAlarmTrigger(String zone) {
@@ -381,6 +411,10 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
 
   Future<void> toggleBuzzerMute() async {
     await _service.setBuzzerMute(!state.isBuzzerMuted);
+  }
+
+  Future<void> toggleLdrSecurity() async {
+    await _service.setLdrSecurityEnabled(!state.ldrSecurity);
   }
 
   Future<void> setSecurityMode(int mode) async {
@@ -455,31 +489,6 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
       _handleAlarmTrigger(sensorName);
     }
     state = state.copyWith(sensors: updatedSensors);
-  }
-
-  bool _isSystemActive() {
-    final mode = state.securityMode;
-    final isDark = state.masterLightLevel <= state.ldrThreshold;
-
-    final hour = DateTime.now().hour;
-    String period;
-    if (hour >= 6 && hour < 12)
-      period = 'morning';
-    else if (hour >= 12 && hour < 17)
-      period = 'afternoon';
-    else if (hour >= 17 && hour < 20)
-      period = 'evening';
-    else if (hour >= 20 || hour < 0)
-      period = 'night';
-    else
-      period = 'midnight';
-
-    final isTimeActive = state.activePeriods[period] ?? true;
-
-    if (mode == 0) return isDark;
-    if (mode == 1) return isTimeActive;
-    if (mode == 2) return isDark && isTimeActive;
-    return true;
   }
 
   @override

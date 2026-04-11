@@ -815,19 +815,22 @@ void processMeshData() {
                     sid.c_str(), incomingData.motion, sensorHitCounter[sid],
                     reqHits);
 
-      // 🧠 NEURAL HUB AUTOMATION (LDR Gated)
-      if (isAutoGlobalEnabled &&
-          (incomingData.lightLevel <= globalLdrThreshold)) {
-        if (pIdx >= 0 && pIdx < 4) {
-          int mask = mapPIR[pIdx];
-          for (int r = 0; r < 7; r++) {
-            if (now - manualOverrideTime[r] < MANUAL_LOCKOUT_MS)
-              continue;
-            if ((mask & (1 << r)) != 0) {
-              relayState[r] = 1;
-              autoTriggerTime[r] = now;
-              isNeuralTriggered[r] = true;
-              updateRelays = true;
+      // 🧠 NEURAL HUB AUTOMATION (Respects Security LDR Gating)
+      if (isAutoGlobalEnabled) {
+        bool autoLdrOk = (!isLdrSecurityEnabled ||
+                          (incomingData.lightLevel <= globalLdrThreshold));
+        if (autoLdrOk) {
+          if (pIdx >= 0 && pIdx < 4) {
+            int mask = mapPIR[pIdx];
+            for (int r = 0; r < 7; r++) {
+              if (now - manualOverrideTime[r] < MANUAL_LOCKOUT_MS)
+                continue;
+              if ((mask & (1 << r)) != 0) {
+                relayState[r] = 1;
+                autoTriggerTime[r] = now;
+                isNeuralTriggered[r] = true;
+                updateRelays = true;
+              }
             }
           }
         }

@@ -75,6 +75,13 @@ class SecurityService {
         .map((event) => (event.snapshot.value as int?) ?? 2);
   }
 
+  Stream<bool> get ldrSecurityStream {
+    return _database
+        .ref('devices/$deviceId/commands/ldrSecurity')
+        .onValue
+        .map((event) => (event.snapshot.value as bool?) ?? false);
+  }
+
   Stream<int> get masterLdrStream {
     return _database.ref('devices/$deviceId/security/masterLDR').onValue.map((
       event,
@@ -180,6 +187,10 @@ class SecurityService {
     await _database.ref('devices/$deviceId/commands/buzzerMute').set(muted);
   }
 
+  Future<void> setLdrSecurityEnabled(bool enabled) async {
+    await _database.ref('devices/$deviceId/commands/ldrSecurity').set(enabled);
+  }
+
   Future<void> setSensorMode(String sensorId, int mode) async {
     await _database
         .ref('devices/$deviceId/commands/security/calibration/$sensorId')
@@ -254,6 +265,7 @@ class SecurityService {
                   'nickname': sensorData['name'] ?? 'New Sensor',
                   'isAlarmEnabled': true,
                   'triggerCount': 0,
+                  'isLdrSecurityEnabled': false,
                 });
 
             // Push notification or log can go here
