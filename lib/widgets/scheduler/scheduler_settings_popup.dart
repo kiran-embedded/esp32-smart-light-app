@@ -190,6 +190,15 @@ class _SchedulerSettingsPopupState
                 ),
                 onPressed: _showRenameDialog,
               ),
+              // Delete Button (NEW)
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: Colors.redAccent,
+                  size: 22,
+                ),
+                onPressed: _showDeleteDialog,
+              ),
               IconButton(
                     icon: const Icon(
                       Icons.help_outline_rounded,
@@ -480,6 +489,61 @@ class _SchedulerSettingsPopupState
             child: const Text(
               'Save',
               style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog() {
+    HapticService.heavy();
+    if (widget.initialDeviceId == null) return;
+
+    final deviceId = widget.initialDeviceId!;
+    final switches = ref.read(switchDevicesProvider);
+    final device = switches.firstWhere(
+      (d) => d.id == deviceId,
+      orElse: () => switches.first,
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.redAccent),
+        ),
+        title: Text(
+          'Delete Smart Node?',
+          style: GoogleFonts.outfit(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to permanently remove "${device.name}" from the system?\n\nThis cannot be undone.',
+          style: GoogleFonts.outfit(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await ref
+                  .read(switchDevicesProvider.notifier)
+                  .deleteDevice(deviceId);
+              if (mounted) {
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Close popup
+              }
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

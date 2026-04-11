@@ -18,17 +18,15 @@ class SecurityService {
   }
 
   Stream<Map<String, dynamic>> get nodeActiveStream {
-    return _database.ref('devices/$deviceId/security/nodeActive').onValue.map((
-      event,
-    ) {
+    return _database.ref('devices/$deviceId/status').onValue.map((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
-      if (data == null) return {'status': false, 'lastSeen': 0};
+      if (data == null) return {'online': false, 'lastSeen': 0};
       return Map<String, dynamic>.from(data);
     });
   }
 
   Stream<bool> get isArmedStream {
-    return _database.ref('devices/$deviceId/security/isArmed').onValue.map((
+    return _database.ref('devices/$deviceId/commands/isArmed').onValue.map((
       event,
     ) {
       return (event.snapshot.value as bool?) ?? true;
@@ -56,11 +54,25 @@ class SecurityService {
   }
 
   Stream<int> get ldrThresholdStream {
-    return _database.ref('devices/$deviceId/security/ldrThreshold').onValue.map(
+    return _database.ref('devices/$deviceId/commands/ldrThreshold').onValue.map(
       (event) {
         return (event.snapshot.value as int?) ?? 50;
       },
     );
+  }
+
+  Stream<bool> get isBuzzerMutedStream {
+    return _database
+        .ref('devices/$deviceId/commands/buzzerMute')
+        .onValue
+        .map((event) => (event.snapshot.value as bool?) ?? false);
+  }
+
+  Stream<int> get securityModeStream {
+    return _database
+        .ref('devices/$deviceId/commands/security/securityMode')
+        .onValue
+        .map((event) => (event.snapshot.value as int?) ?? 2);
   }
 
   Stream<int> get masterLdrStream {
@@ -72,17 +84,16 @@ class SecurityService {
   }
 
   Stream<bool> get autoLightStream {
-    return _database
-        .ref('devices/$deviceId/security/autoLightOnMotion')
-        .onValue
-        .map((event) {
-          return (event.snapshot.value as bool?) ?? false;
-        });
+    return _database.ref('devices/$deviceId/commands/autoGlobal').onValue.map((
+      event,
+    ) {
+      return (event.snapshot.value as bool?) ?? false;
+    });
   }
 
   Stream<Map<String, bool>> get activePeriodsStream {
     return _database
-        .ref('devices/$deviceId/security/activePeriods')
+        .ref('devices/$deviceId/commands/security/activePeriods')
         .onValue
         .map((event) {
           final data = event.snapshot.value as Map<dynamic, dynamic>?;
@@ -99,24 +110,48 @@ class SecurityService {
         });
   }
 
+  Stream<List<Map<String, dynamic>>> get activeBreachesStream {
+    return _database
+        .ref('devices/$deviceId/security/activeBreaches')
+        .onValue
+        .map((event) {
+          final data = event.snapshot.value as Map<dynamic, dynamic>?;
+          if (data == null) return [];
+          return data.entries
+              .map(
+                (e) => {
+                  'id': e.key,
+                  ...Map<String, dynamic>.from(e.value as Map),
+                },
+              )
+              .toList()
+            ..sort(
+              (a, b) =>
+                  (b['timestamp'] as num).compareTo(a['timestamp'] as num),
+            );
+        });
+  }
+
   Future<void> setArmedState(bool armed) async {
-    await _database.ref('devices/$deviceId/security/isArmed').set(armed);
+    await _database.ref('devices/$deviceId/commands/isArmed').set(armed);
   }
 
   Future<void> setLdrThreshold(int value) async {
-    await _database.ref('devices/$deviceId/security/ldrThreshold').set(value);
+    await _database.ref('devices/$deviceId/commands/ldrThreshold').set(value);
   }
 
   Future<void> setAutoLightOnMotion(bool enabled) async {
-    await _database
-        .ref('devices/$deviceId/security/autoLightOnMotion')
-        .set(enabled);
+    await _database.ref('devices/$deviceId/commands/autoGlobal').set(enabled);
   }
 
   Future<void> setPeriodActive(String period, bool isActive) async {
     await _database
-        .ref('devices/$deviceId/security/activePeriods/$period')
+        .ref('devices/$deviceId/commands/security/activePeriods/$period')
         .set(isActive);
+  }
+
+  Future<void> clearActiveBreaches() async {
+    await _database.ref('devices/$deviceId/security/activeBreaches').remove();
   }
 
   Future<void> acknowledgeAlert(String sensorName) async {
@@ -135,5 +170,112 @@ class SecurityService {
     await _database
         .ref('devices/$deviceId/security/sensors/$sensorName')
         .update({'nickname': newName});
+  }
+
+  Future<void> setPanicState(bool active) async {
+    await _database.ref('devices/$deviceId/commands').update({'panic': active});
+  }
+
+  Future<void> setBuzzerMute(bool muted) async {
+    await _database.ref('devices/$deviceId/commands/buzzerMute').set(muted);
+  }
+
+  Future<void> setSensorMode(String sensorId, int mode) async {
+    await _database
+        .ref('devices/$deviceId/commands/security/calibration/$sensorId')
+        .update({'mode': mode});
+  }
+
+  Future<void> setSecurityMode(int mode) async {
+    await _database
+        .ref('devices/$deviceId/commands/security/securityMode')
+        .set(mode);
+  }
+
+  Future<void> deleteSensor(String sensorName) async {
+    final batch = <String, dynamic>{
+      'devices/$deviceId/security/sensors/$sensorName': null,
+      'devices/$deviceId/security/calibration/$sensorName': null,
+      'devices/$deviceId/telemetry/$sensorName': null,
+      'devices/$deviceId/relayNames/$sensorName': null,
+    };
+
+    // Clean up hardware mapping bitmask if it follows PIR naming convention
+    final reg = RegExp(r'PIR(\d+)');
+    final match = reg.firstMatch(sensorName);
+    if (match != null) {
+      final slot = match.group(1);
+      batch['devices/$deviceId/commands/mapPIR$slot'] = 0;
+    }
+
+    // Also clean up any automation links in commands
+    final commandsRef = _database.ref('devices/$deviceId/commands');
+    final snapshot = await commandsRef.get();
+    if (snapshot.exists && snapshot.value is Map) {
+      final data = snapshot.value as Map;
+      data.forEach((key, value) {
+        if (key.toString().startsWith('auto_r') &&
+            key.toString().endsWith('_sen')) {
+          if (value.toString() == sensorName) {
+            batch['devices/$deviceId/commands/$key'] =
+                'kitchen'; // Default fallback
+          }
+        }
+      });
+    }
+
+    await _database.ref().update(batch);
+  }
+
+  /// Listen for new sensors appearing in the discovery path (usually pushed by ESP32/ESP8266)
+  /// If a sensor is found that isn't in the established sensors list, it's added automatically.
+  void initAutoDiscovery() {
+    _database
+        .ref('devices/$deviceId/security/discovery/pending')
+        .onChildAdded
+        .listen((event) async {
+          final sensorId = event.snapshot.key;
+          if (sensorId == null) return;
+
+          final sensorData =
+              event.snapshot.value as Map<dynamic, dynamic>? ?? {};
+
+          // Check if already exists in main sensors list
+          final existing = await _database
+              .ref('devices/$deviceId/security/sensors/$sensorId')
+              .get();
+          if (!existing.exists) {
+            await _database
+                .ref('devices/$deviceId/security/sensors/$sensorId')
+                .set({
+                  'status': false,
+                  'lastTriggered': 0,
+                  'lightLevel': 50,
+                  'nickname': sensorData['name'] ?? 'New Sensor',
+                  'isAlarmEnabled': true,
+                  'triggerCount': 0,
+                });
+
+            // Push notification or log can go here
+          }
+
+          // Clear discovery once processed
+          await _database
+              .ref('devices/$deviceId/security/discovery/pending/$sensorId')
+              .remove();
+        });
+  }
+
+  Future<void> testBuzzer() async {
+    await setPanicState(true);
+    await Future.delayed(const Duration(milliseconds: 800));
+    await setPanicState(false);
+  }
+
+  Stream<bool> get isAlarmActiveStream {
+    return _database
+        .ref('devices/$deviceId/security/alarmActive')
+        .onValue
+        .map((event) => (event.snapshot.value as bool?) ?? false);
   }
 }

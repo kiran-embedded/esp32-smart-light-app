@@ -13,6 +13,7 @@ class SoundSettings {
   final double masterVolume;
   final double appOpeningVolume;
   final double switchVolume;
+  final String? customAlarmPath;
 
   SoundSettings({
     this.masterSound = true,
@@ -21,6 +22,7 @@ class SoundSettings {
     this.masterVolume = 1.0,
     this.appOpeningVolume = 1.0,
     this.switchVolume = 1.0,
+    this.customAlarmPath,
   });
 
   SoundSettings copyWith({
@@ -30,6 +32,7 @@ class SoundSettings {
     double? masterVolume,
     double? appOpeningVolume,
     double? switchVolume,
+    String? customAlarmPath,
   }) {
     return SoundSettings(
       masterSound: masterSound ?? this.masterSound,
@@ -38,6 +41,7 @@ class SoundSettings {
       masterVolume: masterVolume ?? this.masterVolume,
       appOpeningVolume: appOpeningVolume ?? this.appOpeningVolume,
       switchVolume: switchVolume ?? this.switchVolume,
+      customAlarmPath: customAlarmPath ?? this.customAlarmPath,
     );
   }
 }
@@ -61,6 +65,7 @@ class SoundSettingsNotifier extends StateNotifier<SoundSettings> {
       masterVolume: prefs.getDouble('master_volume') ?? 1.0,
       appOpeningVolume: prefs.getDouble('app_opening_volume') ?? 1.0,
       switchVolume: prefs.getDouble('switch_volume') ?? 1.0,
+      customAlarmPath: prefs.getString('custom_alarm_path'),
     );
   }
 
@@ -98,5 +103,15 @@ class SoundSettingsNotifier extends StateNotifier<SoundSettings> {
     state = state.copyWith(switchVolume: volume);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('switch_volume', volume);
+  }
+
+  Future<void> setCustomAlarmPath(String? path) async {
+    state = state.copyWith(customAlarmPath: path);
+    final prefs = await SharedPreferences.getInstance();
+    if (path == null) {
+      await prefs.remove('custom_alarm_path');
+    } else {
+      await prefs.setString('custom_alarm_path', path);
+    }
   }
 }

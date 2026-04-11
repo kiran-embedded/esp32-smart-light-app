@@ -21,32 +21,32 @@ class _HelpBotOverlayState extends State<HelpBotOverlay> {
     HelpStep(
       title: "I am Nebula AI",
       message:
-          "Welcome to your high-performance smart hardware ecosystem. Let's optimize your experience.",
+          "Welcome to your professional smart ecosystem. I'm here to help you master the core's advanced neuro-logic.",
       icon: Icons.auto_awesome,
     ),
     HelpStep(
-      title: "Instant Toggles",
+      title: "Neural Grid Connect",
       message:
-          "Tap any tile for 0ms relay execution. Our dual-core engine ensures zero network lag.",
-      icon: Icons.bolt,
+          "Tap a Sensor Node (left), then tap multiple Relays (right) to establish 1-to-many persistent links. TAP & HOLD to clear a sensor's entire neural path.",
+      icon: Icons.hub_rounded,
     ),
     HelpStep(
-      title: "Hidden Options",
+      title: "Hardware-Adaptive Haptics",
       message:
-          "Long-press any switch tile to access the Automation Engine, Inverted Logic, and Timers.",
-      icon: Icons.settings_suggest,
-    ),
-    HelpStep(
-      title: "Silent Zones",
-      message:
-          "In the Security Hub, long-press any sensor card to silence specific zones and prevent alarms.",
-      icon: Icons.notifications_paused_rounded,
-    ),
-    HelpStep(
-      title: "Tactile Interface",
-      message:
-          "Feel variable-intensity haptics as you slide LDR thresholds. The UI is alive.",
+          "Our engine detects your device's XY-axis motor. Experience 5ms 'Butter' clicks on flagships and smooth 'Calm' pulses on mid-range hardware.",
       icon: Icons.vibration,
+    ),
+    HelpStep(
+      title: "Bi-Directional Sync",
+      message:
+          "Every mapping change is flashed instantly to the ESP32's bitmask memory. Your logic works even if the app and cloud are offline.",
+      icon: Icons.sync_lock_rounded,
+    ),
+    HelpStep(
+      title: "0ms Switch Latency",
+      message:
+          "Relay toggles utilize our 'Stream-Direct' protocol (v1.6.0), bypassing standard HTTP delays for instantaneous physical response.",
+      icon: Icons.bolt,
     ),
   ];
 

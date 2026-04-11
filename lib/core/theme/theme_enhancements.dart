@@ -11,8 +11,10 @@ class ThemeEnhancements {
         return [const Color(0xFF00E5FF), const Color(0xFF2979FF)];
       case AppThemeMode.cyberNeon:
         return [const Color(0xFF00FF9D), const Color(0xFFBC13FE)];
-      case AppThemeMode.liquidGlass:
-        return [const Color(0xFF2979FF), const Color(0xFF00E5FF)];
+      case AppThemeMode.pureGold:
+        return [const Color(0xFFFFD700), const Color(0xFFFFA000)];
+      case AppThemeMode.platinumBlue:
+        return [const Color(0xFFE5E4E2), const Color(0xFF00B0FF)];
       case AppThemeMode.amoledCyberpunk:
         return [const Color(0xFFFF0055), const Color(0xFFE9FF00)];
       case AppThemeMode.darkSpace:
@@ -47,11 +49,7 @@ class ThemeEnhancements {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: colors,
-      stops: [
-        0.0,
-        0.5 + (animationValue * 0.3),
-        1.0,
-      ],
+      stops: [0.0, 0.5 + (animationValue * 0.3), 1.0],
     ).createShader(bounds);
   }
 
@@ -95,9 +93,8 @@ class GradientText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShaderMask(
-      shaderCallback: (bounds) => LinearGradient(
-        colors: colors,
-      ).createShader(bounds),
+      shaderCallback: (bounds) =>
+          LinearGradient(colors: colors).createShader(bounds),
       child: Text(
         text,
         textAlign: textAlign,
@@ -111,5 +108,3 @@ class GradientText extends StatelessWidget {
     );
   }
 }
-
-

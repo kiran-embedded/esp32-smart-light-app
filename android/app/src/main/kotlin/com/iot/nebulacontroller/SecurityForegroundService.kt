@@ -47,6 +47,7 @@ class SecurityForegroundService : Service() {
         when (intent?.action) {
             "STOP_ALARM" -> {
                 stopAlarmSound()
+                disableHardwareBuzzer()
                 alarmAlreadyTriggered = false // Reset so next real breach triggers again
             }
             "com.iot.nebulacontroller.ALARM_TRIGGER" -> {
@@ -383,7 +384,7 @@ class SecurityForegroundService : Service() {
         playAlarmSound()
 
         // 2. Build notification channel
-        val channelId = "nebula_alarm_channel"
+        val channelId = "nebula_alarm_channel_v2"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
@@ -427,7 +428,7 @@ class SecurityForegroundService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setFullScreenIntent(fullScreenIntent, true)
-            .addAction(0, "DISMISS ALARM", stopPendingIntent)
+            .addAction(0, "STOP BUZZER", stopPendingIntent)
             .setOngoing(true) // Keep it in notification bar until dismissed
             .setAutoCancel(false)
             .build()
@@ -443,8 +444,23 @@ class SecurityForegroundService : Service() {
         try {
             if (mediaPlayer?.isPlaying == true) return
 
-            val alarmUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val customPath = prefs.getString("flutter.custom_alarm_path", null)
+            
+            val alarmUri: Uri = if (customPath != null && java.io.File(customPath).exists()) {
+                Uri.fromFile(java.io.File(customPath))
+            } else {
+                // Try res/raw/siren
+                val resId = resources.getIdentifier("siren", "raw", packageName)
+                if (resId != 0) {
+                    Uri.parse("android.resource://$packageName/$resId")
+                } else {
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                }
+            }
+
+            Log.d("SecurityService", "Playing Alarm Sound from: $alarmUri")
 
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(applicationContext, alarmUri)
@@ -464,6 +480,24 @@ class SecurityForegroundService : Service() {
             }
         } catch (e: Exception) {
             Log.e("SecurityService", "Error playing alarm sound", e)
+        }
+    }
+
+    private fun disableHardwareBuzzer() {
+        try {
+            val fb = if (databaseUrl.isNotEmpty()) FirebaseDatabase.getInstance(databaseUrl) else FirebaseDatabase.getInstance()
+            val commandRef = fb.getReference("devices/$deviceId/commands")
+            val securityRef = fb.getReference("devices/$deviceId/security")
+            
+            // 1. Send silent command to ESP32
+            commandRef.child("alarm_disable").setValue(true)
+            
+            // 2. Clear visual alarm state in Firebase
+            securityRef.child("alarmActive").setValue(false)
+            
+            Log.d("SecurityService", "Hardware buzzer disabled from notification")
+        } catch (e: Exception) {
+            Log.e("SecurityService", "Error disabling hardware buzzer", e)
         }
     }
 

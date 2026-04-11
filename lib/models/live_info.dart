@@ -5,6 +5,8 @@ class LiveInfo {
   final String weatherDescription;
   final double acVoltage;
   final double current;
+  final int teleId;
+  final List<int> signals; // Signal strength for PIR1-P5
 
   LiveInfo({
     required this.currentTime,
@@ -13,6 +15,8 @@ class LiveInfo {
     required this.weatherDescription,
     required this.acVoltage,
     required this.current,
+    this.teleId = 0,
+    this.signals = const [0, 0, 0, 0, 0],
   });
 
   LiveInfo copyWith({
@@ -22,6 +26,8 @@ class LiveInfo {
     String? weatherDescription,
     double? acVoltage,
     double? current,
+    int? teleId,
+    List<int>? signals,
   }) {
     return LiveInfo(
       currentTime: currentTime ?? this.currentTime,
@@ -30,7 +36,8 @@ class LiveInfo {
       weatherDescription: weatherDescription ?? this.weatherDescription,
       acVoltage: acVoltage ?? this.acVoltage,
       current: current ?? this.current,
+      teleId: teleId ?? this.teleId,
+      signals: signals ?? this.signals,
     );
   }
 }
-

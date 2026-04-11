@@ -237,12 +237,12 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     return Container(
       padding: EdgeInsets.all((4.w * pScale).toDouble()),
       decoration: BoxDecoration(
-        color: (isConnected ? Colors.blueAccent : Colors.grey).withOpacity(0.1),
+        color: (isConnected ? theme.colorScheme.primary : Colors.grey)
+            .withOpacity(0.1),
         shape: BoxShape.circle,
         border: Border.all(
-          color: (isConnected ? Colors.blueAccent : Colors.grey).withOpacity(
-            0.3,
-          ),
+          color: (isConnected ? theme.colorScheme.primary : Colors.grey)
+              .withOpacity(0.3),
         ),
       ),
       child: Stack(
@@ -251,7 +251,7 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
           Icon(
             Icons.cloud_sync_rounded,
             size: (10.sp * fScale * pScale).toDouble(),
-            color: isConnected ? Colors.blueAccent : Colors.grey,
+            color: isConnected ? theme.colorScheme.primary : Colors.grey,
           ),
           if (isConnected)
             Positioned(

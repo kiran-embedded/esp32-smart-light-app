@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/display_settings_provider.dart';
@@ -100,11 +101,23 @@ class _PixelLedPainter extends CustomPainter {
     required this.mode,
   }) : super(repaint: animation);
 
-  @override
-  void paint(Canvas canvas, Size size) {
+  Path? _cachedPath;
+  PathMetric? _cachedMetric;
+  Size? _lastSize;
+
+  void _updateCache(Size size) {
+    if (_lastSize == size && _cachedPath != null) return;
+    _lastSize = size;
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
-    final path = Path()..addRRect(rrect);
+    _cachedPath = Path()..addRRect(rrect);
+    _cachedMetric = _cachedPath!.computeMetrics().first;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _updateCache(size);
+    final path = _cachedPath!;
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
@@ -113,22 +126,20 @@ class _PixelLedPainter extends CustomPainter {
 
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth =
-          strokeWidth *
-          1.1 // Fine-tuned (was 1.25)
+      ..strokeWidth = strokeWidth * 1.1
       ..maskFilter = mode == NeonAnimationMode.thinLine
           ? null
-          : const MaskFilter.blur(BlurStyle.normal, 1.0); // Pin-point (was 1.5)
+          : const MaskFilter.blur(BlurStyle.normal, 1.0);
 
     switch (mode) {
       case NeonAnimationMode.sweep:
         _paintSweep(canvas, path, paint, glowPaint, size);
         break;
       case NeonAnimationMode.dotRunner:
-        _paintDotRunner(canvas, path, paint, glowPaint, size);
+        _paintDotRunner(canvas, _cachedMetric!, paint, glowPaint, size);
         break;
       case NeonAnimationMode.comet:
-        _paintComet(canvas, path, paint, glowPaint, size);
+        _paintComet(canvas, _cachedMetric!, paint, glowPaint, size);
         break;
       case NeonAnimationMode.pulse:
         _paintPulse(canvas, path, paint, glowPaint, size);
@@ -140,7 +151,7 @@ class _PixelLedPainter extends CustomPainter {
         _paintRainbow(canvas, path, paint, glowPaint, size);
         break;
       case NeonAnimationMode.autoChange:
-        _paintAutoChange(canvas, path, paint, glowPaint, size);
+        _paintAutoChange(canvas, path, _cachedMetric!, paint, glowPaint, size);
         break;
       case NeonAnimationMode.thinLine:
         _paintThinLine(canvas, path, paint, size);
@@ -180,12 +191,11 @@ class _PixelLedPainter extends CustomPainter {
 
   void _paintDotRunner(
     Canvas canvas,
-    Path path,
+    PathMetric pathMetric,
     Paint paint,
     Paint glowPaint,
     Size size,
   ) {
-    final pathMetric = path.computeMetrics().first;
     final length = pathMetric.length;
     final dotPos = animation.value * length;
 
@@ -203,12 +213,11 @@ class _PixelLedPainter extends CustomPainter {
 
   void _paintComet(
     Canvas canvas,
-    Path path,
+    PathMetric pathMetric,
     Paint paint,
     Paint glowPaint,
     Size size,
   ) {
-    final pathMetric = path.computeMetrics().first;
     final length = pathMetric.length;
     final pos = animation.value * length;
 
@@ -280,6 +289,7 @@ class _PixelLedPainter extends CustomPainter {
   void _paintAutoChange(
     Canvas canvas,
     Path path,
+    PathMetric pathMetric,
     Paint paint,
     Paint glowPaint,
     Size size,
@@ -290,10 +300,10 @@ class _PixelLedPainter extends CustomPainter {
         _paintSweep(canvas, path, paint, glowPaint, size);
         break;
       case 1:
-        _paintDotRunner(canvas, path, paint, glowPaint, size);
+        _paintDotRunner(canvas, pathMetric, paint, glowPaint, size);
         break;
       case 2:
-        _paintComet(canvas, path, paint, glowPaint, size);
+        _paintComet(canvas, pathMetric, paint, glowPaint, size);
         break;
       case 3:
         _paintPulse(canvas, path, paint, glowPaint, size);

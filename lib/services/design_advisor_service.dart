@@ -59,13 +59,13 @@ class DesignAdvisorService {
       }
     }
 
-    // 3. Liquid Crystal (Apple Glass + Prism)
-    if (theme == AppThemeMode.appleGlass) {
+    // 3. Liquid Crystal (Pure Gold + Prism)
+    if (theme == AppThemeMode.pureGold) {
       if (switchStyle != SwitchStyleType.crystalPrism) {
         return AdvicePacket(
           text:
-              "Refining 'Liquid Crystal' aesthetics. Smooth glass transitions incoming.",
-          theme: AppThemeMode.appleGlass,
+              "Refining 'Golden Crystal' aesthetics. Smooth luxury transitions incoming.",
+          theme: AppThemeMode.pureGold,
           style: SwitchStyleType.crystalPrism,
           background: SwitchBackgroundType.glassPrism,
           launchAnimation: AppLaunchAnimation.glassDrop,
@@ -80,7 +80,7 @@ class DesignAdvisorService {
         return AdvicePacket(
           text:
               "Holographic projection needs a fluid plasma base for stability.",
-          theme: AppThemeMode.liquidGlass,
+          theme: AppThemeMode.cyberNeon,
           style: SwitchStyleType.holographic,
           background: SwitchBackgroundType.liquidPlasma,
           launchAnimation: AppLaunchAnimation.hologramRise,
@@ -289,14 +289,13 @@ class DesignAdvisorService {
       }
     }
 
-    // 18. Void Rift
-    if (switchStyle == SwitchStyleType.voidRift ||
-        theme == AppThemeMode.voidRift) {
+    // 18. Void Rift (Legacy support mapped to Amoled)
+    if (switchStyle == SwitchStyleType.voidRift) {
       if (background != SwitchBackgroundType.voidRift ||
-          theme != AppThemeMode.voidRift) {
+          theme != AppThemeMode.amoledCyberpunk) {
         return AdvicePacket(
           text: "Singularity event confirmed. Compressing UI gravity.",
-          theme: AppThemeMode.voidRift,
+          theme: AppThemeMode.amoledCyberpunk,
           style: SwitchStyleType.voidRift,
           background: SwitchBackgroundType.voidRift,
           launchAnimation: AppLaunchAnimation.quantumTunnel,
@@ -321,14 +320,12 @@ class DesignAdvisorService {
       }
     }
 
-    // 20. Aero Stream
-    if (switchStyle == SwitchStyleType.aeroStream ||
-        theme == AppThemeMode.aeroStream) {
-      if (background != SwitchBackgroundType.aeroStream ||
-          theme != AppThemeMode.aeroStream) {
+    // 20. Platinum Blue
+    if (theme == AppThemeMode.platinumBlue) {
+      if (background != SwitchBackgroundType.aeroStream) {
         return AdvicePacket(
           text: "Laminar flow achieved. Streamlining aerodynamic curves.",
-          theme: AppThemeMode.aeroStream,
+          theme: AppThemeMode.platinumBlue,
           style: SwitchStyleType.aeroStream,
           background: SwitchBackgroundType.aeroStream,
           launchAnimation: AppLaunchAnimation.iPhoneBlend,

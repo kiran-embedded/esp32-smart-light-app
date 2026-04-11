@@ -102,9 +102,9 @@ class AnimatedNavIcon extends ConsumerWidget {
               curve: Curves.easeInOut,
             ); // Pulse redder
 
-      // 3. APPLE GLASS: Premium Bounce & Slide
+      // 3. PURE GOLD: Premium Bounce & Slide
       // Clean, physics-based spring.
-      case AppThemeMode.appleGlass:
+      case AppThemeMode.pureGold:
         return iconWidget
             .animate()
             .moveY(
@@ -156,9 +156,9 @@ class AnimatedNavIcon extends ConsumerWidget {
               duration: 80.ms,
             ); // Mechanical lock jiggle
 
-      // 6. LIQUID GLASS: Jelly / Morph
+      // 6. CYBER BLOOM: Jelly / Morph
       // Flexible, rubbery.
-      case AppThemeMode.liquidGlass:
+      case AppThemeMode.cyberBloom:
         return iconWidget
             .animate()
             .scaleXY(
@@ -326,19 +326,13 @@ class AnimatedNavIcon extends ConsumerWidget {
 
       // 10. LIGHT / SOFT DARK / DARK NEON: Professional Elevation
       // Subtle rise.
-      case AppThemeMode.light:
       case AppThemeMode.softDark:
       case AppThemeMode.darkNeon:
 
         // Elegant rise and refined glow
         return iconWidget
             .animate()
-            .moveY(
-              begin: 5,
-              end: 0,
-              duration: 80.ms,
-              curve: Curves.easeOutQuad,
-            )
+            .moveY(begin: 5, end: 0, duration: 80.ms, curve: Curves.easeOutQuad)
             .scale(
               begin: const Offset(0.8, 0.8),
               end: const Offset(1.1, 1.1),
@@ -367,18 +361,18 @@ class AnimatedNavIcon extends ConsumerWidget {
             .tint(color: Colors.orange, duration: 1000.ms);
 
       case AppThemeMode.electricTundra:
-      case AppThemeMode.voidRift:
       case AppThemeMode.starlightEcho:
         return iconWidget
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .moveY(begin: -5, end: 5, duration: 2500.ms)
             .shimmer(
               duration: 2000.ms,
-              color: Colors.blueAccent.withValues(alpha: 0.3),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.3),
             );
 
       case AppThemeMode.nanoCatalyst:
-      case AppThemeMode.cyberBloom:
         return iconWidget
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .blur(
@@ -394,7 +388,7 @@ class AnimatedNavIcon extends ConsumerWidget {
 
       case AppThemeMode.phantomVelvet:
       case AppThemeMode.prismFractal:
-      case AppThemeMode.aeroStream:
+      case AppThemeMode.platinumBlue:
         return iconWidget
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .scaleXY(begin: 0.9, end: 1.1, duration: 2000.ms)

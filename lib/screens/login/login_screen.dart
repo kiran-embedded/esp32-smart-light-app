@@ -115,7 +115,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // FORCE DARK MODE for Login Screen because it uses a dark space background
     // This allows the text to be correctly colored (white) even if the app is in "Apple Glass" (light) mode.
     final theme = AppTheme.getTheme(AppThemeMode.darkNeon);
-    final authState = ref.watch(authProvider);
 
     // Watchdog: If state becomes authenticated, ensure loading stops immediately
     ref.listen<AuthState>(authProvider, (previous, next) {

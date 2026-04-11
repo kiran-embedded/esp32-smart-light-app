@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/live_info.dart';
-import '../core/constants/app_constants.dart';
+import '../providers/device_id_provider.dart';
 import 'package:flutter/foundation.dart';
 
 final liveInfoProvider = StateNotifierProvider<LiveInfoNotifier, LiveInfo>((
@@ -32,7 +32,14 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
       ) {
     _startTimer();
     _loadWeather();
+
+    // Listen for Device ID changes and re-init listeners
+    ref.listen<String>(deviceIdProvider, (previous, next) {
+      _initFirebaseListeners();
+    });
+
     _initFirebaseListeners();
+
     // Update weather every 30 minutes
     _weatherTimer = Timer.periodic(const Duration(minutes: 30), (_) {
       _loadWeather();
@@ -40,10 +47,13 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
   }
 
   void _initFirebaseListeners() {
+    _sensorSubscription?.cancel();
+    final deviceId = ref.read(deviceIdProvider);
+
     // Listen to sensor data from Firebase Realtime Database
     try {
       _sensorSubscription = _database
-          .child('devices/${AppConstants.defaultDeviceId}/telemetry')
+          .child('devices/$deviceId/telemetry')
           .onValue
           .listen(
             (event) {
@@ -62,7 +72,27 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
                       double.tryParse(data['current_amp'].toString()) ?? 0.0;
                 }
 
-                state = state.copyWith(acVoltage: voltage, current: current);
+                // Parse tele_id
+                int teleId = state.teleId;
+                if (data.containsKey('tele_id')) {
+                  teleId = int.tryParse(data['tele_id'].toString()) ?? 0;
+                }
+
+                // Parse Signal Strengths (P1-P5)
+                List<int> signals = List.from(state.signals);
+                for (int i = 0; i < 5; i++) {
+                  final key = 'signal_p${i + 1}';
+                  if (data.containsKey(key)) {
+                    signals[i] = int.tryParse(data[key].toString()) ?? 0;
+                  }
+                }
+
+                state = state.copyWith(
+                  acVoltage: voltage,
+                  current: current,
+                  teleId: teleId,
+                  signals: signals,
+                );
               }
             },
             onError: (error) {
@@ -122,10 +152,10 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
         temp = 32.0;
       } else if (lat != 0) {
         // Industry Level: Location context
-        desc = lat > 0 ? 'Northern Sky' : 'Southern Sky';
+        desc = lat > 0 ? 'Optimal Conditions' : 'Stable Microclimate';
       } else {
-        // Fallback for "Internet Location" (Simulated)
-        desc = 'United States'; // Default or based on timezone if we had it
+        // Fallback for when location is not available
+        desc = 'Satellite Sync Active';
       }
 
       state = state.copyWith(

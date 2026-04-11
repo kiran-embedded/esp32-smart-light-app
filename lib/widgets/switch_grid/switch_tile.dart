@@ -37,13 +37,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
   late AnimationController _rippleController;
   late AnimationController _rgbController; // New for Gaming RGB
 
-  late Animation<double> _pressAnimation;
-  late Animation<double> _rippleAnimation;
-  late Animation<double> _parallaxAnimation;
-
-  bool _isInteracted = false;
-  Offset _tapPosition = Offset.zero;
-
   @override
   void initState() {
     super.initState();
@@ -52,11 +45,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       vsync: this,
       duration: Duration.zero,
     );
-
-    _pressAnimation = Tween<double>(
-      begin: 0,
-      end: 2.0,
-    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
 
     _iconAnimController = AnimationController(
       vsync: this,
@@ -73,17 +61,10 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       vsync: this,
       duration: Duration.zero,
     );
-    _rippleAnimation = CurvedAnimation(
-      parent: _rippleController,
-      curve: Curves.easeOutQuart,
-    );
 
     _parallaxController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    );
-    _parallaxAnimation = Tween<double>(begin: -1.0, end: 1.0).animate(
-      CurvedAnimation(parent: _parallaxController, curve: Curves.easeInOut),
     );
     _parallaxController.repeat(reverse: true);
 
@@ -119,11 +100,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
   }
 
   Future<void> _handleTapDown(TapDownDetails details) async {
-    setState(() {
-      _tapPosition = details.localPosition;
-      _isInteracted = true;
-    });
-
     _rippleController.forward(from: 0);
     HapticService.feedback(ref.read(hapticStyleProvider));
 
@@ -131,10 +107,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     widget.onTap();
     // Run press animation concurrently (non-blocking)
     _pressController.forward().then((_) => _pressController.reverse());
-
-    Future.delayed(const Duration(seconds: 10), () {
-      if (mounted) setState(() => _isInteracted = false);
-    });
   }
 
   @override
@@ -164,7 +136,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       if (!_parallaxController.isAnimating)
         _parallaxController.repeat(reverse: true);
     }
-    // isOffTransparent variable removed as it was unused locally
 
     // Common calculations
     final String displayName =
@@ -294,7 +265,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
           iconInfo,
           blendingEnabled, // Added support
         );
-      // Pass blendingEnabled to other styles if needed, currently focusing on key ones for impact
       case SwitchStyleType.different:
         return _buildDifferentStyle(
           theme,
@@ -988,7 +958,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
         child: Stack(
           children: [
             // Frosted Blur Base
-            // Frosted Blur Base (Optimized: Removed Blur)
             Container(
               color: isActive
                   ? color.withOpacity(bgOpacity)
@@ -1196,12 +1165,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       child: AnimatedBuilder(
         animation: _rgbController,
         builder: (context, child) {
-          final borderCol = isActive
-              ? Colors.transparent
-              : (blendingEnabled
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.transparent);
-
           Widget container = Container(
             padding: const EdgeInsets.all(3), // Border width
             decoration: BoxDecoration(
@@ -1844,9 +1807,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
   ) {
     final isActive = widget.device.isActive;
 
-    // For Crystal Prism, we adjust the base darkness when blending to be more "frosted".
-    // It is already glassy, so we just enhance the background blur.
-
     Widget container = Stack(
       children: [
         Container(
@@ -1858,7 +1818,6 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             child: Container(
               height: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white.withOpacity(0.3)),
               ),

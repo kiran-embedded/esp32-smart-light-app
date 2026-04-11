@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/haptic_service.dart';
 
 class SchedulerGearIcon extends StatefulWidget {

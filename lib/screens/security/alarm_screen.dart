@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'dart:ui';
 import '../../providers/security_provider.dart';
 import '../../services/sound_service.dart';
 import '../../services/voice_service.dart';
 import '../../services/haptic_service.dart';
+import '../../widgets/security/nebula_bot.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {
   final String zone;
@@ -21,6 +25,10 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   Timer? _ttsTimer;
+  Timer? _snoozeTimer;
+  bool _isSnoozed = false;
+  double _dragPosition = 0;
+  final double _sliderWidth = 280;
 
   @override
   void initState() {
@@ -30,47 +38,77 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    // Initial Sound & Voice
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startSirenAndVoice();
     });
   }
 
   void _startSirenAndVoice() {
+    if (_isSnoozed) return;
+
     final soundService = ref.read(soundServiceProvider);
-    final voiceService = ref.read(voiceServiceProvider);
-
-    // Play high alarm (should be looping in sound service)
     soundService.playAlarmHigh();
-    voiceService.stop(); // Pre-emptive stop if anything is playing
 
-    // Trigger TTS every 7 seconds
     _triggerTTS();
+    _ttsTimer?.cancel();
     _ttsTimer = Timer.periodic(const Duration(seconds: 7), (timer) {
       _triggerTTS();
     });
   }
 
   void _triggerTTS() {
-    ref.read(voiceServiceProvider).speak("${widget.zone} motion detected");
+    if (_isSnoozed) return;
+
+    final state = ref.read(securityProvider);
+    final triggeredList = state.triggeredSensors.map((sid) {
+      final nickname = state.sensors[sid]?.nickname;
+      return (nickname ?? sid).replaceAll("PIR", "P.I.R");
+    }).toList();
+
+    String text;
+    if (triggeredList.isEmpty) {
+      text = "${widget.zone} motion detected";
+    } else if (triggeredList.length == 1) {
+      text = "${triggeredList.first} motion detected";
+    } else {
+      text = "Multiple zones breached: ${triggeredList.join(", ")}";
+    }
+
+    ref.read(voiceServiceProvider).speak(text);
+  }
+
+  void _snooze() {
+    HapticService.medium();
+    setState(() {
+      _isSnoozed = true;
+    });
+
+    ref.read(soundServiceProvider).stopAlarm();
+    ref.read(voiceServiceProvider).stop();
+    _ttsTimer?.cancel();
+
+    _snoozeTimer?.cancel();
+    _snoozeTimer = Timer(const Duration(minutes: 5), () {
+      if (mounted) {
+        setState(() => _isSnoozed = false);
+        _startSirenAndVoice();
+      }
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _ttsTimer?.cancel();
+    _snoozeTimer?.cancel();
     super.dispose();
   }
 
   void _stopAlarm() {
     HapticService.heavy();
-    // Stop sound
-    // ref.read(soundServiceProvider).stopAll(); // Add this to sound service
-
-    // Acknowledge in Firebase
-    ref.read(securityProvider.notifier).acknowledge(widget.zone);
-
-    // Exit activity
+    ref.read(soundServiceProvider).stopAlarm();
+    ref.read(voiceServiceProvider).stop();
+    ref.read(securityProvider.notifier).stopAlarm();
     SystemNavigator.pop();
   }
 
@@ -78,142 +116,278 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: AnimatedBuilder(
-        animation: _pulseController,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 1.5,
-                colors: [
-                  Colors.redAccent.withOpacity(0.15 * _pulseController.value),
-                  Colors.black,
-                ],
-              ),
-            ),
-            child: child,
-          );
-        },
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              // Warning Icon
-              Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.redAccent,
-                    size: 100,
-                  )
-                  .animate(onPlay: (c) => c.repeat())
-                  .scale(
-                    begin: const Offset(0.8, 0.8),
-                    end: const Offset(1.2, 1.2),
-                    duration: 80.ms,
-                    curve: Curves.easeInOut,
-                  )
-                  .then()
-                  .scale(
-                    begin: const Offset(1.2, 1.2),
-                    end: const Offset(0.8, 0.8),
-                    duration: 80.ms,
+      body: Stack(
+        children: [
+          // Background Pulse
+          AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    radius: 1.5,
+                    colors: [
+                      (_isSnoozed
+                              ? Colors.amberAccent
+                              : Theme.of(context).colorScheme.error)
+                          .withOpacity(0.12 * _pulseController.value),
+                      Colors.black,
+                    ],
                   ),
-
-              const SizedBox(height: 40),
-
-              // Title
-              Text(
-                "MOTION DETECTED",
-                style: TextStyle(
-                  color: Colors.redAccent,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 4,
-                  shadows: [
-                    Shadow(
-                      color: Colors.redAccent.withOpacity(0.8),
-                      blurRadius: 20,
-                    ),
-                  ],
                 ),
-              ).animate().fade(duration: 80.ms).slideY(begin: 0.2, end: 0),
-
-              const SizedBox(height: 10),
-
-              // Zone Subtext
-              Text(
-                "${widget.zone.toUpperCase()} ZONE",
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 2,
-                ),
-              ).animate().fade(delay: 300.ms, duration: 80.ms),
-
-              const Spacer(),
-
-              // Controls
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildControlBtn(
-                    icon: Icons.snooze_rounded,
-                    label: "SNOOZE",
-                    color: Colors.white24,
-                    onTap: () {
-                      HapticService.light();
-                      // Logic for snooze could go here
-                    },
-                  ),
-                  _buildControlBtn(
-                    icon: Icons.stop_rounded,
-                    label: "STOP",
-                    color: Colors.redAccent,
-                    onTap: _stopAlarm,
-                    isPrimary: true,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 60),
-            ],
+              );
+            },
           ),
-        ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 60),
+
+                // Mascot
+                NebulaBotWidget(isAlarmActive: !_isSnoozed),
+
+                const SizedBox(height: 40),
+
+                // Alert Title
+                Text(
+                      _isSnoozed ? "SNOOZED" : "ALARM ACTIVE",
+                      style: GoogleFonts.outfit(
+                        color: _isSnoozed
+                            ? Colors.amberAccent
+                            : Colors.redAccent,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 4,
+                      ),
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .shimmer(duration: 2.seconds),
+
+                const SizedBox(height: 8),
+
+                const SizedBox(height: 8),
+
+                Consumer(
+                  builder: (context, ref, _) {
+                    final securityState = ref.watch(securityProvider);
+                    final breaches = securityState.activeBreaches;
+
+                    if (breaches.isEmpty) {
+                      return Text(
+                        "${widget.zone.toUpperCase()} TRIGGERED",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white38,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      );
+                    }
+
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          height: 180,
+                          margin: const EdgeInsets.symmetric(horizontal: 40),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.05),
+                            ),
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: breaches.length,
+                            separatorBuilder: (context, index) => const Divider(
+                              color: Colors.white10,
+                              height: 16,
+                            ),
+                            itemBuilder: (context, index) {
+                              final b = breaches[index];
+                              final sensorId =
+                                  b['sensor'] as String? ?? 'Unknown';
+                              final nickname =
+                                  securityState.sensors[sensorId]?.nickname;
+                              final sensorName =
+                                  nickname ?? sensorId.toUpperCase();
+                              final ts = b['timestamp'] as num? ?? 0;
+                              final date = DateTime.fromMillisecondsSinceEpoch(
+                                (ts * 1000).toInt(),
+                              );
+                              final timeStr = DateFormat(
+                                'HH:mm:ss',
+                              ).format(date);
+
+                              return Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        sensorName,
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Breach Sequence #${breaches.length - index}",
+                                        style: GoogleFonts.outfit(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error.withOpacity(0.5),
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    timeStr,
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white24,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95));
+                  },
+                ),
+
+                const Spacer(),
+
+                // PIN / SLIDER AREA
+                if (!_isSnoozed) ...[
+                  _buildSlideToStop(),
+                  const SizedBox(height: 32),
+                  GestureDetector(
+                    onTap: _snooze,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Text(
+                        "SNOOZE (5 MIN)",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white60,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  // Snooze indicator
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.amberAccent.withOpacity(0.5),
+                    ),
+                    strokeWidth: 2,
+                  ).animate(onPlay: (c) => c.repeat()).rotate(),
+                  const SizedBox(height: 32),
+                  TextButton(
+                    onPressed: _stopAlarm,
+                    child: Text(
+                      "STOP PERMANENTLY",
+                      style: TextStyle(
+                        color: Colors.redAccent.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 60),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildControlBtn({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-    bool isPrimary = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
+  Widget _buildSlideToStop() {
+    return Container(
+      width: _sliderWidth,
+      height: 70,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(35),
+        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+      ),
+      child: Stack(
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-              border: Border.all(color: color, width: 2),
-              boxShadow: const [],
-            ),
-            child: Icon(icon, color: color, size: 36),
+          Center(
+            child: Text(
+              "SWIPE TO STOP",
+              style: GoogleFonts.outfit(
+                color: Colors.redAccent.withOpacity(0.4),
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                letterSpacing: 2,
+              ),
+            ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 2.seconds),
           ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+          Positioned(
+            left: _dragPosition,
+            child: GestureDetector(
+              onHorizontalDragUpdate: (details) {
+                setState(() {
+                  _dragPosition += details.delta.dx;
+                  _dragPosition = _dragPosition.clamp(0.0, _sliderWidth - 70);
+                });
+                if (_dragPosition >= _sliderWidth - 80) {
+                  _stopAlarm();
+                }
+              },
+              onHorizontalDragEnd: (details) {
+                if (_dragPosition < _sliderWidth - 80) {
+                  setState(() => _dragPosition = 0);
+                }
+              },
+              child: Container(
+                width: 66,
+                height: 66,
+                margin: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Colors.redAccent,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.redAccent,
+                      blurRadius: 10,
+                      spreadRadius: -2,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.power_settings_new_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
             ),
           ),
         ],

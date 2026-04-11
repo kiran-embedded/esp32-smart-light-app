@@ -121,7 +121,7 @@ class _SuperSegmentGoogleHome extends ConsumerWidget {
       icon: Icons.home_rounded,
       label: 'Google Home',
       status: googleHomeLinked ? 'SYNCED' : 'OFFLINE',
-      color: Colors.blueAccent,
+      color: Theme.of(context).colorScheme.primary,
       onTap: () {
         HapticService.medium();
         if (googleHomeLinked) {
@@ -237,10 +237,10 @@ class _SuperSegmentSchedule extends ConsumerWidget {
       borderRadius: 24,
       strokeWidth: 1.2,
       colors: [
-        Colors.blueAccent,
-        Colors.blueAccent.withOpacity(0.5),
+        Theme.of(context).colorScheme.primary,
+        Theme.of(context).colorScheme.primary.withOpacity(0.5),
         Colors.white.withOpacity(0.2),
-        Colors.blueAccent,
+        Theme.of(context).colorScheme.primary,
       ],
       duration: const Duration(seconds: 4),
       child: GestureDetector(
@@ -264,7 +264,7 @@ class _SuperSegmentSchedule extends ConsumerWidget {
             children: [
               Icon(
                 Icons.calendar_today_rounded,
-                color: Colors.blueAccent,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20 * scale,
               ),
               SizedBox(width: 12 * scale),
@@ -500,7 +500,10 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                           children: [
                             ShaderMask(
                               shaderCallback: (bounds) => LinearGradient(
-                                colors: [blendedColor, Colors.white],
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.primary,
+                                ],
                               ).createShader(bounds),
                               child: Icon(
                                 widget.icon,
@@ -513,7 +516,9 @@ class _AdvancedPillBaseState extends ConsumerState<AdvancedPillBase>
                                   width: 8 * scale,
                                   height: 8 * scale,
                                   decoration: BoxDecoration(
-                                    color: blendedColor,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     shape: BoxShape.circle,
                                     boxShadow: const [],
                                   ),

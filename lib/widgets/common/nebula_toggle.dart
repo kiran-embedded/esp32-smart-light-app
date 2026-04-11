@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/haptic_service.dart';
-import '../../providers/performance_provider.dart';
 
 class NebulaToggle extends ConsumerStatefulWidget {
   final bool value;
@@ -28,7 +27,6 @@ class _NebulaToggleState extends ConsumerState<NebulaToggle>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _position;
-  late Animation<Color?> _color;
 
   @override
   void initState() {
@@ -65,14 +63,11 @@ class _NebulaToggleState extends ConsumerState<NebulaToggle>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activeCol = widget.activeColor ?? theme.colorScheme.primary;
-    final inactiveCol = Colors.white.withOpacity(0.1);
-
-    final perfMode = ref.watch(performanceProvider);
 
     return GestureDetector(
       onTap: () {
         if (widget.onChanged != null) {
-          HapticService.medium();
+          HapticService.toggle(!widget.value);
           widget.onChanged!(!widget.value);
         }
       },

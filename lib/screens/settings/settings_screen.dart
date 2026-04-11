@@ -4,6 +4,9 @@ import 'dart:ui'; // Added for ImageFilter
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart'; // Added for animations
 
@@ -18,6 +21,7 @@ import '../../providers/switch_style_provider.dart';
 import '../../providers/switch_background_provider.dart';
 
 import '../../providers/sound_settings_provider.dart';
+import '../../services/sound_service.dart';
 import '../../providers/switch_settings_provider.dart';
 import '../../providers/performance_provider.dart';
 import '../../core/ui/responsive_layout.dart';
@@ -38,10 +42,10 @@ import '../../services/update_service.dart';
 
 import '../login/login_screen.dart';
 import 'help_support_screen.dart';
-import 'help_center_screen.dart';
 import '../../widgets/robo/robo_assistant.dart';
 import '../../widgets/ai/ai_assistant_dialog.dart';
 import '../../widgets/settings/sprinkling_watermark.dart';
+import 'developer_monitor_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -63,6 +67,51 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(updateProvider.notifier).checkForUpdates();
     });
+  }
+
+  Future<void> _pickCustomAlarm(BuildContext context, WidgetRef ref) async {
+    try {
+      HapticService.selection();
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'wav', 'm4a'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+
+        // Copy to local app storage to ensure persistence
+        final appDir = await getApplicationDocumentsDirectory();
+        final fileName = result.files.single.name;
+        final savedFile = await file.copy('${appDir.path}/$fileName');
+
+        // Update settings
+        await ref
+            .read(soundSettingsProvider.notifier)
+            .setCustomAlarmPath(savedFile.path);
+
+        // Load into SoundService
+        await ref.read(soundServiceProvider).loadCustomAlarm(savedFile.path);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Custom alarm sound set: $fileName'),
+              backgroundColor: Colors.greenAccent,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking file: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -266,6 +315,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                                             )
                                             .setSwitchSound(val),
                                       ),
+                                    ),
+                                    _buildPremiumSettingTile(
+                                      context,
+                                      title: 'Custom Alarm Sound',
+                                      subtitle:
+                                          ref
+                                                  .watch(soundSettingsProvider)
+                                                  .customAlarmPath !=
+                                              null
+                                          ? 'Selected: ${ref.watch(soundSettingsProvider).customAlarmPath!.split('/').last}'
+                                          : 'Use default siren',
+                                      leading: _buildPremiumIcon(
+                                        Icons.music_note,
+                                        Colors.amberAccent,
+                                      ),
+                                      onTap: () =>
+                                          _pickCustomAlarm(context, ref),
+                                      trailing:
+                                          ref
+                                                  .watch(soundSettingsProvider)
+                                                  .customAlarmPath !=
+                                              null
+                                          ? IconButton(
+                                              icon: const Icon(
+                                                Icons.close,
+                                                color: Colors.redAccent,
+                                                size: 18,
+                                              ),
+                                              onPressed: () => ref
+                                                  .read(
+                                                    soundSettingsProvider
+                                                        .notifier,
+                                                  )
+                                                  .setCustomAlarmPath(null),
+                                            )
+                                          : null,
                                     ),
                                   ],
                                 ],
@@ -666,6 +751,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                     ),
                     _PremiumGroupedContainer(
                       children: [
+                        _buildPremiumSettingTile(
+                          context,
+                          title: 'Developer Monitor',
+                          subtitle: 'Raw Telemetry & Mesh Diagnostics',
+                          leading: _buildPremiumIcon(
+                            Icons.monitor_heart,
+                            Colors.greenAccent,
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) =>
+                                    const DeveloperMonitorScreen(),
+                              ),
+                            );
+                          },
+                        ),
                         _buildPremiumSettingTile(
                           context,
                           title: 'ESP32 Firmware',
@@ -1247,24 +1350,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             ),
           ),
           const SizedBox(height: 24),
-          _buildPremiumSettingTile(
-            context,
-            title: 'Help & Documentation',
-            subtitle: 'Learn how to use Nebula Core',
-            leading: _buildPremiumIcon(
-              Icons.help_center_rounded,
-              Colors.amberAccent,
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const HelpCenterScreen(),
-                ),
-              );
-            },
-          ),
-          SizedBox(height: 16.h),
+          const SizedBox(height: 16),
+
           child,
           const SizedBox(height: 32),
         ],
@@ -1279,7 +1366,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     required VoidCallback onTap,
     Color? color,
   }) {
-    final activeColor = color ?? Colors.blueAccent;
+    final activeColor = color ?? Theme.of(context).colorScheme.primary;
 
     return GestureDetector(
       onTap: () {
@@ -1421,12 +1508,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         return 'Dark Neon';
       case AppThemeMode.softDark:
         return 'Soft Dark';
-      case AppThemeMode.light:
-        return 'Light';
       case AppThemeMode.cyberNeon:
         return 'Cyber Neon';
-      case AppThemeMode.liquidGlass:
-        return 'Liquid Glass';
       case AppThemeMode.raindrop:
         return 'Raindrop';
       case AppThemeMode.amoledCyberpunk:
@@ -1438,8 +1521,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         return 'Kali Linux';
       case AppThemeMode.nothingDot:
         return 'Nothing';
-      case AppThemeMode.appleGlass:
-        return 'Apple Glass';
       case AppThemeMode.crimsonVampire:
         return 'Crimson Vampire';
       case AppThemeMode.neonTokyo:
@@ -1470,12 +1551,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         return 'Magma Core';
       case AppThemeMode.cyberBloom:
         return 'Cyber Bloom';
-      case AppThemeMode.voidRift:
-        return 'Void Rift';
       case AppThemeMode.starlightEcho:
         return 'Starlight Echo';
-      case AppThemeMode.aeroStream:
-        return 'Aero Stream';
+      case AppThemeMode.pureGold:
+        return 'Pure Gold';
+      case AppThemeMode.platinumBlue:
+        return 'Platinum Blue';
     }
   }
 
@@ -1487,6 +1568,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         return 'Smooth';
       case HapticStyle.heavy:
         return 'Pulse';
+      case HapticStyle.success:
+        return 'Success';
+      case HapticStyle.error:
+        return 'Error';
     }
   }
 
@@ -2036,8 +2121,17 @@ class _PremiumGroupedContainer extends ConsumerWidget {
             ? Colors.black.withOpacity(0.3)
             : const Color(0xFF151515),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1.2),
-        boxShadow: const [],
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.12 * glowIntensity),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.05 * glowIntensity),
+            blurRadius: 15,
+            spreadRadius: -2,
+          ),
+        ],
       ),
       child: Column(children: children),
     );
@@ -2072,7 +2166,7 @@ class _BreathingToggleState extends ConsumerState<_BreathingToggle> {
 
     return GestureDetector(
       onTap: () {
-        HapticService.selection();
+        HapticService.toggle(!widget.value);
         widget.onChanged(!widget.value);
       },
       child: Container(
@@ -2081,7 +2175,7 @@ class _BreathingToggleState extends ConsumerState<_BreathingToggle> {
           value: widget.value,
           activeColor: activeColor,
           onChanged: (val) {
-            HapticService.selection();
+            HapticService.toggle(val);
             widget.onChanged(val);
           },
         ),

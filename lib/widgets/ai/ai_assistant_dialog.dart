@@ -178,8 +178,11 @@ class _AiAssistantDialogState extends ConsumerState<AiAssistantDialog> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.deepPurpleAccent, Colors.blueAccent],
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.deepPurpleAccent,
+                      Theme.of(context).colorScheme.primary,
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -516,10 +519,10 @@ class _AiAssistantDialogState extends ConsumerState<AiAssistantDialog> {
                                       Colors.orangeAccent,
                                     ],
                                   )
-                                : const LinearGradient(
+                                : LinearGradient(
                                     colors: [
                                       Colors.deepPurpleAccent,
-                                      Colors.blueAccent,
+                                      Theme.of(context).colorScheme.primary,
                                     ],
                                   ),
                             shape: BoxShape.circle,

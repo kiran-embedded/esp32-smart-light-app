@@ -7,16 +7,13 @@ import 'package:google_fonts/google_fonts.dart';
 enum AppThemeMode {
   darkNeon,
   softDark,
-  light,
   cyberNeon,
-  liquidGlass,
   raindrop,
   amoledCyberpunk,
   darkSpace,
   // New Themes
   kaliLinux,
   nothingDot,
-  appleGlass,
   crimsonVampire,
   neonTokyo,
   // v1.2 Expansion
@@ -33,9 +30,10 @@ enum AppThemeMode {
   prismFractal,
   magmaCore,
   cyberBloom,
-  voidRift,
   starlightEcho,
-  aeroStream,
+  // v1.3 Premium Edition
+  pureGold,
+  platinumBlue,
 }
 
 class AppTheme {
@@ -45,12 +43,8 @@ class AppTheme {
         return _darkNeonTheme;
       case AppThemeMode.softDark:
         return _softDarkTheme;
-      case AppThemeMode.light:
-        return _lightTheme;
       case AppThemeMode.cyberNeon:
         return _cyberNeonTheme;
-      case AppThemeMode.liquidGlass:
-        return _liquidGlassTheme;
       case AppThemeMode.raindrop:
         return _raindropTheme;
       case AppThemeMode.amoledCyberpunk:
@@ -61,8 +55,6 @@ class AppTheme {
         return _kaliLinuxTheme;
       case AppThemeMode.nothingDot:
         return _nothingTheme;
-      case AppThemeMode.appleGlass:
-        return _appleGlassTheme;
       case AppThemeMode.crimsonVampire:
         return _crimsonTheme;
       case AppThemeMode.neonTokyo:
@@ -93,20 +85,14 @@ class AppTheme {
         return _magmaCoreTheme;
       case AppThemeMode.cyberBloom:
         return _cyberBloomTheme;
-      case AppThemeMode.voidRift:
-        return _voidRiftTheme;
       case AppThemeMode.starlightEcho:
         return _starlightEchoTheme;
-      case AppThemeMode.aeroStream:
-        return _aeroStreamTheme;
+      case AppThemeMode.pureGold:
+        return _pureGoldTheme;
+      case AppThemeMode.platinumBlue:
+        return _platinumBlueTheme;
     }
   }
-
-  // ... (Existing themes _darkNeonTheme, _softDarkTheme, _lightTheme remain if you want to keep them,
-  // but I will output the FULL file content or just the new methods to append if I was appending,
-  // but here I will just add the new ones and keep the old ones via the tool logic if I can,
-  // however replace_file_content replaces a block. I should probably just replace the whole class or add carefully.)
-  // Actually, I'll replace the class content to ensure all are present.
 
   static ThemeData get _darkNeonTheme {
     return ThemeData(
@@ -123,7 +109,6 @@ class AppTheme {
         onSurface: Color(0xFFFFFFFF),
         onError: Color(0xFFFFFFFF),
       ),
-      // Reduced transparency from 0.6 to 0.8 for better visibility
       cardTheme: CardThemeData(
         color: const Color(0xFF1A1A1A).withOpacity(0.8),
         elevation: 0,
@@ -148,7 +133,7 @@ class AppTheme {
         onSecondary: Color(0xFFFFFFFF),
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1E1E1E).withOpacity(0.9), // Less transparent
+        color: const Color(0xFF1E1E1E).withOpacity(0.9),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
@@ -157,44 +142,66 @@ class AppTheme {
     );
   }
 
-  static ThemeData get _lightTheme {
+  static ThemeData get _pureGoldTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-      colorScheme: const ColorScheme.light(
-        primary: Color(0xFF1976D2),
-        secondary: Color(0xFF388E3C),
-        surface: Color(0xFFFFFFFF),
-        error: Color(0xFFD32F2F),
-        onPrimary: Color(0xFFFFFFFF),
-        onSecondary: Color(0xFFFFFFFF),
-        onSurface: Color(0xFF000000),
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF0A0A05),
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFFFFD700),
+        secondary: Color(0xFFFFA000),
+        surface: Color(0xFF1A1A10),
+        onPrimary: Colors.black,
+        onSurface: Color(0xFFFFE082),
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFFFFFFFF),
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        color: const Color(0xFF1A1A10).withOpacity(0.9),
+        elevation: 8,
+        shadowColor: const Color(0xFFFFD700).withOpacity(0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFFFD700), width: 0.5),
+        ),
       ),
-      textTheme: _lightTextTheme, // need to define or inline
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
+      textTheme: GoogleFonts.getTextTheme('Outfit', _baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
     );
   }
 
-  // --- NEW THEMES ---
+  static ThemeData get _platinumBlueTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF05050A),
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFFE5E4E2),
+        secondary: Color(0xFF00B0FF),
+        surface: Color(0xFF10101A),
+        onPrimary: Colors.black,
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF101010).withOpacity(0.85),
+        elevation: 10,
+        shadowColor: const Color(0xFF00B0FF).withOpacity(0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFFE5E4E2), width: 0.3),
+        ),
+      ),
+      textTheme: GoogleFonts.getTextTheme('Outfit', _baseTextTheme),
+      appBarTheme: _baseAppBarTheme,
+    );
+  }
 
   static ThemeData get _cyberNeonTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF050510), // Deep blue-black
+      scaffoldBackgroundColor: const Color(0xFF050510),
       colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF00FF9D), // Spring Green Neon
-        secondary: Color(0xFFBC13FE), // Electric Purple
+        primary: Color(0xFF00FF9D),
+        secondary: Color(0xFFBC13FE),
         surface: Color(0xFF0F0F25),
         onSurface: Color(0xFFE0E0FF),
       ),
@@ -209,41 +216,13 @@ class AppTheme {
     );
   }
 
-  static ThemeData get _liquidGlassTheme {
-    // iPhone 26 like - Ultra clean, white/silver, high blur feel (simulated via colors)
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFE0E5EC), // Neumorphic grey-ish
-      colorScheme: const ColorScheme.light(
-        primary: Color(0xFF2979FF), // Vivid Blue
-        secondary: Color(0xFF00E5FF),
-        surface: Color(0xFFF0F5FA),
-        onSurface: Color(0xFF2D3142),
-      ),
-      cardTheme: CardThemeData(
-        color: const Color(0xFFFFFFFF).withOpacity(0.6), // Glassy but visible
-        elevation: 0, // No shadow for glass
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
-        ),
-      ),
-      textTheme: _lightTextTheme,
-      appBarTheme: _baseAppBarTheme,
-    );
-  }
-
   static ThemeData get _raindropTheme {
-    // Moody, dark blue/purple, like rain on a window
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(
-        0xFF0D1117,
-      ), // GitHub Dark Dimmed style
+      scaffoldBackgroundColor: const Color(0xFF0D1117),
       colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF58A6FF), // Soft Blue
+        primary: Color(0xFF58A6FF),
         secondary: Color(0xFF79C0FF),
         surface: Color(0xFF161B22),
         onSurface: Color(0xFFC9D1D9),
@@ -253,7 +232,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Color(0xFF30363D), width: 1),
+          side: const BorderSide(color: Color(0xFF30363D), width: 1),
         ),
       ),
       textTheme: _baseTextTheme,
@@ -262,23 +241,22 @@ class AppTheme {
   }
 
   static ThemeData get _amoledCyberpunkTheme {
-    // True Black, High Contrast
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF000000), // True Amoled Black
+      scaffoldBackgroundColor: const Color(0xFF000000),
       colorScheme: const ColorScheme.dark(
-        primary: Color(0xFFFF0055), // Neon Pink
-        secondary: Color(0xFFE9FF00), // Neon Yellow
+        primary: Color(0xFFFF0055),
+        secondary: Color(0xFFE9FF00),
         surface: Color(0xFF000000),
         onSurface: Color(0xFFFFFFFF),
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF111111), // Almost black for contrast cards
+        color: const Color(0xFF111111),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0), // Sharp edges for cyberpunk
-          side: BorderSide(color: Color(0xFF333333), width: 1),
+          borderRadius: BorderRadius.circular(0),
+          side: const BorderSide(color: Color(0xFF333333), width: 1),
         ),
       ),
       textTheme: _baseTextTheme,
@@ -290,9 +268,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF000000), // Pure Black
+      scaffoldBackgroundColor: const Color(0xFF000000),
       colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF00FF00), // Toxic Green
+        primary: Color(0xFF00FF00),
         secondary: Color(0xFF00FF00),
         tertiary: Color(0xFF00FF00),
         surface: Color(0xFF000000),
@@ -310,9 +288,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       cardTheme: CardThemeData(
-        color: const Color(
-          0xFFFFFFFF,
-        ).withOpacity(0.25), // Increased opacity for legibility
+        color: const Color(0xFFFFFFFF).withOpacity(0.25),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
@@ -321,24 +297,18 @@ class AppTheme {
       ),
       textTheme: _baseTextTheme.copyWith(
         displayLarge: _baseTextTheme.displayLarge?.copyWith(
-          fontFamily: 'Outfit', // Futuristic Geometric Rounded
+          fontFamily: 'Outfit',
           letterSpacing: 1.2,
         ),
-        bodyLarge: _baseTextTheme.bodyLarge?.copyWith(
-          fontFamily: 'Roboto', // Clean modern sans
-        ),
+        bodyLarge: _baseTextTheme.bodyLarge?.copyWith(fontFamily: 'Roboto'),
       ),
       appBarTheme: _baseAppBarTheme,
     );
   }
 
-  // --- EXPANDED THEMES ---
-
   static ThemeData get _kaliLinuxTheme {
-    // Hacker / Terminal Vibe
-    const primary = Color(0xFF00FF00); // Terminal Green
+    const primary = Color(0xFF00FF00);
     const bg = Color(0xFF000000);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -347,14 +317,14 @@ class AppTheme {
         primary: primary,
         secondary: const Color(0xFF1B1B1B),
         surface: const Color(0xFF0D0D0D),
-        onPrimary: AdaptiveTextEngine.compute(primary), // Auto-adaptive
-        onSurface: const Color(0xFF00FF00), // Text is green too
+        onPrimary: AdaptiveTextEngine.compute(primary),
+        onSurface: const Color(0xFF00FF00),
       ),
       cardTheme: CardThemeData(
         color: const Color(0xFF0D0D0D),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero, // Sharp edges
+          borderRadius: BorderRadius.zero,
           side: BorderSide(color: primary.withOpacity(0.5)),
         ),
       ),
@@ -366,10 +336,8 @@ class AppTheme {
   }
 
   static ThemeData get _nothingTheme {
-    // Retro-Futuristic Dot Matrix
-    const primary = Color(0xFFD71921); // Nothing Red
+    const primary = Color(0xFFD71921);
     const bg = Color(0xFF000000);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -394,43 +362,10 @@ class AppTheme {
     );
   }
 
-  static ThemeData get _appleGlassTheme {
-    // Clean, Airy, Frosted
-    const primary = Color(0xFF007AFF); // Apple Blue
-    const bg = Color(0xFFF5F5F7); // Light Grey
-
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.light(
-        primary: primary,
-        secondary: const Color(0xFF5AC8FA),
-        surface: Colors.white.withOpacity(0.8),
-        onPrimary: AdaptiveTextEngine.compute(primary),
-        onSurface: Colors.black,
-      ),
-      cardTheme: CardThemeData(
-        color: Colors.white.withOpacity(0.4), // Low opacity for glass effect
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: Colors.white.withOpacity(0.5)),
-        ),
-      ),
-      textTheme: GoogleFonts.interTextTheme(_lightTextTheme),
-      appBarTheme: _baseAppBarTheme.copyWith(
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-    );
-  }
-
   static ThemeData get _crimsonTheme {
-    // Vampire / Gothic Luxury
-    const primary = Color(0xFFDC143C); // Crimson
-    const secondary = Color(0xFFFFD700); // Gold
-    const bg = Color(0xFF050000); // Deepest Red/Black
-
+    const primary = Color(0xFFDC143C);
+    const secondary = Color(0xFFFFD700);
+    const bg = Color(0xFF050000);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -457,11 +392,9 @@ class AppTheme {
   }
 
   static ThemeData get _neonTokyoTheme {
-    // 80s Synthwave
-    const primary = Color(0xFF00FFFF); // Cyan
-    const secondary = Color(0xFFFF00FF); // Magenta
-    const bg = Color(0xFF0b0014); // Deep Purple space
-
+    const primary = Color(0xFF00FFFF);
+    const secondary = Color(0xFFFF00FF);
+    const bg = Color(0xFF0b0014);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -491,14 +424,10 @@ class AppTheme {
     );
   }
 
-  // --- HELPERS ---
-
   static ThemeData get _sunsetRetroTheme {
-    // Vaporwave / Suneset: Orange to Purple gradient feel
-    const primary = Color(0xFFFF9E80); // Deep Orange Accent
-    const secondary = Color(0xFFEA80FC); // Purple Accent
-    const bg = Color(0xFF2D1B2E); // Deep purple/brown
-
+    const primary = Color(0xFFFF9E80);
+    const secondary = Color(0xFFEA80FC);
+    const bg = Color(0xFF2D1B2E);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -522,11 +451,9 @@ class AppTheme {
   }
 
   static ThemeData get _mindfulNatureTheme {
-    // Zen / Forest: Green, Brown, Calm
-    const primary = Color(0xFF66BB6A); // Light Green
-    const secondary = Color(0xFF8D6E63); // Brown
-    const bg = Color(0xFF1B261D); // Deep Jungle Green
-
+    const primary = Color(0xFF66BB6A);
+    const secondary = Color(0xFF8D6E63);
+    const bg = Color(0xFF1B261D);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -542,7 +469,7 @@ class AppTheme {
         color: const Color(0xFF253326).withOpacity(0.8),
         elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30), // Organic shape
+          borderRadius: BorderRadius.circular(30),
           side: BorderSide(color: primary.withOpacity(0.2)),
         ),
       ),
@@ -552,11 +479,9 @@ class AppTheme {
   }
 
   static ThemeData get _deepOceanTheme {
-    // Abyssal: Deep Blue, Teal
-    const primary = Color(0xFF00BFA5); // Teal Accent
-    const secondary = Color(0xFF40C4FF); // Light Blue Accent
-    const bg = Color(0xFF001018); // Almost black blue
-
+    const primary = Color(0xFF00BFA5);
+    const secondary = Color(0xFF40C4FF);
+    const bg = Color(0xFF001018);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -582,12 +507,10 @@ class AppTheme {
   }
 
   static ThemeData get _draculaTheme {
-    // Famous Dracula Color Palette
     const bg = Color(0xFF282A36);
-    const primary = Color(0xFFBD93F9); // Purple
-    const secondary = Color(0xFFFF79C6); // Pink
+    const primary = Color(0xFFBD93F9);
+    const secondary = Color(0xFFFF79C6);
     const surface = Color(0xFF44475A);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -611,12 +534,10 @@ class AppTheme {
   }
 
   static ThemeData get _monokaiTheme {
-    // Monokai Pro Vibe
     const bg = Color(0xFF2D2A2E);
-    const primary = Color(0xFFFC9867); // Orange
-    const secondary = Color(0xFFFFD866); // Yellow
+    const primary = Color(0xFFFC9867);
+    const secondary = Color(0xFFFFD866);
     const surface = Color(0xFF403E41);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -624,7 +545,7 @@ class AppTheme {
       colorScheme: ColorScheme.dark(
         primary: primary,
         secondary: secondary,
-        tertiary: const Color(0xFFFF6188), // Red/Pink
+        tertiary: const Color(0xFFFF6188),
         surface: surface,
         onSurface: const Color(0xFFFCFCFA),
       ),
@@ -639,12 +560,10 @@ class AppTheme {
   }
 
   static ThemeData get _synthwaveTheme {
-    // Classic Grid/Sun Vibe
-    const bg = Color(0xFF241734); // Dark violet
-    const primary = Color(0xFFEB00FF); // Hot Pink
-    const secondary = Color(0xFF00F0FF); // Cyan
+    const bg = Color(0xFF241734);
+    const primary = Color(0xFFEB00FF);
+    const secondary = Color(0xFF00F0FF);
     const surface = Color(0xFF2E2142);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -661,7 +580,7 @@ class AppTheme {
         elevation: 10,
         shadowColor: primary.withOpacity(0.4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0), // Retro geometric
+          borderRadius: BorderRadius.circular(0),
           side: BorderSide(color: secondary.withOpacity(0.7), width: 1.5),
         ),
       ),
@@ -673,10 +592,9 @@ class AppTheme {
   }
 
   static ThemeData get _solarFlareTheme {
-    const primary = Color(0xFFFF5722); // Solar Orange
-    const secondary = Color(0xFFFFC107); // Amber
-    const bg = Color(0xFF1A0A00); // Very Deep Orange Black
-
+    const primary = Color(0xFFFF5722);
+    const secondary = Color(0xFFFFC107);
+    const bg = Color(0xFF1A0A00);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -694,16 +612,15 @@ class AppTheme {
         shadowColor: primary.withOpacity(0.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
       ),
-      textTheme: GoogleFonts.outfitTextTheme(_baseTextTheme),
+      textTheme: GoogleFonts.getTextTheme('Outfit', _baseTextTheme),
       appBarTheme: _baseAppBarTheme,
     );
   }
 
   static ThemeData get _electricTundraTheme {
-    const primary = Color(0xFF00E5FF); // Cyan
-    const secondary = Color(0xFF2979FF); // Blue
-    const bg = Color(0xFF001219); // Ice Deep Blue
-
+    const primary = Color(0xFF00E5FF);
+    const secondary = Color(0xFF2979FF);
+    const bg = Color(0xFF001219);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -729,10 +646,9 @@ class AppTheme {
   }
 
   static ThemeData get _nanoCatalystTheme {
-    const primary = Color(0xFFE0E0E0); // Platinum
-    const secondary = Color(0xFF00FF9D); // Hex Green
+    const primary = Color(0xFFE0E0E0);
+    const secondary = Color(0xFF00FF9D);
     const bg = Color(0xFF0A0A0A);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -758,10 +674,9 @@ class AppTheme {
   }
 
   static ThemeData get _phantomVelvetTheme {
-    const primary = Color(0xFF9C27B0); // Purple
-    const secondary = Color(0xFFE91E63); // Pink
-    const bg = Color(0xFF0D0014); // Darkest Purple
-
+    const primary = Color(0xFF9C27B0);
+    const secondary = Color(0xFFE91E63);
+    const bg = Color(0xFF0D0014);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -787,7 +702,6 @@ class AppTheme {
     const primary = Colors.white;
     const secondary = Color(0xFF757575);
     const bg = Color(0xFF050505);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -812,10 +726,9 @@ class AppTheme {
   }
 
   static ThemeData get _magmaCoreTheme {
-    const primary = Color(0xFFFF3D00); // Deep Orange
-    const secondary = Color(0xFFD50000); // Red
+    const primary = Color(0xFFFF3D00);
+    const secondary = Color(0xFFD50000);
     const bg = Color(0xFF0E0000);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -839,10 +752,9 @@ class AppTheme {
   }
 
   static ThemeData get _cyberBloomTheme {
-    const primary = Color(0xFF00FF88); // Bloom Green
-    const secondary = Color(0xFF88FF00); // Lime
+    const primary = Color(0xFF00FF88);
+    const secondary = Color(0xFF88FF00);
     const bg = Color(0xFF050F08);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -866,36 +778,10 @@ class AppTheme {
     );
   }
 
-  static ThemeData get _voidRiftTheme {
-    const primary = Colors.white;
-    const secondary = Color(0xFFE0E0E0);
-    const bg = Color(0xFF000000);
-
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.dark(
-        primary: primary,
-        secondary: secondary,
-        surface: const Color(0xFF0A0A0A),
-        onSurface: Colors.white,
-      ),
-      cardTheme: CardThemeData(
-        color: const Color(0xFF0A0A0A),
-        elevation: 0,
-        shape: const CircleBorder(side: BorderSide(color: Colors.white12)),
-      ),
-      textTheme: GoogleFonts.outfitTextTheme(_baseTextTheme),
-      appBarTheme: _baseAppBarTheme,
-    );
-  }
-
   static ThemeData get _starlightEchoTheme {
-    const primary = Color(0xFFB0BEC5); // Blue Grey
+    const primary = Color(0xFFB0BEC5);
     const secondary = Colors.white;
     const bg = Color(0xFF070A0F);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -915,38 +801,6 @@ class AppTheme {
       appBarTheme: _baseAppBarTheme,
     );
   }
-
-  static ThemeData get _aeroStreamTheme {
-    const primary = Colors.white;
-    const secondary = Color(0xFFB3E5FC); // Light Blue
-    const bg = Color(0xFF000000);
-
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.dark(
-        primary: primary,
-        secondary: secondary,
-        surface: const Color(0xFF121212),
-        onSurface: Colors.white,
-      ),
-      cardTheme: CardThemeData(
-        color: const Color(0xFF121212).withOpacity(0.9),
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            bottomRight: Radius.circular(30),
-          ),
-        ),
-      ),
-      textTheme: GoogleFonts.josefinSansTextTheme(_baseTextTheme),
-      appBarTheme: _baseAppBarTheme,
-    );
-  }
-
-  // --- HELPERS ---
 
   static const AppBarTheme _baseAppBarTheme = AppBarTheme(
     backgroundColor: Colors.transparent,
@@ -992,44 +846,6 @@ class AppTheme {
     bodySmall: TextStyle(color: Color(0xFF999999), fontSize: 12),
   );
 
-  static const TextTheme _lightTextTheme = TextTheme(
-    displayLarge: TextStyle(
-      color: Color(0xFF000000),
-      fontSize: 32,
-      fontWeight: FontWeight.bold,
-      letterSpacing: -0.5,
-    ),
-    displayMedium: TextStyle(
-      color: Color(0xFF000000),
-      fontSize: 28,
-      fontWeight: FontWeight.bold,
-      letterSpacing: -0.5,
-    ),
-    displaySmall: TextStyle(
-      color: Color(0xFF000000),
-      fontSize: 24,
-      fontWeight: FontWeight.w600,
-    ),
-    headlineMedium: TextStyle(
-      color: Color(0xFF000000),
-      fontSize: 20,
-      fontWeight: FontWeight.w600,
-    ),
-    titleLarge: TextStyle(
-      color: Color(0xFF000000),
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-    ),
-    titleMedium: TextStyle(
-      color: Color(0xFF000000),
-      fontSize: 16,
-      fontWeight: FontWeight.w500,
-    ),
-    bodyLarge: TextStyle(color: Color(0xFF000000), fontSize: 16),
-    bodyMedium: TextStyle(color: Color(0xFF424242), fontSize: 14),
-    bodySmall: TextStyle(color: Color(0xFF757575), fontSize: 12),
-  );
-
   static double getThemeGlowIntensity(AppThemeMode mode) {
     switch (mode) {
       case AppThemeMode.darkNeon:
@@ -1039,7 +855,9 @@ class AppTheme {
       case AppThemeMode.solarFlare:
       case AppThemeMode.magmaCore:
       case AppThemeMode.cyberBloom:
-        return 1.2;
+      case AppThemeMode.pureGold:
+      case AppThemeMode.platinumBlue:
+        return 1.5;
       case AppThemeMode.amoledCyberpunk:
       case AppThemeMode.darkSpace:
       case AppThemeMode.phantomVelvet:
@@ -1055,20 +873,13 @@ class AppTheme {
       case AppThemeMode.nothingDot:
       case AppThemeMode.nanoCatalyst:
       case AppThemeMode.prismFractal:
-      case AppThemeMode.voidRift:
-      case AppThemeMode.aeroStream:
         return 0.4;
-      case AppThemeMode.light:
-      case AppThemeMode.liquidGlass:
-      case AppThemeMode.appleGlass:
-        return 0.2;
       default:
         return 0.5;
     }
   }
 }
 
-// Glassmorphic decoration helper
 class GlassmorphicDecoration {
   static BoxDecoration getDecoration({
     required Color baseColor,

@@ -39,7 +39,7 @@ class _AnimatedCupertinoSwitchState
         activeColor: widget.activeColor ?? theme.colorScheme.primary,
         onChanged: (val) {
           if (widget.onChanged != null) {
-            HapticService.light();
+            HapticService.toggle(val);
             widget.onChanged!(val);
           }
         },

@@ -20,33 +20,31 @@ class SoundService {
 
   Future<void> _init() async {
     try {
-      // Initialize SoLoud engine (C++ backend for zero latency)
-      await SoLoud.instance.init();
-
-      // Preload assets into memory
-      // Note: flutter_soloud loads assets differently.
-      // We load them as AudioSource.
-      _sounds['on'] = await SoLoud.instance.loadAsset(
-        'assets/audio/switch_on.mp3',
-      );
-      _sounds['off'] = await SoLoud.instance.loadAsset(
-        'assets/audio/switch_off.mp3',
-      );
-      _sounds['tab'] = await SoLoud.instance.loadAsset(
-        'assets/audio/tab_switch.mp3',
-      );
-      _sounds['alarm_high'] = await SoLoud.instance.loadAsset(
-        'assets/audio/alarm_high.mp3',
-      );
-      _sounds['alarm_med'] = await SoLoud.instance.loadAsset(
-        'assets/audio/alarm_medium.mp3',
-      );
+      // Initialize SoLoud (engine will handle double-init internally or we catch)
       try {
-        _sounds['siren'] = await SoLoud.instance.loadAsset(
-          'assets/audio/siren.mp3',
-        );
+        await SoLoud.instance.init();
       } catch (e) {
-        debugPrint('Siren sound not found, skipping...');
+        debugPrint('SoLoud already initialized or failed: $e');
+      }
+
+      await _loadAppAssets();
+
+      // Listen for changes in custom alarm path
+      _ref.listen(soundSettingsProvider.select((s) => s.customAlarmPath), (
+        previous,
+        next,
+      ) {
+        if (next != null && next != previous) {
+          loadCustomAlarm(next);
+        } else if (next == null) {
+          _sounds.remove('custom_alarm');
+        }
+      });
+
+      // Initial load
+      final settings = _ref.read(soundSettingsProvider);
+      if (settings.customAlarmPath != null) {
+        await loadCustomAlarm(settings.customAlarmPath!);
       }
     } catch (e) {
       debugPrint('SoLoud init error: $e');
@@ -58,6 +56,25 @@ class SoundService {
       await _startupPlayer.setSource(AssetSource('audio/startup.mp3'));
     } catch (e) {
       debugPrint('Startup player init error: $e');
+    }
+  }
+
+  Future<void> _loadAppAssets() async {
+    final assets = {
+      'on': 'assets/audio/switch_on.mp3',
+      'off': 'assets/audio/switch_off.mp3',
+      'tab': 'assets/audio/tab_switch.mp3',
+      'siren': 'assets/audio/siren.mp3',
+      'alarm_high': 'assets/audio/alarm_high.mp3',
+      'alarm_med': 'assets/audio/alarm_medium.mp3',
+    };
+
+    for (final entry in assets.entries) {
+      try {
+        _sounds[entry.key] = await SoLoud.instance.loadAsset(entry.value);
+      } catch (e) {
+        debugPrint('Error loading asset ${entry.key}: $e');
+      }
     }
   }
 
@@ -111,7 +128,9 @@ class SoundService {
   SoundHandle? _alarmHandle;
 
   Future<void> playAlarmHigh({bool looping = true}) async {
-    final source = _sounds['alarm_high'];
+    // Priority: Custom > Siren > AlarmHigh (missing)
+    final source =
+        _sounds['custom_alarm'] ?? _sounds['siren'] ?? _sounds['alarm_high'];
     if (source != null) {
       if (_alarmHandle != null) SoLoud.instance.stop(_alarmHandle!);
       _alarmHandle = await SoLoud.instance.play(
@@ -123,7 +142,9 @@ class SoundService {
   }
 
   Future<void> playAlarmMedium({bool looping = true}) async {
-    final source = _sounds['alarm_med'];
+    // Priority: Custom > Siren > AlarmMed (missing)
+    final source =
+        _sounds['custom_alarm'] ?? _sounds['siren'] ?? _sounds['alarm_med'];
     if (source != null) {
       if (_alarmHandle != null) SoLoud.instance.stop(_alarmHandle!);
       _alarmHandle = await SoLoud.instance.play(
@@ -135,8 +156,9 @@ class SoundService {
   }
 
   Future<void> playSiren({bool looping = true}) async {
-    // Try siren first, fallback to alarm_high
-    final source = _sounds['siren'] ?? _sounds['alarm_high'];
+    // Try custom first, then siren, fallback to alarm_high
+    final source =
+        _sounds['custom_alarm'] ?? _sounds['siren'] ?? _sounds['alarm_high'];
     if (source != null) {
       if (_alarmHandle != null) await SoLoud.instance.stop(_alarmHandle!);
       _alarmHandle = await SoLoud.instance.play(
@@ -144,6 +166,15 @@ class SoundService {
         volume: 1.0,
         looping: looping,
       );
+    }
+  }
+
+  Future<void> loadCustomAlarm(String path) async {
+    try {
+      final source = await SoLoud.instance.loadFile(path);
+      _sounds['custom_alarm'] = source;
+    } catch (e) {
+      debugPrint('Error loading custom alarm: $e');
     }
   }
 

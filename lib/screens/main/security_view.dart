@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'neural_mapping_view.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../widgets/common/premium_app_bar.dart';
 import '../../providers/security_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../widgets/common/pixel_led_border.dart';
+import '../security/pir_calibration_view.dart';
 import 'dart:ui';
 
 class SecurityView extends ConsumerStatefulWidget {
@@ -58,7 +61,19 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
 
             SliverToBoxAdapter(child: SizedBox(height: 16.h)),
 
-            // 2. ECOSYSTEM & AUTOMATION PILLS (VERTICAL)
+            // 2. SYSTEM VITALITY DASHBOARD (High Priority Telemetry)
+            SliverPadding(
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.horizontalPadding,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: _buildVitalityCard(context, securityState),
+              ),
+            ),
+
+            SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+
+            // 3. CORE SECURITY CONTROLS & SCHEDULE
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: Responsive.horizontalPadding,
@@ -66,11 +81,29 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               sliver: SliverToBoxAdapter(
                 child: Column(
                   children: [
+                    _buildActivePeriods(context, securityState, ref),
+                    const SizedBox(height: 16),
                     _buildMasterLDR(context, securityState, ref),
                     const SizedBox(height: 12),
-                    _buildActivePeriods(context, securityState, ref),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildBuzzerTest(context, securityNotifier),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildNeuralAutomationCard(
+                            context,
+                            ref,
+                            securityState,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
-                    _buildNeuralAutomationCard(context, ref, securityState),
+                    _buildCalibrationButton(context),
+                    const SizedBox(height: 12),
+                    _buildNeuralMappingButton(context, theme),
                   ],
                 ),
               ),
@@ -78,7 +111,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
 
             SliverToBoxAdapter(child: SizedBox(height: 24.h)),
 
-            // SENSOR GRID HEADER
+            // 4. SENSOR GRID HEADER
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: Responsive.horizontalPadding,
@@ -90,7 +123,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
 
             SliverToBoxAdapter(child: SizedBox(height: 16.h)),
 
-            // SENSOR GRID
+            // 5. SENSOR GRID
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: Responsive.horizontalPadding,
@@ -102,7 +135,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 16.w,
                         mainAxisSpacing: 16.h,
-                        childAspectRatio: 1.0, // Taller cards for clearer names
+                        childAspectRatio: 1.0,
                       ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final name = securityState.sensors.keys.elementAt(
@@ -121,7 +154,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                     ),
             ),
 
-            // PANIC / SOS SECTION
+            // 6. EMERGENCY PANIC
             SliverToBoxAdapter(child: SizedBox(height: 40.h)),
             SliverPadding(
               padding: EdgeInsets.symmetric(
@@ -132,7 +165,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               ),
             ),
 
-            // FOOTER SPACE FOR BOTTOM NAV
+            // FOOTER SPACE
             SliverToBoxAdapter(child: SizedBox(height: 120.h)),
           ],
         ),
@@ -270,10 +303,11 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               max: 100,
               divisions: 100,
               onChanged: (val) {
-                // Realistic slide feel intelligence
-                if (val.toInt() % 5 == 0) {
-                  HapticService.light();
-                }
+                HapticService.immersiveSliderFeedback(
+                  val.toDouble(),
+                  min: 0,
+                  max: 100,
+                );
                 ref
                     .read(securityProvider.notifier)
                     .updateLdrThreshold(val.toInt());
@@ -284,6 +318,199 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBuzzerTest(BuildContext context, SecurityNotifier notifier) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.heavy();
+        notifier.testBuzzer();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.redAccent.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.redAccent.withOpacity(0.08)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(
+                      Icons.notification_important_rounded,
+                      color: Colors.redAccent,
+                      size: 18.sp,
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .shimmer(duration: 1.seconds, color: Colors.white24)
+                    .shake(hz: 4, curve: Curves.easeInOut),
+                Icon(
+                  Icons.touch_app_rounded,
+                  color: Colors.redAccent.withOpacity(0.3),
+                  size: 16,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "PANIC BUZZER",
+              style: GoogleFonts.outfit(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              "Manual Test Check",
+              style: GoogleFonts.outfit(fontSize: 10.sp, color: Colors.white38),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalibrationButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.heavy();
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const PIRCalibrationView()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.cyanAccent.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.cyanAccent.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.cyanAccent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child:
+                  Icon(
+                        Icons.settings_input_antenna_rounded,
+                        color: Colors.cyanAccent,
+                        size: 24,
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .scale(
+                        duration: 2.seconds,
+                        begin: const Offset(1, 1),
+                        end: const Offset(1.15, 1.15),
+                        curve: Curves.elasticOut,
+                      )
+                      .rotate(
+                        duration: 2.seconds,
+                        begin: -0.05,
+                        end: 0.05,
+                        curve: Curves.easeInOut,
+                      ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "PIR PRO TUNING",
+                    style: GoogleFonts.outfit(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    "SENSITIVITY & DEBOUNCE",
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white38,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.cyanAccent.withOpacity(0.3),
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNeuralMappingButton(BuildContext context, ThemeData theme) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.heavy();
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const NeuralMappingView()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.hub_rounded, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "NEURAL LINK",
+                    style: GoogleFonts.outfit(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    "MAP SENSORS TO GRID",
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white38,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: theme.colorScheme.primary.withOpacity(0.3),
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -323,7 +550,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 value: state.autoLightOnMotion,
                 activeColor: Colors.cyanAccent,
                 onChanged: (_) {
-                  HapticService.medium();
+                  HapticService.light();
                   ref.read(securityProvider.notifier).toggleAutoLightOnMotion();
                 },
               ),
@@ -356,127 +583,302 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 12, bottom: 8),
-          child: Text(
-            "ALARM ACTIVE SCHEDULE",
-            style: GoogleFonts.outfit(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).colorScheme.primary,
-              letterSpacing: 1.2,
-            ),
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 12.sp,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "ALARM ACTIVE SCHEDULE",
+                style: GoogleFonts.outfit(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.primary,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
           ),
         ),
         Container(
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            color: Colors.white.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.06)),
           ),
-          child: Column(
-            children: [
-              _buildIosRowCell(
-                'morning',
-                Icons.wb_twilight,
-                'Morning (6:00 AM - 11:59 AM)',
-                state,
-                ref,
-              ),
-              const Divider(color: Colors.white10, height: 1, indent: 48),
-              _buildIosRowCell(
-                'afternoon',
-                Icons.wb_sunny,
-                'Afternoon (12:00 PM - 4:59 PM)',
-                state,
-                ref,
-              ),
-              const Divider(color: Colors.white10, height: 1, indent: 48),
-              _buildIosRowCell(
-                'evening',
-                Icons.nights_stay_outlined,
-                'Evening (5:00 PM - 7:59 PM)',
-                state,
-                ref,
-              ),
-              const Divider(color: Colors.white10, height: 1, indent: 48),
-              _buildIosRowCell(
-                'night',
-                Icons.nightlight_round,
-                'Night (8:00 PM - 11:59 PM)',
-                state,
-                ref,
-              ),
-              const Divider(color: Colors.white10, height: 1, indent: 48),
-              _buildIosRowCell(
-                'midnight',
-                Icons.star,
-                'Midnight (12:00 AM - 5:59 AM)',
-                state,
-                ref,
-                isLast: true,
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 24) / 3;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: itemWidth,
+                    child: _buildSchedulePill(
+                      'morning',
+                      Icons.wb_twilight,
+                      'MORNING',
+                      state,
+                      ref,
+                    ),
+                  ),
+                  SizedBox(
+                    width: itemWidth,
+                    child: _buildSchedulePill(
+                      'afternoon',
+                      Icons.wb_sunny,
+                      'NOON',
+                      state,
+                      ref,
+                    ),
+                  ),
+                  SizedBox(
+                    width: itemWidth,
+                    child: _buildSchedulePill(
+                      'evening',
+                      Icons.nights_stay_outlined,
+                      'EVENING',
+                      state,
+                      ref,
+                    ),
+                  ),
+                  SizedBox(
+                    width: itemWidth,
+                    child: _buildSchedulePill(
+                      'night',
+                      Icons.nightlight_round,
+                      'NIGHT',
+                      state,
+                      ref,
+                    ),
+                  ),
+                  SizedBox(
+                    width: itemWidth,
+                    child: _buildSchedulePill(
+                      'midnight',
+                      Icons.star,
+                      'MIDNIGHT',
+                      state,
+                      ref,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildIosRowCell(
-    String periodKey,
+  Widget _buildVitalityCard(BuildContext context, SecurityState state) {
+    final bool isLdrOk = state.ldrValid;
+    final int rssi = state.rssi;
+    final bool isOnline = state.isNodeActive;
+
+    Color getRssiColor(int val) {
+      if (val > -65) return Colors.greenAccent;
+      if (val > -85) return Colors.orangeAccent;
+      return Colors.redAccent;
+    }
+
+    IconData getRssiIcon(int val) {
+      if (val > -65) return Icons.wifi_rounded;
+      if (val > -85) return Icons.wifi_2_bar_rounded;
+      return Icons.wifi_1_bar_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: isOnline ? Colors.greenAccent : Colors.white24,
+                          shape: BoxShape.circle,
+                          boxShadow: isOnline
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.greenAccent.withOpacity(0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .scale(
+                        duration: 1.seconds,
+                        begin: const Offset(1, 1),
+                        end: Offset(1.3, 1.3),
+                      )
+                      .then()
+                      .scale(duration: 1.seconds),
+                  const SizedBox(width: 10),
+                  Text(
+                    "SYSTEM VITALITY",
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white38,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                isOnline ? "HUB CONNECTED" : "HUB OFFLINE",
+                style: GoogleFonts.outfit(
+                  fontSize: 9.sp,
+                  fontWeight: FontWeight.bold,
+                  color: isOnline ? Colors.greenAccent : Colors.white24,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildVitalTile(
+                  context,
+                  "WIFI SIGNAL",
+                  "${rssi}dBm",
+                  getRssiIcon(rssi),
+                  getRssiColor(rssi),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildVitalTile(
+                  context,
+                  "LDR OPTIC",
+                  isLdrOk ? "NOMINAL" : "HARDWARE FAIL",
+                  Icons.sensors_rounded,
+                  isLdrOk ? Colors.cyanAccent : Colors.redAccent,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVitalTile(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 7.sp,
+                  fontWeight: FontWeight.bold,
+                  color: color.withOpacity(0.6),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.outfit(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSchedulePill(
+    String key,
     IconData icon,
     String label,
     SecurityState state,
-    WidgetRef ref, {
-    bool isLast = false,
-  }) {
-    final isActive = state.activePeriods[periodKey] ?? true;
+    WidgetRef ref,
+  ) {
+    final isActive = state.activePeriods[key] ?? true;
+    final theme = Theme.of(context);
+
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
       onTap: () {
-        HapticService.selection();
-        ref
-            .read(securityProvider.notifier)
-            .setPeriodActive(periodKey, !isActive);
+        HapticService.heavy(); // Premium mechanical feel
+        ref.read(securityProvider.notifier).setPeriodActive(key, !isActive);
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
+      child: AnimatedContainer(
+        duration: 150.ms,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive
+              ? theme.colorScheme.primary.withOpacity(0.1)
+              : Colors.white.withOpacity(0.02),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive
+                ? theme.colorScheme.primary.withOpacity(0.3)
+                : Colors.white.withOpacity(0.05),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isActive
-                    ? Colors.blueAccent.withOpacity(0.15)
-                    : Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                color: isActive ? Colors.blueAccent : Colors.white38,
-                size: 18.sp,
-              ),
+            Icon(
+              icon,
+              size: 14,
+              color: isActive ? theme.colorScheme.primary : Colors.white24,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.outfit(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: isActive ? Colors.white : Colors.white54,
-                ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                color: isActive ? Colors.white : Colors.white24,
+                letterSpacing: 0.5,
               ),
-            ),
-            Switch.adaptive(
-              value: isActive,
-              activeColor: Colors.blueAccent,
-              onChanged: (_) {
-                HapticService.medium();
-                ref
-                    .read(securityProvider.notifier)
-                    .setPeriodActive(periodKey, !isActive);
-              },
             ),
           ],
         ),
@@ -613,7 +1015,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
             fontSize: 14.sp,
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
-            color: Colors.white24,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
           ),
         ),
         if (state.sensors.isNotEmpty)
@@ -773,7 +1175,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
   }
 }
 
-class _SensorCard extends StatefulWidget {
+class _SensorCard extends ConsumerStatefulWidget {
   final String name;
   final SensorState sensor;
   final VoidCallback onAcknowledge;
@@ -787,10 +1189,164 @@ class _SensorCard extends StatefulWidget {
   });
 
   @override
-  State<_SensorCard> createState() => _SensorCardState();
+  ConsumerState<_SensorCard> createState() => _SensorCardState();
 }
 
-class _SensorCardState extends State<_SensorCard> {
+class _SensorCardState extends ConsumerState<_SensorCard> {
+  void _showOptionsSheet(BuildContext context) {
+    HapticService.medium();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF0D0D0D),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              (widget.sensor.nickname ?? widget.name).toUpperCase(),
+              style: GoogleFonts.outfit(
+                color: Colors.white54,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildOptionTile(
+              ctx,
+              icon: Icons.edit_rounded,
+              label: "RENAME SENSOR",
+              color: Colors.amberAccent,
+              onTap: () {
+                Navigator.pop(ctx);
+                _showRenameDialog(context);
+              },
+            ),
+            _buildOptionTile(
+              ctx,
+              icon: Icons.settings_input_antenna_rounded,
+              label: "CALIBRATION HUB",
+              color: Colors.cyanAccent,
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PIRCalibrationView(),
+                  ),
+                );
+              },
+            ),
+            const Divider(color: Colors.white10, height: 32),
+            _buildOptionTile(
+              ctx,
+              icon: Icons.delete_forever_rounded,
+              label: "DELETE SENSOR",
+              color: Colors.redAccent,
+              isDestructive: true,
+              onTap: () {
+                Navigator.pop(ctx);
+                _showDeleteConfirmation(context);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(
+        label,
+        style: GoogleFonts.outfit(
+          color: isDestructive ? Colors.redAccent : Colors.white,
+          fontWeight: FontWeight.w900,
+          fontSize: 13.sp,
+          letterSpacing: 1,
+        ),
+      ),
+      onTap: () {
+        HapticService.selection();
+        onTap();
+      },
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF121212),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          "Permanent Delete?",
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to remove this sensor from the ecosystem? This cannot be undone.",
+          style: GoogleFonts.outfit(color: Colors.white60),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              "CANCEL",
+              style: GoogleFonts.outfit(color: Colors.white38),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(securityProvider.notifier).deleteSensor(widget.name);
+              Navigator.pop(ctx);
+            },
+            child: Text(
+              "DELETE",
+              style: GoogleFonts.outfit(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showRenameDialog(BuildContext context) {
     final TextEditingController _controller = TextEditingController(
       text: widget.sensor.nickname ?? widget.name,
@@ -800,24 +1356,38 @@ class _SensorCardState extends State<_SensorCard> {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: Colors.white.withOpacity(0.05)),
+          ),
           title: Text(
             "Rename Sensor",
-            style: GoogleFonts.outfit(color: Colors.white),
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           content: TextField(
             controller: _controller,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
+            autofocus: true,
+            style: GoogleFonts.outfit(color: Colors.white),
+            decoration: InputDecoration(
               hintText: "Enter custom name",
-              hintStyle: TextStyle(color: Colors.white38),
+              hintStyle: GoogleFonts.outfit(color: Colors.white24),
+              enabledBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white12),
+              ),
+              focusedBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.cyanAccent),
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
+              child: Text(
                 "CANCEL",
-                style: TextStyle(color: Colors.white60),
+                style: GoogleFonts.outfit(color: Colors.white60),
               ),
             ),
             TextButton(
@@ -827,9 +1397,12 @@ class _SensorCardState extends State<_SensorCard> {
                 }
                 Navigator.pop(ctx);
               },
-              child: const Text(
+              child: Text(
                 "SAVE",
-                style: TextStyle(color: Colors.cyanAccent),
+                style: GoogleFonts.outfit(
+                  color: Colors.cyanAccent,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ],
@@ -854,22 +1427,29 @@ class _SensorCardState extends State<_SensorCard> {
             .trim()
             .toUpperCase();
 
+    final accentColor = hasMotion ? Colors.redAccent : Colors.cyanAccent;
+
     return GestureDetector(
-      onLongPress: () {
-        HapticService.pulse();
-        _showRenameDialog(context);
-      },
-      child: Container(
+      onLongPress: () => _showOptionsSheet(context),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: (hasMotion ? Colors.redAccent : Colors.cyanAccent).withOpacity(
-            0.04,
-          ),
+          color: accentColor.withOpacity(hasMotion ? 0.08 : 0.04),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: (hasMotion ? Colors.redAccent : Colors.cyanAccent)
-                .withOpacity(hasMotion ? 0.2 : 0.08),
-            width: 1,
+            color: accentColor.withOpacity(hasMotion ? 0.4 : 0.08),
+            width: hasMotion ? 1.5 : 1.0,
           ),
+          boxShadow: hasMotion
+              ? [
+                  BoxShadow(
+                    color: Colors.redAccent.withOpacity(0.15),
+                    blurRadius: 20,
+                    spreadRadius: -2,
+                  ),
+                ]
+              : [],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -882,45 +1462,48 @@ class _SensorCardState extends State<_SensorCard> {
                   Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color:
-                              (hasMotion ? Colors.redAccent : Colors.cyanAccent)
-                                  .withOpacity(0.12),
+                          color: accentColor.withOpacity(
+                            widget.sensor.isAlarmEnabled ? 0.12 : 0.05,
+                          ),
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  (hasMotion
-                                          ? Colors.redAccent
-                                          : Colors.cyanAccent)
-                                      .withOpacity(0.15),
-                              blurRadius: 10,
-                            ),
-                          ],
                         ),
                         child: Icon(
                           hasMotion
                               ? Icons.motion_photos_on_rounded
                               : Icons.sensors_rounded,
                           size: 18.sp,
-                          color: hasMotion
-                              ? Colors.redAccent
-                              : Colors.cyanAccent,
+                          color: accentColor.withOpacity(
+                            widget.sensor.isAlarmEnabled ? 1.0 : 0.3,
+                          ),
                         ),
                       )
                       .animate(onPlay: (c) => c.repeat(reverse: true))
                       .fade(begin: 0.6, end: 1.0, duration: 1.5.seconds),
-                  if (hasMotion)
-                    Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.redAccent,
-                            shape: BoxShape.circle,
-                          ),
-                        )
-                        .animate(onPlay: (c) => c.repeat())
-                        .scale(duration: 80.ms)
-                        .fadeOut(),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.more_horiz_rounded,
+                      color: Colors.white24,
+                      size: 20,
+                    ),
+                    onPressed: () => _showOptionsSheet(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 8),
+                  Transform.scale(
+                    scale: 0.7,
+                    child: CupertinoSwitch(
+                      value: widget.sensor.isAlarmEnabled,
+                      activeColor: Colors.redAccent,
+                      onChanged: (v) {
+                        HapticService.selection();
+                        ref
+                            .read(securityProvider.notifier)
+                            .toggleSensorAlarm(widget.name);
+                      },
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
@@ -929,26 +1512,47 @@ class _SensorCardState extends State<_SensorCard> {
                 style: GoogleFonts.outfit(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: Colors.white.withOpacity(hasMotion ? 1.0 : 0.8),
+                  letterSpacing: 0.5,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  timeStr == "00:00" ? "IDLE" : timeStr,
-                  style: GoogleFonts.outfit(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white38,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      timeStr == "00:00" ? "IDLE" : timeStr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.primary
+                            .withOpacity(hasMotion ? 0.8 : 0.4),
+                      ),
+                    ),
                   ),
-                ),
+                  if (hasMotion)
+                    Text(
+                          "BREACH",
+                          style: GoogleFonts.outfit(
+                            fontSize: 8.sp,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.redAccent,
+                          ),
+                        )
+                        .animate(onPlay: (c) => c.repeat())
+                        .shimmer(duration: 1.seconds),
+                ],
               ),
             ],
           ),

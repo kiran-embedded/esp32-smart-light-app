@@ -52,7 +52,6 @@ class _PremiumActionPillState extends ConsumerState<PremiumActionPill>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final displaySettings = ref.watch(displaySettingsProvider);
     final performanceMode = ref.watch(performanceProvider);
     final fontSizeMultiplier = displaySettings.fontSizeMultiplier;

@@ -27,7 +27,6 @@ import '../../widgets/common/pixel_led_border.dart';
 import '../../widgets/common/switch_tab_background.dart';
 import '../../widgets/navigation/animated_nav_icon.dart';
 import '../../widgets/common/premium_app_bar.dart';
-import '../../widgets/history/history_sheet.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../core/ui/global_layout_engine.dart';
@@ -98,7 +97,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
         }
 
         final commandValue = schedule.targetState ? 1 : 0;
-        switchService.sendCommand(schedule.relayId, commandValue);
+        switchService.sendCommand(
+          schedule.relayId,
+          commandValue,
+          triggeredBy: 'scheduler',
+        );
 
         _lastFiredSchedules[schedule.id] = now;
       }
@@ -193,16 +196,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
                       _pageController.position.haveDimensions) {
                     final page =
                         _pageController.page ?? _currentPage.toDouble();
+                    // Background is only for the "GRID" tab (index 1)
                     opacity = (1.0 - (page - 1).abs()).clamp(0.0, 1.0);
                   } else {
                     opacity = _currentPage == 1 ? 1.0 : 0.0;
                   }
 
-                  if (opacity <= 0.01) return const SizedBox.shrink();
+                  if (opacity < 0.01) return const SizedBox.shrink();
 
                   return Opacity(opacity: opacity, child: child);
                 },
-                child: const SwitchTabBackground(child: SizedBox.expand()),
+                child: const RepaintBoundary(
+                  child: SwitchTabBackground(child: SizedBox.expand()),
+                ),
               ),
             ),
           ),
@@ -809,23 +815,6 @@ class _ControlViewState extends ConsumerState<ControlView> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.history_rounded,
-                    color: theme.colorScheme.primary,
-                  ),
-                  onPressed: () {
-                    HapticService.medium();
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      isScrollControlled: true,
-                      builder: (context) => const HistorySheet(
-                        deviceId: AppConstants.defaultDeviceId,
-                      ),
-                    );
-                  },
-                ),
                 IconButton(
                       icon: Icon(
                         Icons.alarm_add_rounded,

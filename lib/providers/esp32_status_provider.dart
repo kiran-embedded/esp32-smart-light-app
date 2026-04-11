@@ -1,14 +1,9 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
-import '../core/constants/app_constants.dart';
+import '../providers/device_id_provider.dart';
 
-enum Esp32Status {
-  active,
-  offline,
-  error,
-  connecting,
-}
+enum Esp32Status { active, offline, error, connecting }
 
 class Esp32StatusState {
   final Esp32Status status;
@@ -40,8 +35,8 @@ class Esp32StatusState {
 
 final esp32StatusProvider =
     StateNotifierProvider<Esp32StatusNotifier, Esp32StatusState>((ref) {
-  return Esp32StatusNotifier();
-});
+      return Esp32StatusNotifier(ref);
+    });
 
 class Esp32StatusNotifier extends StateNotifier<Esp32StatusState> {
   StreamSubscription<DatabaseEvent>? _telemetrySubscription;
@@ -49,59 +44,72 @@ class Esp32StatusNotifier extends StateNotifier<Esp32StatusState> {
   Timer? _timeoutTimer;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
 
-  Esp32StatusNotifier() : super(Esp32StatusState()) {
+  final Ref ref;
+
+  Esp32StatusNotifier(this.ref) : super(Esp32StatusState()) {
     _initListeners();
+
+    // Watch for device ID changes
+    ref.listen<String>(deviceIdProvider, (previous, next) {
+      _initListeners();
+    });
   }
 
   void _initListeners() {
+    _telemetrySubscription?.cancel();
+    _connectionSubscription?.cancel();
+    _timeoutTimer?.cancel();
+
+    final deviceId = ref.read(deviceIdProvider);
+
     // Listen to Firebase connection status
-    _connectionSubscription = _database
-        .child('.info/connected')
-        .onValue
-        .listen((event) {
-      final isConnected = (event.snapshot.value as bool?) ?? false;
-      if (!isConnected) {
-        state = state.copyWith(
-          status: Esp32Status.offline,
-          errorMessage: 'Firebase disconnected',
-        );
-        _resetTimeout();
-        return;
-      }
-    });
+    _connectionSubscription = _database.child('.info/connected').onValue.listen(
+      (event) {
+        final isConnected = (event.snapshot.value as bool?) ?? false;
+        if (!isConnected) {
+          state = state.copyWith(
+            status: Esp32Status.offline,
+            errorMessage: 'Firebase disconnected',
+          );
+          _resetTimeout();
+          return;
+        }
+      },
+    );
 
     // Listen to ESP32 telemetry (non-blocking)
     _telemetrySubscription = _database
-        .child('devices/${AppConstants.defaultDeviceId}/telemetry')
+        .child('devices/$deviceId/telemetry')
         .onValue
         .listen(
-      (event) {
-        final data = event.snapshot.value;
-        if (data != null && data is Map) {
-          final voltage = double.tryParse(data['voltage']?.toString() ?? '0') ?? 0.0;
-          
-          state = state.copyWith(
-            status: Esp32Status.active,
-            lastSeen: DateTime.now(),
-            lastVoltage: voltage,
-            errorMessage: null,
-          );
-          _resetTimeout();
-        } else {
-          // No data but connection exists - might be connecting
-          if (state.status == Esp32Status.offline) {
-            state = state.copyWith(status: Esp32Status.connecting);
-          }
-        }
-      },
-      onError: (error) {
-        state = state.copyWith(
-          status: Esp32Status.error,
-          errorMessage: error.toString(),
+          (event) {
+            final data = event.snapshot.value;
+            if (data != null && data is Map) {
+              final voltage =
+                  double.tryParse(data['voltage']?.toString() ?? '0') ?? 0.0;
+
+              state = state.copyWith(
+                status: Esp32Status.active,
+                lastSeen: DateTime.now(),
+                lastVoltage: voltage,
+                errorMessage: null,
+              );
+              _resetTimeout();
+            } else {
+              // No data but connection exists - might be connecting
+              if (state.status == Esp32Status.offline) {
+                state = state.copyWith(status: Esp32Status.connecting);
+              }
+            }
+          },
+          onError: (error) {
+            state = state.copyWith(
+              status: Esp32Status.error,
+              errorMessage: error.toString(),
+            );
+            _resetTimeout();
+          },
         );
-        _resetTimeout();
-      },
-    );
 
     // Timeout check - if no telemetry for 30 seconds, mark as offline
     _resetTimeout();
@@ -110,11 +118,11 @@ class Esp32StatusNotifier extends StateNotifier<Esp32StatusState> {
   void _resetTimeout() {
     _timeoutTimer?.cancel();
     _timeoutTimer = Timer(const Duration(seconds: 30), () {
-      if (state.status == Esp32Status.active || state.status == Esp32Status.connecting) {
+      if (state.status == Esp32Status.active ||
+          state.status == Esp32Status.connecting) {
         final now = DateTime.now();
         final lastSeen = state.lastSeen;
-        if (lastSeen == null ||
-            now.difference(lastSeen).inSeconds > 30) {
+        if (lastSeen == null || now.difference(lastSeen).inSeconds > 30) {
           state = state.copyWith(
             status: Esp32Status.offline,
             errorMessage: 'No telemetry received',
@@ -132,5 +140,3 @@ class Esp32StatusNotifier extends StateNotifier<Esp32StatusState> {
     super.dispose();
   }
 }
-
-

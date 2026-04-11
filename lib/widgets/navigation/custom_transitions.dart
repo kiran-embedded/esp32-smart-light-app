@@ -18,16 +18,19 @@ class IOSTransitionBuilder extends PageTransitionsBuilder {
         Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero).animate(
           CurvedAnimation(
             parent: animation,
-            curve: const Cubic(0.25, 1.0, 0.35, 1.0), // Apple-style Spring
+            curve: const Cubic(
+              0.2,
+              1.0,
+              0.3,
+              1.0,
+            ), // "Premium Shift" Spring-like Curve
           ),
         );
 
     return SlideTransition(
       position: primaryTranslation,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          boxShadow: const [],
-        ),
+        decoration: BoxDecoration(boxShadow: const []),
         child: child,
       ),
     );
@@ -106,7 +109,7 @@ class NebulaZoomTransitionBuilder extends PageTransitionsBuilder {
       scale: Tween<double>(begin: 0.92, end: 1.0).animate(
         CurvedAnimation(
           parent: animation,
-          curve: Curves.fastLinearToSlowEaseIn, // The "Butter" Curve
+          curve: const Cubic(0.2, 1.0, 0.2, 1.0), // Heavy Liquid Zoom
         ),
       ),
       child: FadeTransition(

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/switch_background_provider.dart';
 import '../../providers/switch_provider.dart';
 import '../../providers/performance_provider.dart';
-import '../../providers/theme_provider.dart';
 
 class SwitchTabBackground extends ConsumerWidget {
   final Widget child;
@@ -18,7 +17,6 @@ class SwitchTabBackground extends ConsumerWidget {
     final devices = ref.watch(switchDevicesProvider);
     final performanceMode = ref.watch(performanceProvider);
     final theme = Theme.of(context);
-    final currentTheme = ref.watch(themeProvider);
 
     // High Performance optimization: Disable animated backgrounds
     if (performanceMode) {
@@ -443,41 +441,46 @@ class _NeonBorderPainter extends CustomPainter {
   _NeonBorderPainter(this.animation, this.primary, this.secondary)
     : super(repaint: animation);
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Solid deep black base - no more "spread"
-    canvas.drawColor(const Color(0xFF020408), BlendMode.src);
+  PathMetric? _cachedMetric;
+  double? _lastLength;
+  Size? _lastSize;
 
+  void _updateCache(Size size) {
+    if (_lastSize == size && _cachedMetric != null) return;
+    _lastSize = size;
     final rect = Offset.zero & size;
     final path = Path()
       ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(0)));
+    _cachedMetric = path.computeMetrics().first;
+    _lastLength = _cachedMetric!.length;
+  }
 
-    // Calculate position along the path (0.0 to 1.0)
-    final pathMetrics = path.computeMetrics().first;
-    final length = pathMetrics.length;
+  @override
+  void paint(Canvas canvas, Size size) {
+    _updateCache(size);
+    final pathMetrics = _cachedMetric!;
+    final length = _lastLength!;
 
-    final beadLength = 120.0; // Precise "tiny" neon
+    canvas.drawColor(const Color(0xFF020408), BlendMode.src);
+
+    final beadLength = 120.0;
     final currentPos = animation.value * length;
 
-    // Draw the moving bead
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
 
-    // Outer Glow (Tight, not spreading)
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6.0
       ..strokeCap = StrokeCap.round
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-    // Draw the segment
     for (int i = 0; i < 2; i++) {
       final isGlow = i == 0;
       final p = isGlow ? glowPaint : paint;
 
-      // Gradient for the bead trailing effect
       final beadStart = (currentPos - beadLength).clamp(0.0, length);
       final beadEnd = currentPos.clamp(0.0, length);
 
@@ -494,7 +497,6 @@ class _NeonBorderPainter extends CustomPainter {
         canvas.drawPath(extractPath, p);
       }
 
-      // Handle wrapping around the corner
       if (currentPos < beadLength) {
         final wrapStart = length - (beadLength - currentPos);
         final extractPathWrap = pathMetrics.extractPath(wrapStart, length);
@@ -517,30 +519,29 @@ class _DanceFloorPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawColor(Colors.black, BlendMode.src);
-    final tileSize = 60.0;
+    const tileSize = 60.0;
     final cols = (size.width / tileSize).ceil();
     final rows = (size.height / tileSize).ceil();
 
-    // Performance: Avoid HSL conversion in loop.
-    // Use pre-defined colors or simpler interpolation.
     final t = animation.value;
+    final paint = Paint();
 
     for (int y = 0; y < rows; y++) {
+      final yFactor = y * 0.5 + t * 5;
+      final sinY = cos(yFactor); // Pre-calculate for row
+
       for (int x = 0; x < cols; x++) {
-        // Pseudo-random pulsing based on time and position
-        final noise = sin(x * 0.5 + t * 10) * cos(y * 0.5 + t * 5);
+        final xFactor = x * 0.5 + t * 10;
+        final noise = sin(xFactor) * sinY;
+
         if (noise > 0.7) {
-          // Reduced density for perf
           final color = Color.lerp(
             primary,
             secondary,
             (x + y) / (cols + rows),
           )!;
 
-          final paint = Paint()..color = color;
-          // Removing blur mask inside loop greatly improves FPS
-          // paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-
+          paint.color = color;
           canvas.drawRect(
             Rect.fromLTWH(
               x * tileSize,
@@ -672,12 +673,15 @@ class _DigitalRainPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawColor(Colors.black, BlendMode.src);
+    final random = Random(123);
+    final cols = (size.width / 15).floor();
+
     final paint = Paint()
       ..strokeCap = StrokeCap.square
       ..strokeWidth = 2;
-    // Optimized: Draw lines/dots instead of TextPainter layout
-    final random = Random(123);
-    final cols = (size.width / 15).floor();
+
+    // Use a list per opacity level to batch drawPoints
+    final List<List<Offset>> pointsByOpacity = List.generate(8, (_) => []);
 
     for (int i = 0; i < cols; i++) {
       final speed = random.nextDouble() * 5 + 2;
@@ -685,27 +689,25 @@ class _DigitalRainPainter extends CustomPainter {
           (animation.value * 500 * speed + random.nextDouble() * size.height) %
           (size.height + 100);
 
-      // Draw trail as series of rects
       for (int j = 0; j < 8; j++) {
         final opacity = 1.0 - (j * 0.12);
         if (opacity <= 0) continue;
 
-        paint.color = primary.withOpacity(opacity);
-        // Draw a "character" representation (small rects/lines)
+        final y = dropY - j * 15;
         if (random.nextBool()) {
-          canvas.drawLine(
-            Offset(i * 15.0, dropY - j * 15),
-            Offset(i * 15.0 + 8, dropY - j * 15),
-            paint,
-          );
+          pointsByOpacity[j].add(Offset(i * 15.0, y));
+          pointsByOpacity[j].add(Offset(i * 15.0 + 8, y));
         } else {
-          canvas.drawLine(
-            Offset(i * 15.0 + 4, dropY - j * 15),
-            Offset(i * 15.0 + 4, dropY - j * 15 + 8),
-            paint,
-          );
+          pointsByOpacity[j].add(Offset(i * 15.0 + 4, y));
+          pointsByOpacity[j].add(Offset(i * 15.0 + 4, y + 8));
         }
       }
+    }
+
+    for (int j = 0; j < 8; j++) {
+      if (pointsByOpacity[j].isEmpty) continue;
+      paint.color = primary.withOpacity(1.0 - (j * 0.12));
+      canvas.drawPoints(PointMode.lines, pointsByOpacity[j], paint);
     }
   }
 

@@ -147,7 +147,7 @@ class _AutomationSettingsPopupState
               value: _isActive,
               activeColor: Colors.cyanAccent,
               onChanged: (val) {
-                HapticService.selection();
+                HapticService.toggle(val);
                 setState(() => _isActive = val);
                 _saveCurrentState();
               },
@@ -182,7 +182,7 @@ class _AutomationSettingsPopupState
               }).toList(),
               onChanged: (val) {
                 if (val != null) {
-                  HapticService.selection();
+                  HapticService.impactClick();
                   setState(() => _selectedSensor = val);
                   _saveCurrentState();
                 }
@@ -218,8 +218,7 @@ class _AutomationSettingsPopupState
           inactiveColor: Colors.white24,
           onChanged: (val) {
             setState(() => _durationSeconds = val.toInt());
-            // Moderate haptic based on duration
-            HapticService.variableSelection(val / 300);
+            HapticService.immersiveSliderFeedback(val, min: 10, max: 300);
           },
           onChangeEnd: (val) {
             HapticService.selection();
@@ -270,8 +269,7 @@ class _AutomationSettingsPopupState
           inactiveColor: Colors.white24,
           onChanged: (val) {
             setState(() => _ldrThreshold = val.toInt());
-            // Immersive haptic: vibrating harder as sensitivity increases
-            HapticService.variableSelection(val / 100);
+            HapticService.immersiveSliderFeedback(val, min: 0, max: 100);
           },
           onChangeEnd: (val) {
             HapticService.selection();
@@ -290,7 +288,10 @@ class _AutomationSettingsPopupState
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              HapticService.impactClick();
+              Navigator.pop(context);
+            },
             child: Text(
               'Close',
               style: GoogleFonts.outfit(

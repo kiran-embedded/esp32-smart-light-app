@@ -458,7 +458,13 @@ class _RoboAssistantState extends ConsumerState<RoboAssistant>
               color: color.withOpacity(eyeOpacity * 0.8),
               width: 1.5,
             ),
-            boxShadow: const [],
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3 * glowIntensity),
+                blurRadius: 8 * glowIntensity,
+                spreadRadius: 1,
+              ),
+            ],
           ),
           child: eyeOpacity > 0
               ? Stack(

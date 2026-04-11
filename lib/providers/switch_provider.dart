@@ -304,8 +304,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        // Optimized to 3s for better network jitter handling
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 3000) {
+        // Optimized to 2s for better network jitter handling
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
           final existing = currentDeviceMap[id];
           if (existing != null) {
             // PIN THE STATE: As long as it's pending, force the last known active state
@@ -383,7 +383,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Future<void> toggleSwitch(String id) async {
     final now = DateTime.now();
     if (_lastToggleTime.containsKey(id)) {
-      if (now.difference(_lastToggleTime[id]!).inMilliseconds < 400) {
+      if (now.difference(_lastToggleTime[id]!).inMilliseconds < 250) {
         return; // Deny double-click rapid glitch
       }
     }
@@ -475,6 +475,20 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       _saveNicknames();
     } catch (e) {
       state = previousList;
+      rethrow;
+    }
+  }
+
+  Future<void> deleteDevice(String id) async {
+    final previousState = state;
+    state = state.where((d) => d.id != id).toList();
+
+    try {
+      await _ref
+          .read(firebaseSwitchServiceProvider)
+          .deleteRelay(id, deviceId: _deviceId);
+    } catch (e) {
+      state = previousState;
       rethrow;
     }
   }

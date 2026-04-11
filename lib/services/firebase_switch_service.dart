@@ -69,14 +69,19 @@ class FirebaseSwitchService {
 
   /// Update the hardware name strictly at /devices/{id}/relayNames/{relayKey}
   Future<void> updateHardwareName(
-    String relayKey,
-    String newName, {
-    String? deviceId,
+    String relayId,
+    String name, {
+    required String deviceId,
   }) async {
-    final id = deviceId ?? AppConstants.defaultDeviceId;
-    final path = '${AppConstants.firebaseDevicesPath}/$id/relayNames';
+    await _database.child('devices/$deviceId/relayNames').update({
+      relayId: name,
+    });
+  }
 
-    await _database.child(path).update({relayKey: newName});
+  Future<void> deleteRelay(String relayId, {required String deviceId}) async {
+    await _database.child('devices/$deviceId/commands/$relayId').remove();
+    await _database.child('devices/$deviceId/telemetry/$relayId').remove();
+    await _database.child('devices/$deviceId/relayNames/$relayId').remove();
   }
 
   /// Get hardware names strictly from /devices/{id}/relayNames
@@ -189,32 +194,16 @@ class FirebaseSwitchService {
     final id = deviceId ?? AppConstants.defaultDeviceId;
     final path = '${AppConstants.firebaseDevicesPath}/$id/commands';
 
-    // 1. Batch execute commands
-    _executeBatchCommandsWithRetry(path, relayUpdates);
+    // 1. Prepare and Batch execute commands with Priority
+    final pRelayUpdates = Map<String, dynamic>.from(relayUpdates);
+    final int priority = (triggeredBy == 'scheduler') ? 0 : 2;
 
-    // 2. Log History asynchronously
-    unawaited(() async {
-      try {
-        final logPath = 'devices/$id/logs';
-        final batch = <String, dynamic>{};
-        final now = DateTime.now().toIso8601String();
+    for (var relayKey in relayUpdates.keys) {
+      final relayNum = relayKey.replaceAll('relay', '');
+      pRelayUpdates['prio$relayNum'] = priority;
+    }
 
-        for (var entry in relayUpdates.entries) {
-          final logRef = _database.child(logPath).push();
-          batch[logRef.key!] = {
-            'id': logRef.key,
-            'relayId': entry.key,
-            'relayName': relayName ?? entry.key,
-            'state': entry.value == 1,
-            'timestamp': now,
-            'triggeredBy': triggeredBy,
-          };
-        }
-        await _database.child(logPath).update(batch);
-      } catch (e) {
-        print('History batch logging failed: $e');
-      }
-    }());
+    _executeBatchCommandsWithRetry(path, pRelayUpdates);
   }
 
   /// Legacy method for single command
@@ -233,7 +222,7 @@ class FirebaseSwitchService {
 
   Future<void> _executeBatchCommandsWithRetry(
     String path,
-    Map<String, int> updates, {
+    Map<String, dynamic> updates, {
     int retryCount = 0,
   }) async {
     try {
