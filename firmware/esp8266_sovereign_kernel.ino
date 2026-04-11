@@ -50,7 +50,6 @@ int commFailCount = 0;
 void onDataSent(uint8_t *mac, uint8_t status) {
   if (status != 0) {
     commFailCount++;
-    Serial.println("⚠️ Mesh Transmission Error");
   } else {
     commFailCount = 0;
   }
@@ -61,7 +60,7 @@ void setup() {
   Serial.begin(115200);
   delay(200);
 
-  // Industrial Hardware Guard
+  // 🛡️ INDUSTRIAL WATCHDOG (8s)
   ESP.wdtEnable(WDTO_8S);
 
   pinMode(PIR1_PIN, INPUT);
@@ -72,10 +71,10 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ROUTER_SSID, ROUTER_PASS);
 
-  // High-Speed Channel Sync
+  // High-Speed Channel Sync (Critical for ESP-NOW)
   unsigned long start = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - start < 6000) {
-    delay(200);
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 5000) {
+    delay(100);
     ESP.wdtFeed();
   }
 
@@ -95,18 +94,16 @@ void setup() {
   ArduinoOTA.setHostname(OTA_HOSTNAME);
   ArduinoOTA.begin();
 
-  Serial.printf("⚡ SATELLITE ONLINE | Channel: %d | 4 Zones Active\n",
-                channel);
+  Serial.printf("⚡ SOVEREIGN SAT ONLINE | CH: %d | WDT: ENABLED\n", channel);
 }
 
 /* ================= LOOP (Supervised) ================= */
 void loop() {
-  ESP.wdtFeed(); // Feed the Industrial Watchdog
+  ESP.wdtFeed();
   ArduinoOTA.handle();
   unsigned long now = millis();
 
-  int ldrRaw = analogRead(LDR_PIN);
-  int ldrPercent = map(ldrRaw, 0, 1024, 0, 100);
+  int ldrPercent = map(analogRead(LDR_PIN), 0, 1024, 0, 100);
   int pirPins[] = {PIR1_PIN, PIR2_PIN, PIR3_PIN, PIR4_PIN};
   bool stateChanged = false;
 
@@ -125,28 +122,23 @@ void loop() {
         lastTriggerTime[i] = now;
         stateChanged = true;
 
-        Serial.printf("📡 %s -> %s\n", myData.sensorId,
-                      currentMotion ? "BREACH" : "CLEAR");
+        Serial.printf("📡 Mesh Push: %s | %s\n", myData.sensorId,
+                      currentMotion ? "MOTION" : "CLEAR");
       }
     }
   }
 
-  // Periodic Telemetry Heartbeat
+  // Industrial Heartbeat (Maintain Hub Vitality)
   if (!stateChanged && (now - lastHeartbeat > HEARTBEAT_INTERVAL)) {
-    strcpy(myData.sensorId, "SAT_TELE");
+    strcpy(myData.sensorId, "SAT_NODE_1");
     myData.motion = false;
     myData.lightLevel = ldrPercent;
     esp_now_send(receiverAddress, (uint8_t *)&myData, sizeof(myData));
-
     lastHeartbeat = now;
-    Serial.printf("🏥 Vitality Pulse: %d%% LDR | Heap: %d\n", ldrPercent,
-                  ESP.getFreeHeap());
   }
 
-  // Proactive Stability Guard
-  if (commFailCount > 15 || ESP.getFreeHeap() < 8000) {
-    Serial.println("♻️ Self-Healing Restart Triggered...");
-    delay(100);
+  // 🛡️ PROACTIVE STABILITY GUARD
+  if (commFailCount > 20 || ESP.getFreeHeap() < 5000) {
     ESP.restart();
   }
 
