@@ -109,6 +109,7 @@ std::map<String, int> sensorSensitivity;
 std::map<String, int> sensorHitCounter;
 std::map<String, unsigned long> lastTriggerTimeMap;
 std::map<String, bool> sensorAlarmEnabled;
+std::set<String> discoveredSensors;
 
 bool updateRelays = false;
 bool forceTelemetry = false;
@@ -673,7 +674,7 @@ void setup() {
         &fbTele,
         ("devices/" + deviceId + "/security/discovery/pending/" + p).c_str(),
         &disc);
-    discoveredSensors.insert(sid);
+    discoveredSensors.insert(p);
   }
   Firebase.RTDB.setIntAsync(
       &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(), 0);
@@ -748,7 +749,6 @@ void processMeshData() {
                             incomingData.lightLevel);
 
   // 🛡️ AUTO-DISCOVERY (Announce to App if new)
-  static std::set<String> discoveredSensors;
   if (discoveredSensors.find(sid) == discoveredSensors.end()) {
     FirebaseJson disc;
     disc.set("name", sid);
