@@ -626,6 +626,12 @@ void setup() {
                                 ("devices/" + deviceId + "/events").c_str());
   Firebase.RTDB.deleteNodeAsync(
       &fbTele, ("devices/" + deviceId + "/security/activeBreaches").c_str());
+  Firebase.RTDB.setIntAsync(
+      &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(), 0);
+  Firebase.RTDB.setBoolAsync(
+      &fbTele, ("devices/" + deviceId + "/status/ldrValid").c_str(), false);
+  Firebase.RTDB.setIntAsync(
+      &fbTele, ("devices/" + deviceId + "/status/rssi").c_str(), -100);
 
   Serial.println("✅ SYSTEM READY.");
 }
