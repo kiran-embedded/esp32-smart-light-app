@@ -6,6 +6,19 @@
  * PRIORITY 1: OTA Update (Red/Blue Strobe).
  * PRIORITY 2: Data Flash (Blue) -> Overrides Status.
  * PRIORITY 3: Status (Green=OK, Red=No Network).
+ *
+ * FEATURES ADDED OVER SOLID BASE:
+ * - Broadcast ESP-NOW (MAC-agnostic mesh)
+ * - Proactive 4-zone PIR discovery on boot
+ * - Real-time sensor telemetry to security/sensors
+ * - Master LDR sync from heartbeat + motion
+ * - LDR-gated Neural automation (no daylight triggers)
+ * - Individual timer priority (App slider > global pirTimer)
+ * - Standalone LDR-based relay automation
+ * - Individual calibration path parsing (sensitivity/debounce)
+ * - Rule-compliant JSON security logs
+ * - testMesh simulation command
+ * - Hub MAC / isNight / ch telemetry
  */
 
 #include <ArduinoOTA.h>
@@ -14,7 +27,6 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <esp_now.h>
-#include <esp_task_wdt.h>
 #include <map>
 #include <set>
 #include <time.h>
@@ -54,9 +66,9 @@ float calibrationFactor = 313.3;
 #define P2P_THRESHOLD 60
 #define RMS_THRESHOLD 0.020
 #define SMOOTHING_ALPHA 0.1
+#define MANUAL_LOCKOUT_MS 5000
 #define DEADMAN_TIMEOUT_MS 120000
 #define LED_PULSE_MS 100
-#define MANUAL_LOCKOUT_TIMEOUT_MS 900000 // 15-Minute Priority Lockout
 
 /* ================= GLOBALS ================= */
 FirebaseData fbTele;
@@ -77,22 +89,25 @@ bool autoActive[7] = {false, false, false, false, false, false, false};
 unsigned long autoTriggerTime[7] = {0, 0, 0, 0, 0, 0, 0};
 bool isNeuralTriggered[7] = {false, false, false, false, false, false, false};
 unsigned long manualOverrideTime[7] = {0, 0, 0, 0, 0, 0, 0};
-int relayPriority[7] = {0, 0, 0, 0, 0, 0, 0}; // 0: Auto, 1: Motion, 2: Manual
 
 int pirTimer = 60;
 int autoTimeMode[7] = {0, 0, 0, 0, 0, 0, 0};
 int mapPIR[5] = {0, 0, 0, 0, 0};
-int pirDetectionCount[5] = {1, 1, 1, 1, 1};
+int pirDetectionCount[5] = {2, 2, 2, 2, 2};
 int pirDebounce[5] = {200, 200, 200, 200, 200};
 
 bool activePeriods[5] = {true, true, true, true, true};
 const char *periodNames[5] = {"morning", "afternoon", "evening", "night",
                               "midnight"};
+std::map<String, int> sensorMode;
+unsigned long lastPanicPulse = 0;
+bool buzzerPending = false;
+unsigned long buzzerStartTime = 0;
+int buzzerDuration = 200;
 
 std::map<String, int> sensorDebounce;
 std::map<String, int> sensorSensitivity;
 std::map<String, int> sensorHitCounter;
-std::map<String, int> sensorMode;
 std::map<String, unsigned long> lastTriggerTimeMap;
 
 bool updateRelays = false;
@@ -100,34 +115,25 @@ bool forceTelemetry = false;
 volatile float sharedVoltage = 0.0;
 unsigned long lastTelemetryTime = 0;
 float lastReportedVoltage = 0;
-bool isArmed = false;
+bool isArmed = true;
 bool isBuzzerMuted = false;
+bool isLdrSecurityEnabled = false;
 bool isAutoGlobalEnabled = true;
 unsigned long blueLedOffTime = 0;
 int globalLdrThreshold = 50;
-int globalLdrValue = 0;
-int securityMode = 2; // 0: LDR, 1: Schedule, 2: Hybrid
-bool ldrValid = false;
-unsigned long lastLdrUpdate = 0;
 bool isEcoMode = false;
 int reportInterval = 8000;
-unsigned long systemInitTime = 0;
+
+String pathTele, pathEvents, pathCmds, pathSensors;
+bool isActivityFlashing = false;
+unsigned long activityStart = 0;
+bool isPanicActive = false;
 bool buzzerPending = false;
 unsigned long buzzerStartTime = 0;
 int buzzerDuration = 200;
 unsigned long lastPanicPulse = 0;
-
-String pathTele, pathCmds, pathSensors;
-bool isActivityFlashing = false;
-unsigned long activityStart = 0;
-bool isPanicActive = false;
-bool isPanicResume = false;
-std::map<String, int> motionBatchCounter;
-std::map<String, unsigned long> motionBatchStartTime;
-unsigned long lastLogTime = 0;
 bool safetyTripped = false;
 unsigned long lastCloudActivity = 0;
-int systemEventCount = 0;
 
 /* ================= MESH STRUCTURE ================= */
 typedef struct struct_message {
@@ -196,8 +202,6 @@ void animateLEDs() {
       triggerBuzzer(250);
       lastPanicPulse = now;
     }
-  } else {
-    digitalWrite(BUZZER_PIN, LOW);
   }
   if (buzzerPending) {
     if (now - buzzerStartTime < buzzerDuration) {
@@ -216,7 +220,6 @@ void triggerBuzzer(int ms) {
   buzzerPending = true;
   buzzerStartTime = millis();
   buzzerDuration = ms;
-  digitalWrite(BUZZER_PIN, HIGH);
 }
 
 /* ================= BACKGROUND TASKS ================= */
@@ -286,7 +289,6 @@ void applyRelays() {
     bool target = (relayState[i] != invertedLogic[i]);
     digitalWrite(pins[i], target ? HIGH : LOW);
   }
-  forceTelemetry = true;
 }
 
 void triggerHardware() {
@@ -295,55 +297,7 @@ void triggerHardware() {
   updateRelays = false;
 }
 
-/* ================= PRIORITY LOGIC ================= */
-bool canUpdateRelay(int idx, int newPriority) {
-  if (newPriority >= relayPriority[idx])
-    return true;
-  if (millis() - manualOverrideTime[idx] > MANUAL_LOCKOUT_TIMEOUT_MS)
-    return true;
-  return false;
-}
-
-void applyRelayUpdate(int idx, int state, int priority) {
-  if (canUpdateRelay(idx, priority)) {
-    relayState[idx] = state;
-    relayPriority[idx] = priority;
-    if (priority == 2)
-      manualOverrideTime[idx] = millis();
-    updateRelays = true;
-    forceTelemetry = true;
-
-    // Relay Acknowledgement (Status Node)
-    String statusPath =
-        "devices/" + deviceId + "/status/relays/r" + String(idx + 1);
-    Firebase.RTDB.setIntAsync(&fbTele, statusPath.c_str(), state);
-  }
-}
-
 /* ================= STREAM CALLBACK ================= */
-void logEvent(String type, String sensor = "", String details = "") {
-  if (millis() - lastLogTime < 200)
-    return;
-  lastLogTime = millis();
-  String path = "devices/" + deviceId + "/events";
-  FirebaseJson event;
-  event.set("type", type);
-  if (sensor != "")
-    event.set("sensor", sensor);
-  if (details != "")
-    event.set("details", details);
-  double ts =
-      (time(nullptr) > 1000000) ? (double)time(nullptr) : (double)millis();
-  event.set("timestamp", ts);
-  Firebase.RTDB.pushJSONAsync(&fbTele, path.c_str(), &event);
-
-  systemEventCount++;
-  if (systemEventCount > 200) {
-    Firebase.RTDB.deleteNode(&fbTele, path.c_str());
-    systemEventCount = 0;
-  }
-}
-
 void streamCallback(FirebaseStream data) {
   digitalWrite(LED_PIN_BLUE, HIGH);
   blueLedOffTime = millis() + LED_PULSE_MS;
@@ -355,22 +309,45 @@ void streamCallback(FirebaseStream data) {
   if (path == "/") {
     FirebaseJson *json = data.jsonObjectPtr();
     FirebaseJsonData d;
-    for (int i = 0; i < 7; i++) {
-      char rKey[16], pKey[16];
-      sprintf(rKey, "relay%d", i + 1);
-      sprintf(pKey, "prio%d", i + 1);
-      int newState = -1;
-      int newPrio = -1;
-
-      if (json->get(d, rKey))
-        newState = d.intValue;
-      if (json->get(d, pKey))
-        newPrio = d.intValue;
-
-      if (newState != -1) {
-        if (newPrio == -1)
-          newPrio = 2; // Default to Manual if not specified
-        applyRelayUpdate(i, newState, newPrio);
+    if (json->get(d, "relay1")) {
+      if (relayState[0] != (bool)d.intValue) {
+        relayState[0] = d.intValue;
+        wasRelayUpdated = true;
+      }
+    }
+    if (json->get(d, "relay2")) {
+      if (relayState[1] != (bool)d.intValue) {
+        relayState[1] = d.intValue;
+        wasRelayUpdated = true;
+      }
+    }
+    if (json->get(d, "relay3")) {
+      if (relayState[2] != (bool)d.intValue) {
+        relayState[2] = d.intValue;
+        wasRelayUpdated = true;
+      }
+    }
+    if (json->get(d, "relay4")) {
+      if (relayState[3] != (bool)d.intValue) {
+        relayState[3] = d.intValue;
+        wasRelayUpdated = true;
+      }
+    }
+    if (json->get(d, "relay5")) {
+      if (relayState[4] != (bool)d.intValue) {
+        relayState[4] = d.intValue;
+        wasRelayUpdated = true;
+      }
+    }
+    if (json->get(d, "relay6")) {
+      if (relayState[5] != (bool)d.intValue) {
+        relayState[5] = d.intValue;
+        wasRelayUpdated = true;
+      }
+    }
+    if (json->get(d, "relay7")) {
+      if (relayState[6] != (bool)d.intValue) {
+        relayState[6] = d.intValue;
         wasRelayUpdated = true;
       }
     }
@@ -396,13 +373,7 @@ void streamCallback(FirebaseStream data) {
       isPanicActive = d.boolValue;
       if (isPanicActive)
         triggerBuzzer(1000);
-      else
-        Firebase.RTDB.deleteNode(
-            &fbTele,
-            ("devices/" + deviceId + "/security/activeBreaches").c_str());
     }
-    if (json->get(d, "security/securityMode"))
-      securityMode = d.intValue;
     if (json->get(d, "isArmed") || json->get(d, "security/isArmed")) {
       isArmed = d.boolValue;
       if (!isArmed)
@@ -414,14 +385,10 @@ void streamCallback(FirebaseStream data) {
       isBuzzerMuted = d.boolValue;
     if (json->get(d, "ldrThreshold"))
       globalLdrThreshold = d.intValue;
+    if (json->get(d, "ldrSecurity"))
+      isLdrSecurityEnabled = d.boolValue;
     if (json->get(d, "pirTimer"))
       pirTimer = d.intValue;
-
-    if (json->get(d, "security/masterLDR")) {
-      globalLdrValue = d.intValue;
-      ldrValid = true;
-      lastLdrUpdate = millis();
-    }
 
     if (json->get(d, "autoGlobal") || json->get(d, "autoLightOnMotion") ||
         json->get(d, "security/autoGlobal") ||
@@ -429,11 +396,10 @@ void streamCallback(FirebaseStream data) {
       isAutoGlobalEnabled = d.boolValue;
 
     for (int i = 1; i <= 4; i++) {
-      char key[16], sKey[48], dKey[48];
+      char key[16], sKey[48], dKey[48], mKey[48];
       sprintf(key, "mapPIR%d", i);
       sprintf(sKey, "security/calibration/PIR%d/detection_count", i);
       sprintf(dKey, "security/calibration/PIR%d/debounce", i);
-      char mKey[48];
       sprintf(mKey, "security/calibration/PIR%d/mode", i);
       if (json->get(d, key))
         mapPIR[i - 1] = d.intValue;
@@ -479,30 +445,33 @@ void streamCallback(FirebaseStream data) {
       meshDataPending = true;
       Firebase.RTDB.setBoolAsync(&fbTele, (pathCmds + "/testMesh").c_str(),
                                  false);
+      FirebaseJson testLog;
+      testLog.set("sensor", "PIR1-TEST");
+      testLog.set("timestamp", (int)time(NULL));
+      Firebase.RTDB.pushJSONAsync(&fbTele, pathEvents.c_str(), &testLog);
     }
   } else {
     // === INDIVIDUAL PATH UPDATES ===
     if (path.startsWith("/relay")) {
       int idx = path.substring(6).toInt() - 1;
       if (idx >= 0 && idx < 7) {
-        applyRelayUpdate(idx, data.intData(), 2);
+        if (relayState[idx] != (bool)data.intData()) {
+          relayState[idx] = data.intData();
+          wasRelayUpdated = true;
+        }
       }
-    } else if (path == "/isArmed") {
+    } else if (path == "/isArmed" || path == "/security/isArmed") {
       isArmed = data.boolData();
-    } else if (path == "/buzzerMute") {
-      isBuzzerMuted = data.boolData();
-    } else if (path == "/ldrThreshold") {
-      globalLdrThreshold = data.intData();
-    } else if (path == "/autoGlobal" || path == "/autoLightOnMotion") {
-      isAutoGlobalEnabled = data.boolData();
+      if (!isArmed)
+        Firebase.RTDB.deleteNode(
+            &fbTele,
+            ("devices/" + deviceId + "/security/activeBreaches").c_str());
     } else if (path == "/panic" || path == "/security/panic") {
       isPanicActive = data.boolData();
       if (isPanicActive)
         triggerBuzzer(1000);
-      else
-        Firebase.RTDB.deleteNode(
-            &fbTele,
-            ("devices/" + deviceId + "/security/activeBreaches").c_str());
+    } else if (path == "/buzzerMute" || path == "/security/buzzerMute") {
+      isBuzzerMuted = data.boolData();
     } else if (path.startsWith("/security/calibration/PIR")) {
       int pIdx = path.substring(25, 26).toInt() - 1;
       if (pIdx >= 0 && pIdx < 4) {
@@ -513,19 +482,30 @@ void streamCallback(FirebaseStream data) {
         else if (path.endsWith("/mode"))
           sensorMode["PIR" + String(pIdx + 1)] = data.intData();
       }
-    } else if (path == "/security/securityMode") {
-      securityMode = data.intData();
-    } else if (path.startsWith("/security/activePeriods/")) {
-      String period = path.substring(24);
-      for (int i = 0; i < 5; i++) {
-        if (period == periodNames[i]) {
-          activePeriods[i] = data.boolData();
-          break;
-        }
-      }
+    } else if (path.startsWith("/mapPIR")) {
+      int pIdx = path.substring(7).toInt() - 1;
+      if (pIdx >= 0 && pIdx < 4)
+        mapPIR[pIdx] = data.intData();
+    } else if (path == "/pirTimer" || path == "/security/pirTimer") {
+      pirTimer = data.intData();
+    } else if (path == "/ldrThreshold" || path == "/security/ldrThreshold") {
+      globalLdrThreshold = data.intData();
+    } else if (path == "/ldrSecurity" || path == "/security/ldrSecurity") {
+      isLdrSecurityEnabled = data.boolData();
+    } else if (path == "/autoGlobal" || path == "/security/autoGlobal" ||
+               path == "/autoLightOnMotion" ||
+               path == "/security/autoLightOnMotion") {
+      isAutoGlobalEnabled = data.boolData();
+    } else if (path == "/ecoMode") {
+      isEcoMode = data.boolData();
     }
   }
 
+  if (wasRelayUpdated) {
+    unsigned long lockout_now = millis();
+    for (int i = 0; i < 7; i++)
+      manualOverrideTime[i] = lockout_now;
+  }
   triggerHardware();
   lastTelemetryTime = millis() - reportInterval + 500;
   triggerActivityLED();
@@ -570,6 +550,7 @@ void setup() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   pathTele = "devices/" + deviceId + "/telemetry";
+  pathEvents = "devices/" + deviceId + "/events";
   pathCmds = "devices/" + deviceId + "/commands";
   pathSensors = "devices/" + deviceId + "/security/sensors";
 
@@ -583,7 +564,7 @@ void setup() {
     configTime(19800, 0, "pool.ntp.org");
     xTaskCreatePinnedToCore(connectivityTask, "ConnTask", 2048, NULL, 1, NULL,
                             0);
-    systemInitTime = millis();
+    // 🔊 Boot hardware test beeps
     for (int i = 0; i < 3; i++) {
       digitalWrite(BUZZER_PIN, HIGH);
       delay(50);
@@ -606,6 +587,7 @@ void setup() {
   Firebase.RTDB.setStreamCallback(&fbStream, streamCallback,
                                   streamTimeoutCallback);
 
+  // 🛰 BROADCAST ESP-NOW (MAC-agnostic mesh)
   if (esp_now_init() == ESP_OK) {
     esp_now_register_recv_cb(OnDataRecv);
     esp_now_peer_info_t peerInfo = {};
@@ -616,8 +598,31 @@ void setup() {
   }
   xTaskCreatePinnedToCore(voltageTask, "VoltageTask", 5120, NULL, 1, NULL, 0);
 
+  // 📡 OTA DIAGNOSTICS
+  Serial.print("📡 HUB MAC: ");
+  Serial.println(WiFi.macAddress());
   Firebase.RTDB.setStringAsync(&fbTele, (pathTele + "/hubMac").c_str(),
                                WiFi.macAddress());
+
+  // 🛡️ PROACTIVE 4-ZONE DISCOVERY (Force-create sensor slots)
+  Firebase.RTDB.setBoolAsync(
+      &fbTele, ("devices/" + deviceId + "/security/bootSignal").c_str(), true);
+  for (int i = 1; i <= 4; i++) {
+    String p = "PIR" + String(i);
+    FirebaseJson initData;
+    initData.set("status", false);
+    initData.set("lightLevel", 0);
+    Firebase.RTDB.setJSONAsync(&fbTele, (pathSensors + "/" + p).c_str(),
+                               &initData);
+    FirebaseJson disc;
+    disc.set("name", p);
+    Firebase.RTDB.updateNodeAsync(
+        &fbTele,
+        ("devices/" + deviceId + "/security/discovery/pending/" + p).c_str(),
+        &disc);
+  }
+  Firebase.RTDB.setIntAsync(
+      &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(), 0);
 
   // === WATCHDOG INITIALIZATION (v3.0.0 Compatible) ===
   esp_task_wdt_config_t twdt_config = {
@@ -626,23 +631,14 @@ void setup() {
       .trigger_panic = true,
   };
   esp_task_wdt_init(&twdt_config);
-  esp_task_wdt_add(NULL); // Add current thread (Main Loop)
+  esp_task_wdt_add(NULL);
 
-  // Presence & Cleanup Nodes
-  Firebase.RTDB.setBoolAsync(
-      &fbTele, ("devices/" + deviceId + "/status/online").c_str(), true);
-  Firebase.RTDB.deleteNode(&fbTele,
-                           ("devices/" + deviceId + "/events").c_str());
   Firebase.RTDB.deleteNode(
       &fbTele, ("devices/" + deviceId + "/security/activeBreaches").c_str());
-  Firebase.RTDB.setIntAsync(
-      &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(), 0);
-  Firebase.RTDB.setBoolAsync(
-      &fbTele, ("devices/" + deviceId + "/status/ldrValid").c_str(), false);
-  Firebase.RTDB.setIntAsync(
-      &fbTele, ("devices/" + deviceId + "/status/rssi").c_str(), -100);
+  Firebase.RTDB.deleteNode(&fbTele, pathEvents.c_str());
 
   Serial.println("✅ SYSTEM READY.");
+  lastCloudActivity = millis();
 }
 
 /* ================= HELPERS ================= */
@@ -667,51 +663,45 @@ void processMeshData() {
     return;
   unsigned long now = millis();
   String sid = String(incomingData.sensorId);
-
-  // 🛡️ BOOT GUARD (15s stabilization)
-  if (now - systemInitTime < 15000) {
-    meshDataPending = false;
-    return;
-  }
-
   int curP = getCurrentPeriodIdx();
   bool isScheduled = (curP == -1 || activePeriods[curP]);
 
-  // LDR Update & Stale Check
-  if (sid.startsWith("PIR") || sid == "NODE_GOLD") {
-    globalLdrValue = incomingData.lightLevel;
-    ldrValid = true;
-    lastLdrUpdate = now;
-  }
-  if (now - lastLdrUpdate > 60000)
-    ldrValid = false;
-
-  // Security Mode Decision (Individual Sensor Privilege)
-  bool isDark = !ldrValid || (globalLdrValue <= globalLdrThreshold);
-  bool systemActive = false;
-  int sMode = (sensorMode.count(sid) > 0) ? sensorMode[sid] : securityMode;
-
-  if (sMode == 0)
-    systemActive = isDark;
-  else if (sMode == 1)
-    systemActive = isScheduled;
-  else if (sMode == 2)
-    systemActive = isScheduled && isDark;
-
   int debounceVal = 800;
+  if (sensorDebounce.count(sid))
+    debounceVal = sensorDebounce[sid];
   int pIdx = (sid.startsWith("PIR") && sid.length() >= 4)
                  ? (sid.substring(3).toInt() - 1)
                  : -1;
   if (pIdx >= 0 && pIdx < 4)
     debounceVal = pirDebounce[pIdx];
 
+  // SOFTWARE DEBOUNCE
   if (incomingData.motion &&
       (now - lastTriggerTimeMap[sid] < (unsigned long)debounceVal)) {
     meshDataPending = false;
     return;
   }
 
-  // Log Telemetry
+  // 🛡️ VERBOSE DEBUGGING
+  Serial.printf("📡 Hub Mesh: ID=%s | Motion=%d | LDR=%d\n", sid.c_str(),
+                incomingData.motion, incomingData.lightLevel);
+  Firebase.RTDB.setStringAsync(&fbTele, (pathTele + "/lastNode").c_str(), sid);
+  Firebase.RTDB.setIntAsync(&fbTele, (pathTele + "/lastNodeLdr").c_str(),
+                            incomingData.lightLevel);
+
+  // 🛡️ AUTO-DISCOVERY (Announce to App if new)
+  static std::set<String> discoveredSensors;
+  if (discoveredSensors.find(sid) == discoveredSensors.end()) {
+    FirebaseJson disc;
+    disc.set("name", sid);
+    Firebase.RTDB.updateNodeAsync(
+        &fbTele,
+        ("devices/" + deviceId + "/security/discovery/pending/" + sid).c_str(),
+        &disc);
+    discoveredSensors.insert(sid);
+  }
+
+  // 🛡️ REAL-TIME SENSOR TELEMETRY (For App Dynamic UI)
   FirebaseJson sensorData;
   sensorData.set("status", incomingData.motion);
   sensorData.set("lightLevel", incomingData.lightLevel);
@@ -720,85 +710,125 @@ void processMeshData() {
   Firebase.RTDB.setJSONAsync(&fbTele, (pathSensors + "/" + sid).c_str(),
                              &sensorData);
 
-  if (incomingData.motion) {
-    // 🎯 TEMPORAL EVENT COMPRESSION (Batching)
-    motionBatchCounter[sid]++;
-    if (motionBatchStartTime[sid] == 0)
-      motionBatchStartTime[sid] = now;
-    if (now - motionBatchStartTime[sid] > 10000) {
-      logEvent("motion_batch", sid, String(motionBatchCounter[sid]));
-      motionBatchCounter[sid] = 0;
-      motionBatchStartTime[sid] = now;
-    }
+  // 🌓 Update Master LDR (Heartbeat + Motion)
+  if (sid.startsWith("PIR") || sid == "NODE_GOLD") {
+    Firebase.RTDB.setIntAsync(
+        &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(),
+        incomingData.lightLevel);
+  }
 
-    int reqHits = 1;
+  if (incomingData.motion) {
+    // 🎯 SENSITIVITY CALIBRATION
+    int reqHits = 2;
     if (pIdx >= 0 && pIdx < 4)
       reqHits = pirDetectionCount[pIdx];
 
-    unsigned long timeSinceLast = now - lastTriggerTimeMap[sid];
-    int window = (reqHits >= 3) ? 10000 : 15000;
-
-    if (reqHits > 1 && timeSinceLast > window)
-      sensorHitCounter[sid] = 1;
-    else
-      sensorHitCounter[sid]++;
-
+    sensorHitCounter[sid]++;
     lastTriggerTimeMap[sid] = now;
 
     if (sensorHitCounter[sid] >= reqHits) {
-      sensorHitCounter[sid] = 0;
-      // Automation
-      if (isAutoGlobalEnabled && systemActive) {
+      // 🌓 Mode Validation
+      int mode = 2; // Default Hybrid
+      if (sensorMode.count(sid))
+        mode = sensorMode[sid];
+
+      bool isLdrOk = (incomingData.lightLevel <= globalLdrThreshold);
+      bool isTimeOk = isScheduled;
+      bool canTrigger = false;
+
+      if (mode == 0)
+        canTrigger = isLdrOk;
+      else if (mode == 1)
+        canTrigger = isTimeOk;
+      else
+        canTrigger = (isLdrOk && isTimeOk);
+
+      if (!canTrigger) {
+        sensorHitCounter[sid] = 0;
+        meshDataPending = false;
+        return;
+      }
+      Serial.printf("📡 Hub Received: %s | Motion: %d | Hits: %d/%d\n",
+                    sid.c_str(), incomingData.motion, sensorHitCounter[sid],
+                    reqHits);
+
+      // 🧠 NEURAL HUB AUTOMATION (LDR Gated)
+      if (isAutoGlobalEnabled &&
+          (incomingData.lightLevel <= globalLdrThreshold)) {
         if (pIdx >= 0 && pIdx < 4) {
           int mask = mapPIR[pIdx];
           for (int r = 0; r < 7; r++) {
+            if (now - manualOverrideTime[r] < MANUAL_LOCKOUT_MS)
+              continue;
             if ((mask & (1 << r)) != 0) {
-              applyRelayUpdate(r, 1, 1);
+              relayState[r] = 1;
               autoTriggerTime[r] = now;
               isNeuralTriggered[r] = true;
+              updateRelays = true;
             }
           }
         }
       }
-      // Alarm (Forensic Push Sequencing)
-      if (isArmed && systemActive && !isPanicActive) {
-        triggerBuzzer(400);
-        String breachPath = "devices/" + deviceId + "/security/activeBreaches";
-        FirebaseJson breach;
-        breach.set("sensor", sid);
-        breach.set("timestamp", (int)time(NULL));
-        Firebase.RTDB.pushJSONAsync(&fbTele, breachPath.c_str(), &breach);
-        logEvent("security_breach", sid, "Zone Alert");
+
+      // 🛡 SECURITY ALARM LOGIC (Rule-Compliant JSON Logs)
+      if (isArmed && isScheduled) {
+        if (!isLdrSecurityEnabled ||
+            incomingData.lightLevel <= globalLdrThreshold) {
+          triggerBuzzer(400);
+          FirebaseJson breachLog;
+          breachLog.set("sensor", sid);
+          breachLog.set("timestamp", (int)time(NULL));
+          Firebase.RTDB.pushJSONAsync(&fbTele, pathEvents.c_str(), &breachLog);
+
+          // 🚨 ACTIVE BREACH AGGREGATION
+          Firebase.RTDB.setBoolAsync(
+              &fbTele,
+              ("devices/" + deviceId + "/security/activeBreaches/" + sid)
+                  .c_str(),
+              true);
+        }
       }
+      sensorHitCounter[sid] = 0;
     }
   } else {
-    // 💤 Reset temporal batcher on idle
-    motionBatchStartTime[sid] = 0;
-    motionBatchCounter[sid] = 0;
+    sensorHitCounter[sid] = 0;
+  }
+
+  // 🛡️ STANDALONE LDR AUTOMATION ENGINE
+  for (int r = 0; r < 7; r++) {
+    if (autoActive[r] && autoSensor[r] == "ldr") {
+      if (incomingData.lightLevel <= autoThreshold[r]) {
+        if (!relayState[r]) {
+          relayState[r] = 1;
+          autoTriggerTime[r] = millis();
+          updateRelays = true;
+        }
+      } else {
+        if (relayState[r]) {
+          relayState[r] = 0;
+          updateRelays = true;
+        }
+      }
+    }
   }
 
   meshDataPending = false;
 }
 
+/* ================= LOOP ================= */
 void loop() {
   animateLEDs();
   ArduinoOTA.handle();
-  processMeshData();
-
-  // 🏥 Self-Healing Stream Monitor
-  if (millis() - lastCloudActivity > 30000) { // Check every 30s
-    if (Firebase.ready() && isInternetLive) {
-      if (!Firebase.RTDB.readStream(&fbStream)) {
-        Serial.println("♻️ Restarting Stream...");
-        Firebase.RTDB.beginStream(&fbStream, pathCmds.c_str());
-      }
-      lastCloudActivity = millis();
-    }
-  }
-
   if (updateRelays) {
     applyRelays();
     updateRelays = false;
+  }
+
+  static unsigned long lastWiFiCheck = 0;
+  if (millis() - lastWiFiCheck > 20000) {
+    lastWiFiCheck = millis();
+    if (WiFi.status() != WL_CONNECTED)
+      WiFi.reconnect();
   }
 
   static unsigned long lastTeleCheck = 0;
@@ -808,68 +838,58 @@ void loop() {
       if (Firebase.ready() && isInternetLive) {
         FirebaseJson j;
         for (int i = 0; i < 7; i++) {
-          char k[16];
+          char k[8];
           sprintf(k, "relay%d", i + 1);
           j.set(k, relayState[i]);
-          sprintf(k, "prio%d", i + 1);
-          j.set(k, relayPriority[i]);
         }
         j.set("voltage", sharedVoltage);
         j.set("heap", (int)ESP.getFreeHeap());
-        j.set("hubMac", WiFi.macAddress());
-        j.set("isNight", globalLdrValue < globalLdrThreshold);
-        j.set("lastUpdate", (double)millis());
-
-        // Tiered Status (Safe Summary)
-        FirebaseJson status;
-        status.set("online", true);
-        double ts = (time(nullptr) > 1000000) ? (double)time(nullptr)
-                                              : (double)millis();
-        status.set("lastSeen", ts);
-        status.set("panic", isPanicActive);
-        status.set("isArmed", isArmed);
-        status.set("ldrValid", ldrValid);
-        status.set("rssi", WiFi.RSSI());
-        for (int i = 0; i < 7; i++) {
-          char k[16];
-          sprintf(k, "r%d", i + 1);
-          status.set(k, relayState[i]);
-        }
-        String pathStatusNode = "devices/" + deviceId + "/status";
-        Firebase.RTDB.updateNodeAsync(&fbTele, pathStatusNode.c_str(), &status);
-
-        // Full Forensic Telemetry
+        j.set("isNight", incomingData.lightLevel < globalLdrThreshold);
+        j.set("ch", (int)WiFi.channel());
         if (Firebase.RTDB.updateNodeAsync(&fbTele, pathTele.c_str(), &j)) {
           lastTelemetryTime = millis();
+          lastCloudActivity = millis();
           forceTelemetry = false;
         }
       }
     }
   }
 
-  // Automation Timer Logic
-  unsigned long now = millis();
+  // ⏱ AUTOMATION TIMER ENGINE (Individual Priority)
   for (int i = 0; i < 7; i++) {
-    if (autoDuration[i] > 0 && isNeuralTriggered[i]) {
-      if (now - autoTriggerTime[i] > (unsigned long)autoDuration[i] * 1000) {
-        applyRelayUpdate(i, 0, 0);
-        isNeuralTriggered[i] = false;
-      }
+    if (relayState[i] == 0) {
+      autoTriggerTime[i] = 0;
+      isNeuralTriggered[i] = false;
+      continue;
+    }
+    // Individual App timer takes priority; fallback to global pirTimer
+    unsigned long dur =
+        (autoDuration[i] > 0)
+            ? ((unsigned long)autoDuration[i] * 1000UL)
+            : (isNeuralTriggered[i] ? ((unsigned long)pirTimer * 1000UL) : 0);
+    if (dur > 0 && autoTriggerTime[i] > 0 &&
+        (millis() - autoTriggerTime[i] > dur)) {
+      relayState[i] = 0;
+      autoTriggerTime[i] = 0;
+      isNeuralTriggered[i] = false;
+      updateRelays = true;
+      forceTelemetry = true;
     }
   }
 
-  // 🏥 Self-Healing & Heap Guard (101% Stability)
-  if (ESP.getFreeHeap() < 12000) {
-    ESP.restart(); // Proactive memory safety
-  }
+  processMeshData();
 
-  if (millis() - lastCloudActivity > 45000) {
-    if (Firebase.ready() && isInternetLive) {
-      Firebase.RTDB.beginStream(&fbStream, pathCmds.c_str());
-      lastCloudActivity = millis();
+  // DEADMAN'S SWITCH
+  if (millis() - lastCloudActivity > DEADMAN_TIMEOUT_MS) {
+    if (!safetyTripped) {
+      for (int i = 0; i < 7; i++)
+        relayState[i] = 0;
+      updateRelays = true;
+      safetyTripped = true;
     }
+  } else {
+    safetyTripped = false;
   }
 
-  yield();
-  esp_task_wdt_reset();
+  delay(isEcoMode ? 10 : 2);
 }
