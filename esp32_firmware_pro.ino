@@ -339,7 +339,7 @@ void logEvent(String type, String sensor = "", String details = "") {
 
   systemEventCount++;
   if (systemEventCount > 200) {
-    Firebase.RTDB.removeNodeAsync(&fbTele, path.c_str());
+    Firebase.RTDB.deleteNode(&fbTele, path.c_str());
     systemEventCount = 0;
   }
 }
@@ -397,7 +397,7 @@ void streamCallback(FirebaseStream data) {
       if (isPanicActive)
         triggerBuzzer(1000);
       else
-        Firebase.RTDB.removeNodeAsync(
+        Firebase.RTDB.deleteNode(
             &fbTele,
             ("devices/" + deviceId + "/security/activeBreaches").c_str());
     }
@@ -406,7 +406,7 @@ void streamCallback(FirebaseStream data) {
     if (json->get(d, "isArmed") || json->get(d, "security/isArmed")) {
       isArmed = d.boolValue;
       if (!isArmed)
-        Firebase.RTDB.removeNodeAsync(
+        Firebase.RTDB.deleteNode(
             &fbTele,
             ("devices/" + deviceId + "/security/activeBreaches").c_str());
     }
@@ -500,7 +500,7 @@ void streamCallback(FirebaseStream data) {
       if (isPanicActive)
         triggerBuzzer(1000);
       else
-        Firebase.RTDB.removeNodeAsync(
+        Firebase.RTDB.deleteNode(
             &fbTele,
             ("devices/" + deviceId + "/security/activeBreaches").c_str());
     } else if (path.startsWith("/security/calibration/PIR")) {
@@ -631,9 +631,9 @@ void setup() {
   // Presence & Cleanup Nodes
   Firebase.RTDB.setBoolAsync(
       &fbTele, ("devices/" + deviceId + "/status/online").c_str(), true);
-  Firebase.RTDB.removeNodeAsync(&fbTele,
-                                ("devices/" + deviceId + "/events").c_str());
-  Firebase.RTDB.removeNodeAsync(
+  Firebase.RTDB.deleteNode(&fbTele,
+                           ("devices/" + deviceId + "/events").c_str());
+  Firebase.RTDB.deleteNode(
       &fbTele, ("devices/" + deviceId + "/security/activeBreaches").c_str());
   Firebase.RTDB.setIntAsync(
       &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(), 0);
