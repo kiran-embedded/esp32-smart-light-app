@@ -393,7 +393,22 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
   Future<void> toggleSensorAlarm(String sensorName) async {
     final sensor = state.sensors[sensorName];
     if (sensor == null) return;
-    await _service.setSensorAlarmEnabled(sensorName, !sensor.isAlarmEnabled);
+
+    final newState = !sensor.isAlarmEnabled;
+
+    // ⚡ Optimistic Update for Industrial Responsiveness
+    final updatedSensors = Map<String, SensorState>.from(state.sensors);
+    updatedSensors[sensorName] = sensor.copyWith(isAlarmEnabled: newState);
+    state = state.copyWith(sensors: updatedSensors);
+
+    try {
+      await _service.setSensorAlarmEnabled(sensorName, newState);
+    } catch (e) {
+      // Revert on failure
+      final revertedSensors = Map<String, SensorState>.from(state.sensors);
+      revertedSensors[sensorName] = sensor.copyWith(isAlarmEnabled: !newState);
+      state = state.copyWith(sensors: revertedSensors);
+    }
   }
 
   Future<void> acknowledge(String sensorName) async {

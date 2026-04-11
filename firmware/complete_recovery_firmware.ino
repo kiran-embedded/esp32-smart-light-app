@@ -427,8 +427,12 @@ void streamCallback(FirebaseStream data) {
       sprintf(pKey, "security/activePeriods/%s", periodNames[i]);
       if (json->get(d, pKey))
         activePeriods[i] = d.boolValue;
-      if (json->get(d, periodNames[i]))
-        activePeriods[i] = d.boolValue;
+    }
+    for (int i = 1; i <= 4; i++) {
+      char sPath[48];
+      sprintf(sPath, "security/sensors/PIR%d/isAlarmEnabled", i);
+      if (json->get(d, sPath))
+        sensorAlarmEnabled["PIR" + String(i)] = d.boolValue;
     }
     for (int i = 1; i <= 7; i++) {
       char sKey[16], dKey[16], tKey[16], aKey[16], mKey[16];
@@ -502,10 +506,14 @@ void streamCallback(FirebaseStream data) {
           sensorAlarmEnabled[baseSid] = data.boolData();
         }
       }
-    } else if (path == "/security/activePeriods") {
-      int pIdx = path.substring(7).toInt() - 1;
-      if (pIdx >= 0 && pIdx < 4)
-        mapPIR[pIdx] = data.intData();
+    } else if (path.startsWith("/security/activePeriods/")) {
+      String pName = path.substring(24);
+      for (int i = 0; i < 5; i++) {
+        if (pName == periodNames[i]) {
+          activePeriods[i] = data.boolData();
+          break;
+        }
+      }
     } else if (path.startsWith("/mapPIR")) {
       int pIdx = path.substring(7).toInt() - 1;
       if (pIdx >= 0 && pIdx < 4)
