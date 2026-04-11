@@ -209,6 +209,7 @@ void animateLEDs() {
       buzzerPending = false;
     }
   }
+  esp_task_wdt_reset();
 }
 
 void triggerBuzzer(int ms) {
@@ -305,6 +306,8 @@ void streamCallback(FirebaseStream data) {
 
   if (path == "/") {
     FirebaseJson *json = data.jsonObjectPtr();
+    if (!json)
+      return;
     FirebaseJsonData d;
     if (json->get(d, "relay1")) {
       if (relayState[0] != (bool)d.intValue) {
@@ -630,7 +633,7 @@ void setup() {
   };
   esp_task_wdt_init(&twdt_config);
 #else
-  esp_task_wdt_init(30, true);
+  esp_task_wdt_init(60, true);
 #endif
   esp_task_wdt_add(NULL);
 
@@ -893,4 +896,5 @@ void loop() {
   }
 
   delay(isEcoMode ? 10 : 2);
+  esp_task_wdt_reset();
 }
