@@ -82,8 +82,6 @@ bool isInternetLive = false;
 String deviceId = "79215788";
 
 bool relayState[7] = {0, 0, 0, 0, 0, 0, 0};
-const int RELAY_PINS[7] = {RELAY1, RELAY2, RELAY3, RELAY4,
-                           RELAY5, RELAY6, RELAY7};
 bool invertedLogic[7] = {0, 0, 0, 0, 0, 0, 0};
 String autoSensor[7] = {"", "", "", "", "", "", ""};
 int autoDuration[7] = {0, 0, 0, 0, 0, 0, 0};
@@ -498,7 +496,7 @@ void streamCallback(FirebaseStream data) {
         String baseSid = sid.substring(0, slash);
         String attr = sid.substring(slash + 1);
         if (attr == "isAlarmEnabled") {
-          sensorAlarmEnabled[baseSid] = data.boolData();
+          sensorAlarmEnabled[baseSid] = data.boolValue();
         }
       }
     } else if (path == "/security/activePeriods") {
@@ -620,10 +618,9 @@ void setup() {
   ArduinoOTA.onEnd([]() { isOTAActive = false; });
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    // 🧪 FLASH VISUAL FEEDBACK (Magenta Strobe - No NeoPixel dependency)
-    digitalWrite(LED_PIN_RED, HIGH);
-    digitalWrite(LED_PIN_BLUE, HIGH);
-    digitalWrite(LED_PIN_GREEN, LOW);
+    // 🧪 FLASH VISUAL FEEDBACK (Magenta)
+    pixels.setPixelColor(0, pixels.Color(150, 0, 150));
+    pixels.show();
   });
 
   ArduinoOTA.onError([](ota_error_t error) { isOTAActive = false; });
@@ -850,6 +847,10 @@ void processMeshData() {
           Firebase.RTDB.setBoolAsync(
               &fbTele,
               ("devices/" + deviceId + "/security/alarmActive").c_str(), true);
+          // 🌔 Master LDR Telemetry Sync
+          Firebase.RTDB.setIntAsync(
+              &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(),
+              incomingData.lightLevel);
         }
       }
       sensorHitCounter[sid] = 0;
@@ -930,10 +931,6 @@ void loop() {
                 ("devices/" + deviceId + "/security/alarmActive").c_str(),
                 false);
           }
-          // 🌔 Master LDR Telemetry Sync
-          Firebase.RTDB.setIntAsync(
-              &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(),
-              incomingData.lightLevel);
         }
       }
     }
@@ -946,6 +943,7 @@ void loop() {
       isNeuralTriggered[i] = false;
       continue;
     }
+    // Individual App timer takes priority; fallback to global pirTimer
     unsigned long dur =
         (autoDuration[i] > 0)
             ? ((unsigned long)autoDuration[i] * 1000UL)
@@ -977,3 +975,4 @@ void loop() {
   delay(isEcoMode ? 10 : 2);
   esp_task_wdt_reset();
 }
+

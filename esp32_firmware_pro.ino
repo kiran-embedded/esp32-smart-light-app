@@ -496,7 +496,7 @@ void streamCallback(FirebaseStream data) {
         String baseSid = sid.substring(0, slash);
         String attr = sid.substring(slash + 1);
         if (attr == "isAlarmEnabled") {
-          sensorAlarmEnabled[baseSid] = data.boolValue();
+          sensorAlarmEnabled[baseSid] = data.boolData();
         }
       }
     } else if (path == "/security/activePeriods") {
