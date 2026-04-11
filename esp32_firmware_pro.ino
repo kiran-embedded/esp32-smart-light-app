@@ -406,7 +406,7 @@ void streamCallback(FirebaseStream data) {
     if (json->get(d, "isArmed") || json->get(d, "security/isArmed")) {
       isArmed = d.boolValue;
       if (!isArmed)
-        Firebase.RTDB.deleteNodeAsync(
+        Firebase.RTDB.removeNodeAsync(
             &fbTele,
             ("devices/" + deviceId + "/security/activeBreaches").c_str());
     }
