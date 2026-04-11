@@ -106,6 +106,7 @@ std::map<String, int> sensorDebounce;
 std::map<String, int> sensorSensitivity;
 std::map<String, int> sensorHitCounter;
 std::map<String, unsigned long> lastTriggerTimeMap;
+std::map<String, bool> sensorAlarmEnabled;
 
 bool updateRelays = false;
 bool forceTelemetry = false;
@@ -398,6 +399,10 @@ void streamCallback(FirebaseStream data) {
         json->get(d, "security/autoGlobal") ||
         json->get(d, "security/autoLightOnMotion"))
       isAutoGlobalEnabled = d.boolValue;
+    if (json->get(d, "ldrThreshold"))
+      globalLdrThreshold = d.intValue;
+    if (json->get(d, "buzzerMute"))
+      isBuzzerMuted = d.boolValue;
 
     for (int i = 1; i <= 4; i++) {
       char key[16], sKey[48], dKey[48], mKey[48];
@@ -470,6 +475,8 @@ void streamCallback(FirebaseStream data) {
       isPanicActive = data.boolData();
       if (isPanicActive)
         triggerBuzzer(1000);
+    } else if (path == "/ldrThreshold" || path == "/security/ldrThreshold") {
+      globalLdrThreshold = data.intData();
     } else if (path == "/buzzerMute" || path == "/security/buzzerMute") {
       isBuzzerMuted = data.boolData();
     } else if (path.startsWith("/security/calibration/PIR")) {
@@ -482,6 +489,20 @@ void streamCallback(FirebaseStream data) {
         else if (path.endsWith("/mode"))
           sensorMode["PIR" + String(pIdx + 1)] = data.intData();
       }
+    } else if (path.startsWith("/security/sensors/")) {
+      String sid = path.substring(18);
+      int slash = sid.indexOf('/');
+      if (slash > 0) {
+        String baseSid = sid.substring(0, slash);
+        String attr = sid.substring(slash + 1);
+        if (attr == "isAlarmEnabled") {
+          sensorAlarmEnabled[baseSid] = data.boolValue();
+        }
+      }
+    } else if (path == "/security/activePeriods") {
+      int pIdx = path.substring(7).toInt() - 1;
+      if (pIdx >= 0 && pIdx < 4)
+        mapPIR[pIdx] = data.intData();
     } else if (path.startsWith("/mapPIR")) {
       int pIdx = path.substring(7).toInt() - 1;
       if (pIdx >= 0 && pIdx < 4)
@@ -804,7 +825,11 @@ void processMeshData() {
       }
 
       // 🛡 SECURITY ALARM LOGIC (Rule-Compliant JSON Logs)
-      if (isArmed && isScheduled) {
+      bool sensorEnabled = true;
+      if (sensorAlarmEnabled.count(sid))
+        sensorEnabled = sensorAlarmEnabled[sid];
+
+      if (isArmed && isScheduled && sensorEnabled) {
         if (!isLdrSecurityEnabled ||
             incomingData.lightLevel <= globalLdrThreshold) {
           triggerBuzzer(400);
@@ -822,6 +847,10 @@ void processMeshData() {
           Firebase.RTDB.setBoolAsync(
               &fbTele,
               ("devices/" + deviceId + "/security/alarmActive").c_str(), true);
+          // 🌔 Master LDR Telemetry Sync
+          Firebase.RTDB.setIntAsync(
+              &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(),
+              incomingData.lightLevel);
         }
       }
       sensorHitCounter[sid] = 0;
