@@ -462,10 +462,6 @@ void streamCallback(FirebaseStream data) {
       }
     } else if (path == "/isArmed" || path == "/security/isArmed") {
       isArmed = data.boolData();
-      if (!isArmed)
-        Firebase.RTDB.deleteNode(
-            &fbTele,
-            ("devices/" + deviceId + "/security/activeBreaches").c_str());
     } else if (path == "/panic" || path == "/security/panic") {
       isPanicActive = data.boolData();
       if (isPanicActive)
@@ -627,7 +623,7 @@ void setup() {
   // === WATCHDOG INITIALIZATION (Cross-Core Compatible) ===
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   esp_task_wdt_config_t twdt_config = {
-      .timeout_ms = 30000,
+      .timeout_ms = 60000,
       .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
       .trigger_panic = true,
   };
