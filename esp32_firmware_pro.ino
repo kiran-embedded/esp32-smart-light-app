@@ -112,6 +112,10 @@ unsigned long lastLdrUpdate = 0;
 bool isEcoMode = false;
 int reportInterval = 8000;
 unsigned long systemInitTime = 0;
+bool buzzerPending = false;
+unsigned long buzzerStartTime = 0;
+int buzzerDuration = 200;
+unsigned long lastPanicPulse = 0;
 
 String pathTele, pathCmds, pathSensors;
 bool isActivityFlashing = false;
@@ -335,7 +339,7 @@ void logEvent(String type, String sensor = "", String details = "") {
 
   systemEventCount++;
   if (systemEventCount > 200) {
-    Firebase.RTDB.deleteNodeAsync(&fbTele, path.c_str());
+    Firebase.RTDB.removeNodeAsync(&fbTele, path.c_str());
     systemEventCount = 0;
   }
 }
@@ -393,7 +397,7 @@ void streamCallback(FirebaseStream data) {
       if (isPanicActive)
         triggerBuzzer(1000);
       else
-        Firebase.RTDB.deleteNodeAsync(
+        Firebase.RTDB.removeNodeAsync(
             &fbTele,
             ("devices/" + deviceId + "/security/activeBreaches").c_str());
     }
@@ -496,7 +500,7 @@ void streamCallback(FirebaseStream data) {
       if (isPanicActive)
         triggerBuzzer(1000);
       else
-        Firebase.RTDB.deleteNodeAsync(
+        Firebase.RTDB.removeNodeAsync(
             &fbTele,
             ("devices/" + deviceId + "/security/activeBreaches").c_str());
     } else if (path.startsWith("/security/calibration/PIR")) {
@@ -615,16 +619,21 @@ void setup() {
   Firebase.RTDB.setStringAsync(&fbTele, (pathTele + "/hubMac").c_str(),
                                WiFi.macAddress());
 
-  // === WATCHDOG INITIALIZATION ===
-  esp_task_wdt_init(30, true); // 30 second timeout
-  esp_task_wdt_add(NULL);      // Add current thread (Main Loop)
+  // === WATCHDOG INITIALIZATION (v3.0.0 Compatible) ===
+  esp_task_wdt_config_t twdt_config = {
+      .timeout_ms = 30000,
+      .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
+      .trigger_panic = true,
+  };
+  esp_task_wdt_init(&twdt_config);
+  esp_task_wdt_add(NULL); // Add current thread (Main Loop)
 
   // Presence & Cleanup Nodes
   Firebase.RTDB.setBoolAsync(
       &fbTele, ("devices/" + deviceId + "/status/online").c_str(), true);
-  Firebase.RTDB.deleteNodeAsync(&fbTele,
+  Firebase.RTDB.removeNodeAsync(&fbTele,
                                 ("devices/" + deviceId + "/events").c_str());
-  Firebase.RTDB.deleteNodeAsync(
+  Firebase.RTDB.removeNodeAsync(
       &fbTele, ("devices/" + deviceId + "/security/activeBreaches").c_str());
   Firebase.RTDB.setIntAsync(
       &fbTele, ("devices/" + deviceId + "/security/masterLDR").c_str(), 0);
