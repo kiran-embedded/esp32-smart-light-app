@@ -34,6 +34,24 @@ class SensorState {
       triggerCount: map['triggerCount'] ?? 0,
     );
   }
+
+  SensorState copyWith({
+    bool? status,
+    int? lastTriggered,
+    int? lightLevel,
+    String? nickname,
+    bool? isAlarmEnabled,
+    int? triggerCount,
+  }) {
+    return SensorState(
+      status: status ?? this.status,
+      lastTriggered: lastTriggered ?? this.lastTriggered,
+      lightLevel: lightLevel ?? this.lightLevel,
+      nickname: nickname ?? this.nickname,
+      isAlarmEnabled: isAlarmEnabled ?? this.isAlarmEnabled,
+      triggerCount: triggerCount ?? this.triggerCount,
+    );
+  }
 }
 
 class SensorCalibration {
