@@ -82,6 +82,8 @@ bool isInternetLive = false;
 String deviceId = "79215788";
 
 bool relayState[7] = {0, 0, 0, 0, 0, 0, 0};
+const int RELAY_PINS[7] = {RELAY1, RELAY2, RELAY3, RELAY4,
+                           RELAY5, RELAY6, RELAY7};
 bool invertedLogic[7] = {0, 0, 0, 0, 0, 0, 0};
 String autoSensor[7] = {"", "", "", "", "", "", ""};
 int autoDuration[7] = {0, 0, 0, 0, 0, 0, 0};
@@ -597,9 +599,10 @@ void setup() {
   ArduinoOTA.onEnd([]() { isOTAActive = false; });
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    // 🧪 FLASH VISUAL FEEDBACK (Magenta)
-    pixels.setPixelColor(0, pixels.Color(150, 0, 150));
-    pixels.show();
+    // 🧪 FLASH VISUAL FEEDBACK (Magenta Strobe - No NeoPixel dependency)
+    digitalWrite(LED_PIN_RED, HIGH);
+    digitalWrite(LED_PIN_BLUE, HIGH);
+    digitalWrite(LED_PIN_GREEN, LOW);
   });
 
   ArduinoOTA.onError([](ota_error_t error) { isOTAActive = false; });
@@ -914,7 +917,6 @@ void loop() {
       isNeuralTriggered[i] = false;
       continue;
     }
-    // Individual App timer takes priority; fallback to global pirTimer
     unsigned long dur =
         (autoDuration[i] > 0)
             ? ((unsigned long)autoDuration[i] * 1000UL)

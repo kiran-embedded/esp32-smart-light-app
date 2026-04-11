@@ -35,7 +35,7 @@ class SecurityService {
 
   Stream<List<Map<String, dynamic>>> get securityLogsStream {
     return _database
-        .ref('devices/$deviceId/security/logs')
+        .ref('devices/$deviceId/events')
         .orderByChild('timestamp')
         .limitToLast(50)
         .onValue
