@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/haptic_service.dart';
+import '../../core/system/display_engine.dart';
 
 class SensorCard extends StatelessWidget {
   final String name;
@@ -11,7 +14,6 @@ class SensorCard extends StatelessWidget {
   final VoidCallback onAcknowledge;
   final VoidCallback onToggleAlarm;
   final VoidCallback onDelete;
-  final VoidCallback? onCalibrate;
   final VoidCallback? onRename;
 
   const SensorCard({
@@ -25,188 +27,172 @@ class SensorCard extends StatelessWidget {
     required this.onAcknowledge,
     required this.onToggleAlarm,
     required this.onDelete,
-    this.onCalibrate,
     this.onRename,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12.h),
       child: GestureDetector(
         onLongPress: () {
           HapticService.heavy();
           _showSensorOptions(context);
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16.p),
           decoration: BoxDecoration(
-            color: isAlarmEnabled
-                ? Colors.white.withOpacity(0.05)
-                : Colors.white.withOpacity(0.02),
+            color: const Color(0xFF0A0A0A),
             border: Border.all(
               color: status
-                  ? Colors.redAccent.withOpacity(0.5)
+                  ? Colors.redAccent
                   : (isAlarmEnabled
                         ? Colors.white10
-                        : Colors.white.withOpacity(0.05)),
-              width: 1.5,
+                        : Colors.white.withOpacity(0.03)),
+              width: 1.0,
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(12.r),
           ),
           child: Row(
             children: [
-              // ── SENSOR ICON ──
-              Stack(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: status
-                          ? Colors.redAccent.withOpacity(0.2)
-                          : (isAlarmEnabled
-                                ? Colors.greenAccent.withOpacity(0.1)
-                                : Colors.white.withOpacity(0.05)),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      status
-                          ? Icons.warning_rounded
-                          : (isAlarmEnabled
-                                ? Icons.shield_rounded
-                                : Icons.shield_outlined),
-                      color: status
-                          ? Colors.redAccent
-                          : (isAlarmEnabled
-                                ? Colors.greenAccent
-                                : Colors.white24),
-                      size: 28,
-                    ),
-                  ),
-                  if (triggerCount > 0)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          triggerCount.toString(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 15),
+              // ── DIAGNOSTIC STATUS ICON ──
+              _buildDiagnosticIcon(),
+              SizedBox(width: 16.w),
 
-              // ── INFO ──
+              // ── INFO HUB ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      name,
-                      style: TextStyle(
-                        color: isAlarmEnabled ? Colors.white : Colors.white38,
-                        fontSize: 16,
+                      name.toUpperCase(),
+                      style: GoogleFonts.shareTechMono(
+                        color: isAlarmEnabled ? Colors.white : Colors.white24,
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      status
-                          ? "ALERT - MOTION DETECTED"
-                          : (isAlarmEnabled ? "SECURE" : "NODE SILENCED"),
-                      style: TextStyle(
-                        color: status
-                            ? Colors.redAccent
-                            : (isAlarmEnabled
-                                  ? Colors.greenAccent.withOpacity(0.8)
-                                  : Colors.white24),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        _buildBadge(
+                          status
+                              ? "BREACH_ACTIVE"
+                              : (isAlarmEnabled ? "MONITORING" : "SILENCED"),
+                          status
+                              ? Colors.redAccent
+                              : (isAlarmEnabled
+                                    ? Colors.greenAccent
+                                    : Colors.white10),
+                        ),
+                        if (status) ...[
+                          SizedBox(width: 8.w),
+                          _buildBadge("0x$triggerCount", Colors.redAccent),
+                        ],
+                      ],
                     ),
                   ],
                 ),
               ),
 
-              // ── INLINE ALARM TOGGLE ──
-              GestureDetector(
-                onTap: () {
-                  HapticService.toggle(!isAlarmEnabled);
-                  onToggleAlarm();
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isAlarmEnabled
-                        ? Colors.greenAccent.withOpacity(0.1)
-                        : Colors.white.withOpacity(0.05),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isAlarmEnabled
-                          ? Colors.greenAccent.withOpacity(0.3)
-                          : Colors.white12,
+              // ── ACTION CLUSTERS ──
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (status)
+                    _buildIconButton(
+                      Icons.check_circle_outline_rounded,
+                      Colors.white,
+                      onAcknowledge,
                     ),
-                  ),
-                  child: Icon(
+                  SizedBox(width: 8.w),
+                  _buildIconButton(
                     isAlarmEnabled
                         ? Icons.notifications_active_rounded
                         : Icons.notifications_off_rounded,
-                    color: isAlarmEnabled ? Colors.greenAccent : Colors.white24,
-                    size: 18,
+                    isAlarmEnabled ? Colors.greenAccent : Colors.white24,
+                    () {
+                      HapticService.toggle(!isAlarmEnabled);
+                      onToggleAlarm();
+                    },
+                    isPill: true,
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: 4),
-
-              // ── MORE OPTIONS ──
-              IconButton(
-                icon: const Icon(
-                  Icons.more_vert_rounded,
-                  color: Colors.white24,
-                  size: 20,
-                ),
-                onPressed: () {
-                  HapticService.selection();
-                  _showSensorOptions(context);
-                },
-              ),
-
-              // ── ACKNOWLEDGE (only when alert is active) ──
-              if (status) ...[
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: () {
-                    HapticService.selection();
-                    onAcknowledge();
-                  },
-                  icon: const Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.white70,
-                  ),
-                  tooltip: 'Acknowledge Alert',
-                ),
-              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDiagnosticIcon() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+              width: 44.w,
+              height: 44.h,
+              decoration: BoxDecoration(
+                color: status
+                    ? Colors.redAccent.withOpacity(0.1)
+                    : Colors.transparent,
+                border: Border.all(
+                  color: status ? Colors.redAccent : Colors.white10,
+                  width: 1.0,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                status ? Icons.radar_rounded : Icons.sensors_rounded,
+                color: status ? Colors.redAccent : Colors.white24,
+                size: 18.sp,
+              ),
+            )
+            .animate(target: status ? 1 : 0)
+            .shimmer(duration: 800.ms, color: Colors.white10),
+      ],
+    );
+  }
+
+  Widget _buildBadge(String label, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        border: Border.all(color: color.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(2.r),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.shareTechMono(
+          color: color.withOpacity(0.8),
+          fontSize: 8.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton(
+    IconData icon,
+    Color color,
+    VoidCallback onTap, {
+    bool isPill = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(8.p),
+        decoration: BoxDecoration(
+          color: isPill ? color.withOpacity(0.05) : Colors.transparent,
+          border: Border.all(
+            color: isPill ? color.withOpacity(0.2) : Colors.transparent,
+          ),
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        child: Icon(icon, color: color, size: 16.sp),
       ),
     );
   }
@@ -216,127 +202,71 @@ class SensorCard extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Color(0xFF0A0A0A),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        padding: EdgeInsets.all(24.p),
+        decoration: BoxDecoration(
+          color: const Color(0xFF070707),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Handle ──
             Container(
-              width: 40,
-              height: 4,
+              width: 40.w,
+              height: 2.h,
               decoration: BoxDecoration(
                 color: Colors.white10,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(1.r),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 24.h),
             Text(
-              name,
-              style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
+              "NODE_ABSTRACTION: ${name.toUpperCase()}",
+              style: GoogleFonts.shareTechMono(
+                color: Colors.white38,
+                fontSize: 10.sp,
+                letterSpacing: 2,
               ),
             ),
-            const SizedBox(height: 16),
-
-            // ── Toggle Alarm ──
-            ListTile(
-              leading: Icon(
-                isAlarmEnabled
-                    ? Icons.notifications_off_rounded
-                    : Icons.notifications_active_rounded,
-                color: Colors.cyanAccent,
-              ),
-              title: Text(
-                isAlarmEnabled ? "Disable Phone Alerts" : "Enable Phone Alerts",
-                style: const TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                isAlarmEnabled ? "Currently active" : "Currently silenced",
-                style: const TextStyle(color: Colors.white24, fontSize: 11),
-              ),
-              onTap: () {
-                HapticService.toggle(!isAlarmEnabled);
-                Navigator.pop(context);
-                onToggleAlarm();
-              },
+            SizedBox(height: 24.h),
+            _buildOptionTile(
+              Icons.edit_note_rounded,
+              "RENAME_NODE",
+              onRename,
+              color: Colors.cyanAccent,
             ),
-            const Divider(height: 1, color: Colors.white10),
-
-            // ── Rename ──
-            if (onRename != null)
-              ListTile(
-                leading: const Icon(
-                  Icons.edit_rounded,
-                  color: Colors.amberAccent,
-                ),
-                title: const Text(
-                  "Rename Sensor",
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  HapticService.impactClick();
-                  Navigator.pop(context);
-                  onRename!();
-                },
-              ),
-
-            // ── Calibration ──
-            if (onCalibrate != null) ...[
-              const Divider(height: 1, color: Colors.white10),
-              ListTile(
-                leading: const Icon(
-                  Icons.settings_input_antenna_rounded,
-                  color: Colors.cyanAccent,
-                ),
-                title: const Text(
-                  "Calibration Hub",
-                  style: TextStyle(color: Colors.white),
-                ),
-                subtitle: const Text(
-                  "Adjust PIR sensitivity & debounce",
-                  style: TextStyle(color: Colors.white24, fontSize: 11),
-                ),
-                onTap: () {
-                  HapticService.impactClick();
-                  Navigator.pop(context);
-                  onCalibrate!();
-                },
-              ),
-            ],
-
-            const Divider(height: 1, color: Colors.white10),
-
-            // ── Delete ──
-            ListTile(
-              leading: const Icon(
-                Icons.delete_forever_rounded,
-                color: Colors.redAccent,
-              ),
-              title: const Text(
-                "Delete Sensor Permanently",
-                style: TextStyle(color: Colors.redAccent),
-              ),
-              subtitle: const Text(
-                "This action cannot be undone",
-                style: TextStyle(color: Colors.white24, fontSize: 11),
-              ),
-              onTap: () {
-                HapticService.impactWarning();
-                Navigator.pop(context);
-                onDelete();
-              },
+            _buildOptionTile(
+              Icons.delete_sweep_rounded,
+              "DELETE_NODE",
+              onDelete,
+              color: Colors.redAccent,
+              isDestructive: true,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildOptionTile(
+    IconData icon,
+    String label,
+    VoidCallback? onTap, {
+    required Color color,
+    bool isDestructive = false,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color, size: 18.sp),
+      title: Text(
+        label,
+        style: GoogleFonts.shareTechMono(
+          color: isDestructive ? color : Colors.white,
+          fontSize: 12.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      onTap: onTap,
     );
   }
 }

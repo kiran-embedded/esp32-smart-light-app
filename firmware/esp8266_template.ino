@@ -1,12 +1,11 @@
 /*
- * -----------------------------------------------------------------------------
- * NEBULA CORE – SATELLITE SENSOR NODE (INDUSTRIAL MINIMAL)
- * VERSION: v2.1.0-STABLE
- * -----------------------------------------------------------------------------
- * ARCH: ESP8266 (1MB Flash Compatible)
- * FIXES: WiFi auto-reconnect, Firebase token fallback, periodic force-push,
- *        reliable PIR detection with proper state tracking.
- * -----------------------------------------------------------------------------
+ * =============================================================================
+ * NEBULA CORE – ESP8266 SATELLITE TEMPLATE
+ * VERSION: v2.1.0 TEMPLATE (Skeleton)
+ * =============================================================================
+ * THIS IS A CLEAN TEMPLATE. Fill in YOUR credentials below.
+ * See FIREBASE_DATA_MAP.md for all data paths explained.
+ * =============================================================================
  */
 
 #define FIREBASE_DISABLE_CA_CERT
@@ -22,20 +21,26 @@
 #include <Firebase_ESP_Client.h>
 #include <time.h>
 
-/* ================= CONFIGURATION ================= */
-#define WIFI_SSID "Kerala_Vision"
-#define WIFI_PASS "chandrasekharan0039"
-#define OTA_HOSTNAME "Nebula-Satellite-GOLD"
-#define OTA_PASSWORD "nebula2024"
-#define API_KEY "AIzaSyA9zs6xhRcEwwGLO6cI417b2FO52PiXaxs"
-#define DATABASE_URL                                                           \
-  "nebula-smartpowergrid-default-rtdb.asia-southeast1.firebasedatabase.app"
-#define DEVICE_ID "79215788"
+/* =================  YOUR CONFIGURATION  ================= */
+/* ⚠️  FILL IN YOUR OWN CREDENTIALS BELOW                  */
+/* ======================================================== */
+
+#define WIFI_SSID "YOUR_WIFI_NAME"
+#define WIFI_PASS "YOUR_WIFI_PASSWORD"
+#define OTA_HOSTNAME "Nebula-Satellite"
+#define OTA_PASSWORD "YOUR_OTA_PASSWORD"
+#define API_KEY "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL "YOUR_PROJECT.firebasedatabase.app"
+#define DEVICE_ID "YOUR_DEVICE_ID"
+
+/* =================  PIN DEFINITIONS  ================= */
+/* Change these to match YOUR wiring                     */
+/* ===================================================== */
 
 #define STATUS_LED LED_BUILTIN
-const uint8_t PIR_PINS[4] = {5, 4, 14, 12};
+const uint8_t PIR_PINS[4] = {5, 4, 14, 12}; // D1, D2, D5, D6
 
-/* ================= LOGIC CONSTANTS ================= */
+/* =================  DETECTION TUNING  ================= */
 int REQUIRED_PULSES = 2;
 unsigned long WINDOW_TIME = 15000;
 unsigned long HOLD_TIME = 3000;
@@ -58,12 +63,9 @@ FirebaseAuth auth;
 FirebaseConfig config;
 bool isFirebaseReady = false;
 
-// LED Engine
 int pendingPulses = 0;
 unsigned long lastLedAction = 0;
 unsigned long hbStart = 0;
-
-// WiFi reconnect state
 unsigned long lastWiFiCheck = 0;
 unsigned long lastForcePush = 0;
 unsigned long lastTokenCheck = 0;
@@ -119,7 +121,6 @@ void initFirebase() {
   Firebase.signUp(&config, &auth, "", "");
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
-
   String p = F("devices/");
   p += DEVICE_ID;
   p += F("/satellite/config");
@@ -131,7 +132,6 @@ void initFirebase() {
 void setup() {
   pinMode(STATUS_LED, OUTPUT);
   digitalWrite(STATUS_LED, HIGH);
-
   for (int i = 0; i < 4; i++) {
     pinMode(PIR_PINS[i], INPUT);
     zones[i] = {0, LOW, 0, 0, 0, 0, false};
@@ -141,13 +141,11 @@ void setup() {
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < 15000) {
     delay(100);
     yield();
   }
-
   if (WiFi.status() == WL_CONNECTED) {
     wasConnected = true;
     configTime(19800, 0, "pool.ntp.org");
@@ -164,30 +162,28 @@ void loop() {
   animateLED();
   unsigned long now = millis();
 
-  // ---- WiFi auto-reconnect ----
+  // WiFi auto-reconnect
   if (now - lastWiFiCheck > 10000) {
     lastWiFiCheck = now;
     if (WiFi.status() != WL_CONNECTED) {
       WiFi.disconnect();
       delay(500);
       WiFi.begin(WIFI_SSID, WIFI_PASS);
-      unsigned long wt = millis();
-      while (WiFi.status() != WL_CONNECTED && millis() - wt < 8000) {
+      unsigned long w = millis();
+      while (WiFi.status() != WL_CONNECTED && millis() - w < 8000) {
         delay(200);
         yield();
       }
-      if (WiFi.status() == WL_CONNECTED) {
-        if (!wasConnected) {
-          configTime(19800, 0, "pool.ntp.org");
-          initFirebase();
-          wasConnected = true;
-        }
+      if (WiFi.status() == WL_CONNECTED && !wasConnected) {
+        configTime(19800, 0, "pool.ntp.org");
+        initFirebase();
+        wasConnected = true;
         triggerLedPulse(3);
       }
     }
   }
 
-  // ---- Firebase token fallback ----
+  // Firebase token fallback
   if (!isFirebaseReady && now - lastTokenCheck > 30000) {
     lastTokenCheck = now;
     if (Firebase.ready()) {
@@ -196,17 +192,15 @@ void loop() {
     }
   }
 
-  // ---- PIR Processing ----
+  // PIR Processing
   for (int i = 0; i < 4; i++) {
     int pir = digitalRead(PIR_PINS[i]);
     PirZone &z = zones[i];
-
     if (pir == HIGH) {
       if (z.highStart == 0)
         z.highStart = now;
     } else
       z.highStart = 0;
-
     if (z.highStart > 0 && (now - z.highStart >= HIGH_VALID_TIME)) {
       if (z.lastPirState == LOW) {
         if (!(z.pulseCount > 0 && (now - z.lastPulseTime < MIN_GAP))) {
@@ -228,86 +222,71 @@ void loop() {
       z.lastPirState = HIGH;
     } else if (pir == LOW)
       z.lastPirState = LOW;
-
     if (z.motionDetected && (now - z.detectedTime > HOLD_TIME)) {
       z.motionDetected = false;
       z.pulseCount = 0;
     }
     if (!z.motionDetected && z.pulseCount > 0 &&
-        (now - z.lastPulseTime > WINDOW_TIME)) {
+        (now - z.lastPulseTime > WINDOW_TIME))
       z.pulseCount = 0;
-    }
   }
 
-  // ---- Firebase Push ----
-  static uint8_t lastMask = 0xFF; // Force first push
+  // Firebase Push
+  static uint8_t lastMask = 0xFF;
   static int lastLdr = -1;
   static unsigned long lastUpdate = 0;
   static int lastStates[4] = {-1, -1, -1, -1};
-
   uint8_t currentMask = 0;
   for (int i = 0; i < 4; i++)
     if (zones[i].motionDetected)
       currentMask |= (1 << i);
-
   int currentLdr = map(analogRead(A0), 0, 1024, 0, 100);
 
-  bool shouldPush = false;
-  if (currentMask != lastMask)
-    shouldPush = true;
-  if (abs(currentLdr - lastLdr) > 10)
-    shouldPush = true;
-  if (now - lastUpdate > 20000)
-    shouldPush = true; // Force periodic push
-
+  bool shouldPush =
+      (currentMask != lastMask || abs(currentLdr - lastLdr) > 10 ||
+       now - lastUpdate > 20000);
   if (isFirebaseReady && shouldPush) {
     lastMask = currentMask;
     lastLdr = currentLdr;
     lastUpdate = now;
     triggerLedPulse(2);
-
     for (int i = 0; i < 4; i++) {
-      int state = (currentMask & (1 << i)) != 0 ? 1 : 0;
-      if (state != lastStates[i]) {
-        lastStates[i] = state;
-        FirebaseJson zoneData;
-        zoneData.set(F("status"), state == 1);
-        zoneData.set(F("lightLevel"), currentLdr);
-        if (state == 1)
-          zoneData.set(F("lastTriggered"), (int)time(NULL));
-
+      int st = (currentMask & (1 << i)) != 0 ? 1 : 0;
+      if (st != lastStates[i]) {
+        lastStates[i] = st;
+        FirebaseJson z;
+        z.set(F("status"), st == 1);
+        z.set(F("lightLevel"), currentLdr);
+        if (st == 1)
+          z.set(F("lastTriggered"), (int)time(NULL));
         String p = F("devices/");
         p += DEVICE_ID;
         p += F("/security/sensors/PIR");
         p += (i + 1);
-        Firebase.RTDB.updateNodeAsync(&fbData, p, &zoneData);
+        Firebase.RTDB.updateNodeAsync(&fbData, p, &z);
       }
     }
-
-    // Satellite heartbeat
-    FirebaseJson status;
-    status.set(F("online"), true);
-    status.set(F("lastSeen"), (int)time(NULL));
-    status.set(F("signal"), WiFi.RSSI());
-    status.set(F("version"), F("v2.1.0"));
-
+    FirebaseJson s;
+    s.set(F("online"), true);
+    s.set(F("lastSeen"), (int)time(NULL));
+    s.set(F("signal"), WiFi.RSSI());
+    s.set(F("version"), F("v2.1.0"));
     String p2 = F("devices/");
     p2 += DEVICE_ID;
     p2 += F("/satellite/status");
-    Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &status);
+    Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &s);
   }
 
-  // ---- Force push heartbeat even if no sensor change (every 30s) ----
+  // Force heartbeat every 30s
   if (isFirebaseReady && now - lastForcePush > 30000) {
     lastForcePush = now;
-    FirebaseJson status;
-    status.set(F("online"), true);
-    status.set(F("lastSeen"), (int)time(NULL));
-    status.set(F("signal"), WiFi.RSSI());
-
+    FirebaseJson s;
+    s.set(F("online"), true);
+    s.set(F("lastSeen"), (int)time(NULL));
+    s.set(F("signal"), WiFi.RSSI());
     String p2 = F("devices/");
     p2 += DEVICE_ID;
     p2 += F("/satellite/status");
-    Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &status);
+    Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &s);
   }
 }

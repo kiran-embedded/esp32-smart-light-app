@@ -200,7 +200,7 @@ class FirebaseSwitchService {
 
     for (var relayKey in relayUpdates.keys) {
       final relayNum = relayKey.replaceAll('relay', '');
-      pRelayUpdates['prio$relayNum'] = priority;
+      pRelayUpdates['relPrio$relayNum'] = priority;
     }
 
     _executeBatchCommandsWithRetry(path, pRelayUpdates);

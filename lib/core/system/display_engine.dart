@@ -6,7 +6,7 @@ import 'dart:io';
 /// NEBULA ADVANCED DISPLAY ENGINE (NADE)
 /// An Unreal Engine inspired UI scaling and visual management system.
 class DisplayEngine {
-  static late MediaQueryData _data;
+  static MediaQueryData _data = const MediaQueryData();
   static double _width = 375;
   static double _height = 812;
   static double _pixelRatio = 1.0;
@@ -28,6 +28,8 @@ class DisplayEngine {
 
   /// Initialize the engine with device data
   static void init(BuildContext context) async {
+    if (_initialized) return;
+
     _data = MediaQuery.of(context);
     _width = _data.size.width;
     _height = _data.size.height;
@@ -97,10 +99,10 @@ class DisplayEngine {
   static double r(double val) => val * _scaleMin * _userDensity;
   static double p(double val) => val * _scaleMin * _userDensity;
 
-  static double get screenW => _width;
-  static double get screenH => _height;
-  static double get statusBarH => _data.padding.top;
-  static double get bottomBarH => _data.padding.bottom;
+  static double get screenW => _initialized ? _width : 375.0;
+  static double get screenH => _initialized ? _height : 812.0;
+  static double get statusBarH => _initialized ? _data.padding.top : 0.0;
+  static double get bottomBarH => _initialized ? _data.padding.bottom : 0.0;
   static double get aspectRatio => _width / _height;
 
   static double get scaleW => _scaleW;

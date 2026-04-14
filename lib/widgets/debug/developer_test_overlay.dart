@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../providers/security_provider.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
 
@@ -29,8 +31,10 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("OVERLAY_LOG: Build Method Invoked");
     final stats = ref.watch(performanceStatsProvider);
+    final securityState = ref.watch(securityProvider);
+    debugPrint("OVERLAY_LOG: Starting build. Visible: ${stats.consoleVisible}");
+    debugPrint("OVERLAY_LOG: State Watched. HubMAC: ${securityState.hubMac}");
 
     return Positioned.fill(
       child: Stack(
@@ -86,6 +90,19 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
                     Colors.orange,
                   ),
                   _row("MEM:", "${stats.memoryUsage.toInt()}MB", Colors.purple),
+                  const SizedBox(height: 10),
+                  const Divider(color: Colors.white10),
+                  const SizedBox(height: 10),
+                  _smallRow("HUB MAC:", securityState.hubMac),
+                  _smallRow("SAT MAC:", securityState.satMac),
+                  _smallRow(
+                    "ESP-NOW:",
+                    securityState.satLastSeen < 30 ? "SYNCED" : "LOST",
+                    securityState.satLastSeen < 30
+                        ? Colors.greenAccent
+                        : Colors.redAccent,
+                  ),
+                  _smallRow("LAST BEAT:", "${securityState.satLastSeen}s ago"),
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -122,16 +139,50 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
 
   Widget _row(String l, String v, Color c) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(l, style: const TextStyle(color: Colors.white, fontSize: 14)),
+          Text(
+            l,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           Text(
             v,
             style: TextStyle(
               color: c,
-              fontSize: 24,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _smallRow(String l, String v, [Color c = Colors.white38]) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            l,
+            style: GoogleFonts.outfit(
+              color: Colors.white24,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            v,
+            style: GoogleFonts.outfit(
+              color: c,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),

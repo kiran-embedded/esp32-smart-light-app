@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
+import '../core/constants/app_constants.dart';
 
 class SecurityService {
   final String deviceId;
@@ -8,9 +9,9 @@ class SecurityService {
   SecurityService(this.deviceId);
 
   Stream<Map<String, dynamic>> get sensorStream {
-    return _database.ref('devices/$deviceId/security/sensors').onValue.map((
-      event,
-    ) {
+    final path =
+        '${AppConstants.firebaseDevicesPath}/$deviceId/${AppConstants.firebaseSecurityPath}/${AppConstants.firebaseSensorsPath}';
+    return _database.ref(path).onValue.map((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
       if (data == null) return {};
       return Map<String, dynamic>.from(data);
@@ -25,11 +26,21 @@ class SecurityService {
     });
   }
 
-  Stream<bool> get isArmedStream {
-    return _database.ref('devices/$deviceId/commands/isArmed').onValue.map((
+  Stream<Map<String, dynamic>> get satStatusStream {
+    return _database.ref('devices/$deviceId/satellite/status').onValue.map((
       event,
     ) {
-      return (event.snapshot.value as bool?) ?? true;
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {'online': false, 'lastSeen': 0};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
+  Stream<bool> get isArmedStream {
+    final path =
+        '${AppConstants.firebaseDevicesPath}/$deviceId/${AppConstants.firebaseCommandsPath}/isArmed';
+    return _database.ref(path).onValue.map((event) {
+      return (event.snapshot.value as bool?) ?? false;
     });
   }
 
@@ -46,7 +57,7 @@ class SecurityService {
               .map(
                 (e) => {
                   'id': e.key,
-                  ...Map<String, dynamic>.from(e.value as Map),
+                  ...Map<String, dynamic>.from(e.value as Map? ?? {}),
                 },
               )
               .toList();
@@ -54,11 +65,11 @@ class SecurityService {
   }
 
   Stream<int> get ldrThresholdStream {
-    return _database.ref('devices/$deviceId/commands/ldrThreshold').onValue.map(
-      (event) {
-        return (event.snapshot.value as int?) ?? 50;
-      },
-    );
+    final path =
+        '${AppConstants.firebaseDevicesPath}/$deviceId/${AppConstants.firebaseCommandsPath}/ldrThreshold';
+    return _database.ref(path).onValue.map((event) {
+      return (event.snapshot.value as int?) ?? 50;
+    });
   }
 
   Stream<bool> get isBuzzerMutedStream {
@@ -76,10 +87,11 @@ class SecurityService {
   }
 
   Stream<bool> get ldrSecurityStream {
-    return _database
-        .ref('devices/$deviceId/commands/ldrSecurity')
-        .onValue
-        .map((event) => (event.snapshot.value as bool?) ?? false);
+    final path =
+        '${AppConstants.firebaseDevicesPath}/$deviceId/${AppConstants.firebaseCommandsPath}/ldrSecurity';
+    return _database.ref(path).onValue.map((event) {
+      return (event.snapshot.value as bool?) ?? false;
+    });
   }
 
   Stream<int> get masterLdrStream {
@@ -87,14 +99,6 @@ class SecurityService {
       event,
     ) {
       return (event.snapshot.value as int?) ?? 0;
-    });
-  }
-
-  Stream<bool> get autoLightStream {
-    return _database.ref('devices/$deviceId/commands/autoGlobal').onValue.map((
-      event,
-    ) {
-      return (event.snapshot.value as bool?) ?? false;
     });
   }
 
@@ -128,7 +132,7 @@ class SecurityService {
               .map(
                 (e) => {
                   'id': e.key,
-                  ...Map<String, dynamic>.from(e.value as Map),
+                  ...Map<String, dynamic>.from(e.value as Map? ?? {}),
                 },
               )
               .toList()
@@ -139,16 +143,59 @@ class SecurityService {
         });
   }
 
+  Stream<Map<String, dynamic>> get telemetryStream {
+    return _database.ref('devices/$deviceId/telemetry').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
+  Stream<Map<String, dynamic>> get satTelemetryStream {
+    return _database.ref('devices/$deviceId/satellite/telemetry').onValue.map((
+      event,
+    ) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
+  Stream<Map<String, dynamic>> get satConfigStream {
+    return _database.ref('devices/$deviceId/satellite/config').onValue.map((
+      event,
+    ) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
+  Stream<int> get globalMotionModeStream {
+    return _database
+        .ref('devices/$deviceId/commands/globalMotionMode')
+        .onValue
+        .map((event) => (event.snapshot.value as int?) ?? 0);
+  }
+
+  Stream<Map<String, dynamic>> get satSensorsStream {
+    return _database.ref('devices/$deviceId/satellite/sensors').onValue.map((
+      event,
+    ) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return {};
+      return Map<String, dynamic>.from(data);
+    });
+  }
+
   Future<void> setArmedState(bool armed) async {
-    await _database.ref('devices/$deviceId/commands/isArmed').set(armed);
+    final path =
+        '${AppConstants.firebaseDevicesPath}/$deviceId/${AppConstants.firebaseCommandsPath}/isArmed';
+    await _database.ref(path).set(armed);
   }
 
   Future<void> setLdrThreshold(int value) async {
     await _database.ref('devices/$deviceId/commands/ldrThreshold').set(value);
-  }
-
-  Future<void> setAutoLightOnMotion(bool enabled) async {
-    await _database.ref('devices/$deviceId/commands/autoGlobal').set(enabled);
   }
 
   Future<void> setPeriodActive(String period, bool isActive) async {
@@ -158,7 +205,12 @@ class SecurityService {
   }
 
   Future<void> clearActiveBreaches() async {
-    await _database.ref('devices/$deviceId/security/activeBreaches').remove();
+    final batch = {
+      'devices/$deviceId/security/activeBreaches': null,
+      'devices/$deviceId/security/alarmActive': false,
+      'devices/$deviceId/commands/panic': false,
+    };
+    await _database.ref().update(batch);
   }
 
   Future<void> acknowledgeAlert(String sensorName) async {
@@ -180,7 +232,9 @@ class SecurityService {
   }
 
   Future<void> setPanicState(bool active) async {
-    await _database.ref('devices/$deviceId/commands').update({'panic': active});
+    final path =
+        '${AppConstants.firebaseDevicesPath}/$deviceId/${AppConstants.firebaseCommandsPath}';
+    await _database.ref(path).update({'panic': active});
   }
 
   Future<void> setBuzzerMute(bool muted) async {
@@ -191,16 +245,20 @@ class SecurityService {
     await _database.ref('devices/$deviceId/commands/ldrSecurity').set(enabled);
   }
 
-  Future<void> setSensorMode(String sensorId, int mode) async {
-    await _database
-        .ref('devices/$deviceId/commands/security/calibration/$sensorId')
-        .update({'mode': mode});
-  }
-
   Future<void> setSecurityMode(int mode) async {
     await _database
         .ref('devices/$deviceId/commands/security/securityMode')
         .set(mode);
+  }
+
+  Future<void> setGlobalMotionMode(int mode) async {
+    await _database
+        .ref('devices/$deviceId/commands/globalMotionMode')
+        .set(mode);
+  }
+
+  Future<void> setSatConfig(String key, dynamic value) async {
+    await _database.ref('devices/$deviceId/satellite/config/$key').set(value);
   }
 
   Future<void> deleteSensor(String sensorName) async {

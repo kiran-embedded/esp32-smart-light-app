@@ -304,16 +304,15 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        // Optimized to 2s for better network jitter handling
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
+        // Extended to 5s to fully suppress firmware telemetry echo
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 5000) {
           final existing = currentDeviceMap[id];
-          if (existing != null) {
-            // PIN THE STATE: As long as it's pending, force the last known active state
-            // to prevent pings from old data overriding the optimistic UI
+          if (existing != null && existing.isPending) {
+            // PIN THE STATE: Force the optimistic state during the transition
             newIsActive = existing.isActive;
             isPending = true;
 
-            // Auto-clear if the server finally catches up
+            // Strict Clear: Only remove pending if telemetry ACTUALLY matches the intent
             final telemetryVal = telemetry[id];
             bool remoteMatches = false;
             if (telemetryVal is int)
@@ -321,7 +320,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
             else if (telemetryVal is bool)
               remoteMatches = (telemetryVal == newIsActive);
 
-            if (remoteMatches) {
+            if (remoteMatches &&
+                DateTime.now().difference(pendingTime).inMilliseconds > 1000) {
               _pendingSwitches.remove(id);
               isPending = false;
             }
@@ -371,8 +371,9 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       final timestamp = lastSeen is int
           ? lastSeen
           : int.parse(lastSeen.toString());
-      final now = DateTime.now().millisecondsSinceEpoch;
-      return (now - timestamp) < 10000;
+      // lastSeen is epoch SECONDS from ESP32, not milliseconds
+      final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      return (nowEpoch - timestamp).abs() < 30;
     } catch (e) {
       return false;
     }
@@ -383,7 +384,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Future<void> toggleSwitch(String id) async {
     final now = DateTime.now();
     if (_lastToggleTime.containsKey(id)) {
-      if (now.difference(_lastToggleTime[id]!).inMilliseconds < 250) {
+      if (now.difference(_lastToggleTime[id]!).inMilliseconds < 400) {
         return; // Deny double-click rapid glitch
       }
     }

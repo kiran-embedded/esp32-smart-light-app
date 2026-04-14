@@ -25,7 +25,7 @@ class SecurityForegroundService : Service() {
 
     private var databaseListener: ValueEventListener? = null
     private var isArmedListener: ValueEventListener? = null
-    private var isArmed: Boolean = true
+    private var isArmed: Boolean = false
     private var schedulesListener: ValueEventListener? = null
     private var deviceId: String = ""
     private var databaseUrl: String = ""
@@ -221,12 +221,13 @@ class SecurityForegroundService : Service() {
 
     private fun setupListeners() {
         val fb = if (databaseUrl.isNotEmpty()) FirebaseDatabase.getInstance(databaseUrl) else FirebaseDatabase.getInstance()
-        val db = fb.getReference("devices/$deviceId/security")
+        val dbSecurity = fb.getReference("devices/$deviceId/security")
+        val dbCommands = fb.getReference("devices/$deviceId/commands")
 
-        // 1. Listen for Armed state
-        isArmedListener = db.child("isArmed").addValueEventListener(object : ValueEventListener {
+        // 1. Listen for Armed state (Correctly pointed to commands/isArmed)
+        isArmedListener = dbCommands.child("isArmed").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                isArmed = snapshot.getValue(Boolean::class.java) ?: true
+                isArmed = snapshot.getValue(Boolean::class.java) ?: false
                 if (!isArmed) {
                     // If disarmed, reset the trigger guard so it can fire again when re-armed
                     alarmAlreadyTriggered = false
@@ -237,7 +238,7 @@ class SecurityForegroundService : Service() {
         })
 
         // 2. Listen for Sensor Breaches
-        databaseListener = db.child("sensors").addValueEventListener(object : ValueEventListener {
+        databaseListener = dbSecurity.child("sensors").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (!isArmed) return
 
@@ -271,7 +272,16 @@ class SecurityForegroundService : Service() {
                     
                     if (isPeriodEnabled) {
                         alarmAlreadyTriggered = true
-                        triggerNativeAlarm(sensorName)
+                        
+                        // Check if Android Native Alarms are enabled in settings
+                        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                        val isNativeEnabled = prefs.getBoolean("flutter.native_alarm_enabled", true)
+                        
+                        if (isNativeEnabled) {
+                            triggerNativeAlarm(sensorName)
+                        } else {
+                            Log.d("SecurityService", "Sensor triggered, but Native Alarm Overlay is Disabled in User Settings.")
+                        }
                     } else {
                         Log.d("SecurityService", "Sensor triggered, but alarm skipped. Period ($period) is disabled.")
                     }

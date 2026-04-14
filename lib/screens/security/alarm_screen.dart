@@ -43,6 +43,12 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Auto-dismiss if alarm is cleared or system disarmed remotely
+  }
+
   void _startSirenAndVoice() {
     if (_isSnoozed) return;
 
@@ -114,6 +120,18 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Auto-dismiss logic: if alarm stopped or system disarmed
+    ref.listen(securityProvider, (previous, next) {
+      if (!next.isArmed ||
+          (!next.isAlarmActive && (previous?.isAlarmActive ?? false))) {
+        if (mounted) {
+          ref.read(soundServiceProvider).stopAlarm();
+          ref.read(voiceServiceProvider).stop();
+          Navigator.of(context).pop();
+        }
+      }
+    });
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -163,7 +181,8 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
                       ),
                     )
                     .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .shimmer(duration: 2.seconds),
+                    .shimmer(duration: 2.seconds)
+                    .shake(duration: 500.ms, hz: 4),
 
                 const SizedBox(height: 8),
 
@@ -187,87 +206,124 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
                       );
                     }
 
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          height: 180,
-                          margin: const EdgeInsets.symmetric(horizontal: 40),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.05),
-                            ),
-                          ),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: breaches.length,
-                            separatorBuilder: (context, index) => const Divider(
-                              color: Colors.white10,
-                              height: 16,
-                            ),
-                            itemBuilder: (context, index) {
-                              final b = breaches[index];
-                              final sensorId =
-                                  b['sensor'] as String? ?? 'Unknown';
-                              final nickname =
-                                  securityState.sensors[sensorId]?.nickname;
-                              final sensorName =
-                                  nickname ?? sensorId.toUpperCase();
-                              final ts = b['timestamp'] as num? ?? 0;
-                              final date = DateTime.fromMillisecondsSinceEpoch(
-                                (ts * 1000).toInt(),
-                              );
-                              final timeStr = DateFormat(
-                                'HH:mm:ss',
-                              ).format(date);
+                    return Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              constraints: const BoxConstraints(maxHeight: 220),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 30,
+                              ),
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.redAccent.withOpacity(0.2),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                itemCount: breaches.length,
+                                separatorBuilder: (context, index) =>
+                                    const Divider(
+                                      color: Colors.white10,
+                                      height: 20,
+                                    ),
+                                itemBuilder: (context, index) {
+                                  final b = breaches[index];
+                                  final sensorId =
+                                      b['sensor'] as String? ?? 'Unknown';
+                                  final nickname =
+                                      securityState.sensors[sensorId]?.nickname;
+                                  final sensorName =
+                                      nickname ?? sensorId.toUpperCase();
+                                  final ts = b['timestamp'] as num? ?? 0;
+                                  final date =
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                        (ts * 1000).toInt(),
+                                      );
+                                  final timeStr = DateFormat(
+                                    'HH:mm:ss',
+                                  ).format(date);
 
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  return Row(
                                     children: [
-                                      Text(
-                                        sensorName,
-                                        style: GoogleFonts.outfit(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.redAccent.withOpacity(
+                                            0.2,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.warning_amber_rounded,
+                                          color: Colors.redAccent,
+                                          size: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              sensorName,
+                                              style: GoogleFonts.outfit(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                            Text(
+                                              "BREACH DETECTED",
+                                              style: GoogleFonts.outfit(
+                                                color: Colors.redAccent,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 1,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       Text(
-                                        "Breach Sequence #${breaches.length - index}",
+                                        timeStr,
                                         style: GoogleFonts.outfit(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.error.withOpacity(0.5),
-                                          fontSize: 9,
+                                          color: Colors.white24,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ],
-                                  ),
-                                  Text(
-                                    timeStr,
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.white24,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95));
+                        ).animate().fadeIn().slideY(begin: 0.1),
+                        if (breaches.length > 1)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Text(
+                              "MULTIPLE ZONES COMPROMISED",
+                              style: GoogleFonts.outfit(
+                                color: Colors.redAccent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2,
+                              ),
+                            ).animate(onPlay: (c) => c.repeat()).shimmer(),
+                          ),
+                      ],
+                    );
                   },
                 ),
 

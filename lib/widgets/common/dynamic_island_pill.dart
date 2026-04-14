@@ -169,7 +169,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
             ),
           ),
           child: Text(
-            isConnected ? "CONNECTED" : "OFFLINE",
+            isConnected ? "CONNECTED" : "DISCONNECTED",
             style: GoogleFonts.outfit(
               fontSize: 9,
               fontWeight: FontWeight.bold,

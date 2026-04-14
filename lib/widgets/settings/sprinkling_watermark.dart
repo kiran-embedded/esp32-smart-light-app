@@ -71,7 +71,7 @@ class SprinklingWatermark extends ConsumerWidget {
                     ),
                     loading: () => const SizedBox.shrink(),
                     error: (e, s) => Text(
-                      "Version 1.2.0+34.5",
+                      "Version 1.2.0+42",
                       style: GoogleFonts.outfit(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 12,
@@ -117,9 +117,7 @@ class SprinklingWatermark extends ConsumerWidget {
                         duration: 2.seconds,
                         builder: (context, value, child) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            boxShadow: const [],
-                          ),
+                          decoration: BoxDecoration(boxShadow: const []),
                           child: child,
                         ),
                       ),

@@ -123,4 +123,7 @@ class AppConstants {
   static const String firebaseSwitchesPath = 'switches';
   static const String firebaseTelemetryPath = 'telemetry';
   static const String firebaseCommandsPath = 'commands';
+  static const String firebaseSecurityPath = 'security';
+  static const String firebaseSensorsPath = 'sensors';
+  static const String firebaseActivePeriodsPath = 'activePeriods';
 }

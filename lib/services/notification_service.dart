@@ -83,19 +83,24 @@ class NotificationService {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final customPath = prefs.getString('custom_alarm_path');
+    final isSirenEnabled = prefs.getBool('native_alarm_enabled') ?? true;
 
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
           'security_alerts_v2',
           'Security Alerts',
           channelDescription: 'Critical motion and security alarms',
-          importance: Importance.max,
-          priority: Priority.high,
+          importance: isSirenEnabled
+              ? Importance.max
+              : Importance.defaultImportance,
+          priority: isSirenEnabled ? Priority.high : Priority.defaultPriority,
           showWhen: true,
-          sound: customPath != null
-              ? UriAndroidNotificationSound(customPath)
-              : const RawResourceAndroidNotificationSound('siren'),
-          playSound: true,
+          sound: isSirenEnabled
+              ? (customPath != null
+                    ? UriAndroidNotificationSound(customPath)
+                    : const RawResourceAndroidNotificationSound('siren'))
+              : null,
+          playSound: isSirenEnabled,
           actions: <AndroidNotificationAction>[
             const AndroidNotificationAction(
               'stop_buzzer',

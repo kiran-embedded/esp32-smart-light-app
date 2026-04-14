@@ -43,7 +43,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     _pressController = AnimationController(
       vsync: this,
-      duration: Duration.zero,
+      duration: const Duration(milliseconds: 150),
     );
 
     _iconAnimController = AnimationController(
@@ -59,7 +59,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     _rippleController = AnimationController(
       vsync: this,
-      duration: Duration.zero,
+      duration: const Duration(milliseconds: 150),
     );
 
     _parallaxController = AnimationController(
@@ -506,7 +506,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               : Colors.white.withOpacity(0.1));
 
     Widget container = AnimatedContainer(
-      duration: Duration.zero,
+      duration: const Duration(milliseconds: 150),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: isActive ? effectiveColor : offColor,
@@ -604,11 +604,11 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             children: [
               // Liquid Background
               AnimatedAlign(
-                duration: Duration.zero,
+                duration: const Duration(milliseconds: 150),
                 curve: Curves.easeOutQuart,
                 alignment: isActive ? Alignment.center : Alignment.bottomLeft,
                 child: AnimatedContainer(
-                  duration: Duration.zero,
+                  duration: const Duration(milliseconds: 150),
                   curve: Curves.easeOutQuart,
                   width: isActive ? 400 : 20, // Overseized to fill
                   height: isActive ? 400 : 20,
@@ -664,7 +664,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     final isActive = widget.device.isActive;
 
     Widget container = AnimatedContainer(
-      duration: Duration.zero,
+      duration: const Duration(milliseconds: 150),
       decoration: BoxDecoration(
         color: blendingEnabled
             ? (Colors.black.withOpacity(0.3)) // Darker tint for glass
@@ -689,7 +689,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
       ),
       child: Center(
         child: AnimatedContainer(
-          duration: Duration.zero,
+          duration: const Duration(milliseconds: 150),
           width: 80.r,
           height: 80.r,
           decoration: BoxDecoration(
@@ -790,7 +790,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                 // Glitch scale effect for icon
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 1.0, end: isActive ? 1.05 : 1.0),
-                  duration: Duration.zero,
+                  duration: const Duration(milliseconds: 150),
                   builder: (context, scale, child) {
                     return Transform.scale(
                       scale:
@@ -868,7 +868,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     }
 
     Widget container = AnimatedContainer(
-      duration: Duration.zero,
+      duration: const Duration(milliseconds: 150),
       decoration: BoxDecoration(
         color: baseColor,
         borderRadius: BorderRadius.circular(24),
@@ -966,7 +966,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
             // Dynamic Border & Fill
             AnimatedContainer(
-              duration: Duration.zero,
+              duration: const Duration(milliseconds: 150),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
@@ -1089,7 +1089,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
             top: 8,
             right: 8,
             child: AnimatedContainer(
-              duration: Duration.zero,
+              duration: const Duration(milliseconds: 150),
               width: 8.r,
               height: 8.r,
               decoration: BoxDecoration(
@@ -1299,7 +1299,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
               // Glitchy Icon
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
-                duration: Duration.zero,
+                duration: const Duration(milliseconds: 150),
                 builder: (context, value, child) {
                   return ShaderMask(
                     shaderCallback: (bounds) => LinearGradient(
@@ -1365,7 +1365,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
     final isActive = widget.device.isActive;
 
     Widget container = AnimatedContainer(
-      duration: Duration.zero,
+      duration: const Duration(milliseconds: 150),
       curve: Curves.easeOutQuart,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),

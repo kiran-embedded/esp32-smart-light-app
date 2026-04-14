@@ -5,21 +5,22 @@ import 'dart:math' as math;
 /// Dynamically scales UI components based on screen dimensions and pixel density.
 /// Uses a base reference of 375x812 (standard iPhone/Android flagship).
 class Responsive {
-  static late MediaQueryData _mediaQueryData;
-  static late double screenWidth;
-  static late double screenHeight;
-  static late double pixelRatio;
-  static late double textScaleFactor;
+  static MediaQueryData _mediaQueryData = const MediaQueryData();
+  static double screenWidth = 375.0;
+  static double screenHeight = 812.0;
+  static double pixelRatio = 1.0;
+  static double textScaleFactor = 1.0;
 
-  static late double scaleWidth;
-  static late double scaleHeight;
-  static late double scaleText;
+  static double scaleWidth = 1.0;
+  static double scaleHeight = 1.0;
+  static double scaleText = 1.0;
 
   static void init(
     BuildContext context, {
     double scaleMultiplier = 1.0,
     double fontMultiplier = 1.0,
   }) {
+    // We allow re-initialization on context changes, but the first frame is always safe
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
     screenHeight = _mediaQueryData.size.height;
@@ -41,10 +42,7 @@ class Responsive {
     }
 
     debugPrint(
-      'NEBULA_RESPONSIVE: Initialized with Screen Size: ${screenWidth}x${screenHeight}',
-    );
-    debugPrint(
-      'NEBULA_RESPONSIVE: Scaling Factors - Width: ${scaleWidth.toStringAsFixed(3)}, Height: ${scaleHeight.toStringAsFixed(3)}, Text: ${scaleText.toStringAsFixed(3)}',
+      'NEBULA_RESPONSIVE: Sync Active with Screen Size: ${screenWidth.toInt()}x${screenHeight.toInt()}',
     );
   }
 
@@ -59,6 +57,8 @@ class Responsive {
 
   /// Adaptive Spacing/Radius (Square scaling)
   static double r(double radius) => radius * scaleText;
+
+  static double p(double padding) => padding * scaleText;
 
   /// Safe Area Padding Top
   static double get paddingTop => _mediaQueryData.padding.top;
@@ -92,4 +92,5 @@ extension ResponsiveExtension on num {
   double get h => Responsive.h(this.toDouble());
   double get sp => Responsive.sp(this.toDouble());
   double get r => Responsive.r(this.toDouble());
+  double get p => Responsive.p(this.toDouble());
 }

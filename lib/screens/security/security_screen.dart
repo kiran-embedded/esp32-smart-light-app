@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'pir_calibration_view.dart';
 import '../../providers/security_provider.dart';
 import '../../widgets/security/sensor_card.dart';
 import '../../widgets/security/security_history_view.dart';
 import '../../services/haptic_service.dart';
-import '../../services/sound_service.dart';
-import 'alarm_screen.dart';
+import '../../widgets/security/calibration_panel.dart';
 
 class SecurityScreen extends ConsumerStatefulWidget {
   const SecurityScreen({super.key});
@@ -24,30 +22,6 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     final sensors = securityState.sensors;
     final isArmed = securityState.isArmed;
 
-    // Monitor for active alarms to play sound and show UI
-    ref.listen(securityProvider, (previous, next) {
-      if (next.isArmed) {
-        next.sensors.forEach((key, value) {
-          if (value.status &&
-              (previous == null || !previous.sensors[key]!.status)) {
-            // Trigger sound based on sensor
-            if (key.toLowerCase().contains('kitchen')) {
-              ref.read(soundServiceProvider).playAlarmHigh();
-            } else {
-              ref.read(soundServiceProvider).playAlarmMedium();
-            }
-
-            // Show Alarm Screen if in foreground
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => AlarmScreen(zone: key.toUpperCase()),
-              ),
-            );
-          }
-        });
-      }
-    });
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -62,23 +36,6 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.settings_input_antenna_rounded,
-              color: Colors.cyanAccent,
-              size: 22,
-            ),
-            tooltip: 'Calibration Hub',
-            onPressed: () {
-              HapticService.selection();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PIRCalibrationView(),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: Icon(
               isArmed ? Icons.lock_rounded : Icons.lock_open_rounded,
@@ -161,6 +118,13 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildMascot(context),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
               // Advanced Security Settings
               SliverToBoxAdapter(
@@ -196,10 +160,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        _buildModeSelector(
+                        _buildActivationStrategy(
                           context,
                           ref,
                           securityState.securityMode,
+                          securityState.ldrThreshold,
                         ),
                         const SizedBox(height: 20),
                         const Divider(height: 1, color: Colors.white10),
@@ -213,6 +178,17 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                           (val) => ref
                               .read(securityProvider.notifier)
                               .toggleBuzzerMute(),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildSettingsRow(
+                          context,
+                          'Native Alarm Overlay',
+                          'Full-screen UI vs Notifications',
+                          Icons.notifications_active_rounded,
+                          securityState.isNativeAlarmEnabled,
+                          (val) => ref
+                              .read(securityProvider.notifier)
+                              .toggleNativeAlarm(),
                         ),
                       ],
                     ),
@@ -230,6 +206,69 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // PIR CALIBRATION HUB (Embedded - Elevated Visibility)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(
+                        0.04,
+                      ), // Increased from 0.01
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.08),
+                      ), // Increased from 0.04
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.orangeAccent.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.tune_rounded,
+                                color: Colors.orangeAccent,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              "DIAGNOSTIC CALIBRATION",
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            Spacer(),
+                            Text(
+                              "v1.9.7 PRO",
+                              style: GoogleFonts.shareTechMono(
+                                color: Colors.white.withOpacity(0.4),
+                                fontSize: 9,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        const CalibrationPanel(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
               SliverToBoxAdapter(
                 child: Padding(
@@ -253,22 +292,22 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: securityState.isNodeActive
+                          color: securityState.isHubOnline
                               ? Colors.green.withOpacity(0.15)
                               : Colors.redAccent.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: securityState.isNodeActive
+                            color: securityState.isHubOnline
                                 ? Colors.green.withOpacity(0.3)
                                 : Colors.redAccent.withOpacity(0.3),
                           ),
                         ),
                         child: Text(
-                          securityState.isNodeActive
+                          securityState.isHubOnline
                               ? 'NODE ONLINE'
                               : 'NODE OFFLINE',
                           style: TextStyle(
-                            color: securityState.isNodeActive
+                            color: securityState.isHubOnline
                                 ? Colors.greenAccent
                                 : Colors.redAccent,
                             fontSize: 10,
@@ -312,7 +351,10 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final id = sensors.keys.elementAt(index);
@@ -337,16 +379,6 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                                 id,
                                 securityState.sensors[id]?.nickname ?? id,
                               ),
-                              onCalibrate: () {
-                                HapticService.selection();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const PIRCalibrationView(),
-                                  ),
-                                );
-                              },
                               onRename: () {
                                 _showRenameSensorDialog(
                                   context,
@@ -378,9 +410,9 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.02),
+                      color: Colors.white.withOpacity(0.01),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      border: Border.all(color: Colors.white.withOpacity(0.03)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,36 +422,27 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                             const Icon(
                               Icons.biotech_rounded,
                               color: Colors.orangeAccent,
-                              size: 20,
+                              size: 18,
                             ),
                             const SizedBox(width: 10),
-                            const Text(
+                            Text(
                               "SYSTEM TEST SUITE",
-                              style: TextStyle(
+                              style: GoogleFonts.outfit(
                                 color: Colors.orangeAccent,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.5,
-                                fontSize: 13,
+                                fontSize: 12,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          "Manually simulate sensor triggers to verify alarm logic and UI responses.",
-                          style: TextStyle(color: Colors.white38, fontSize: 11),
-                        ),
-                        const SizedBox(height: 20),
                         Wrap(
                           spacing: 12,
                           runSpacing: 12,
-                          children: [
-                            _buildTestButton("living"),
-                            _buildTestButton("kitchen"),
-                            _buildTestButton("hallway"),
-                            _buildTestButton("garage"),
-                            _buildTestButton("door"),
-                          ],
+                          children: sensors.keys
+                              .map((id) => _buildTestButton(id))
+                              .toList(),
                         ),
                       ],
                     ),
@@ -469,7 +492,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   Widget _buildVitalityCard(BuildContext context, SecurityState state) {
     final bool isLdrOk = state.ldrValid;
     final int rssi = state.rssi;
-    final bool isOnline = state.isNodeActive;
+    final bool isOnline = state.isHubOnline;
 
     Color getRssiColor(int val) {
       if (val > -65) return Colors.greenAccent;
@@ -578,6 +601,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -697,121 +721,250 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     );
   }
 
-  Widget _buildModeSelector(
+  Widget _buildActivationStrategy(
     BuildContext context,
     WidgetRef ref,
     int currentMode,
+    int ldrThreshold,
   ) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildModePill(
-              0,
-              'LDR AUTO',
-              Icons.nightlight_round,
-              currentMode,
+            _strategyPill(
+              context,
               ref,
+              3,
+              'ALWAYS',
+              Icons.security_rounded,
+              currentMode == 3,
             ),
-            const SizedBox(width: 8),
-            _buildModePill(
+            _strategyPill(
+              context,
+              ref,
+              0,
+              'DARKNESS',
+              Icons.nights_stay_rounded,
+              currentMode == 0,
+            ),
+            _strategyPill(
+              context,
+              ref,
               1,
               'SCHEDULE',
               Icons.schedule_rounded,
-              currentMode,
-              ref,
+              currentMode == 1,
             ),
-            const SizedBox(width: 8),
-            _buildModePill(2, 'HYBRID', Icons.hub_rounded, currentMode, ref),
+            _strategyPill(
+              context,
+              ref,
+              2,
+              'HYBRID',
+              Icons.hub_rounded,
+              currentMode == 2,
+            ),
           ],
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(12),
+        const SizedBox(height: 20),
+        // Simple Description
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Container(
+            key: ValueKey(currentMode),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _getModeIcon(currentMode),
+                  color: Colors.cyanAccent.withOpacity(0.5),
+                  size: 18,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _getModeDescription(currentMode),
+                    style: GoogleFonts.outfit(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Row(
+        ),
+        if (currentMode == 0 || currentMode == 2) ...[
+          const SizedBox(height: 24),
+          Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: Colors.white38, size: 14),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _getModeDescription(currentMode),
-                  style: TextStyle(color: Colors.white38, fontSize: 10),
+              Text(
+                "LDR SENSITIVITY",
+                style: GoogleFonts.outfit(
+                  color: Colors.white38,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                "${ldrThreshold}% DARK",
+                style: GoogleFonts.outfit(
+                  color: Colors.cyanAccent,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          _buildSensitivitySelector(context, ref, ldrThreshold),
+        ],
       ],
     );
   }
 
-  Widget _buildModePill(
+  Widget _strategyPill(
+    BuildContext context,
+    WidgetRef ref,
     int mode,
     String label,
     IconData icon,
-    int currentMode,
-    WidgetRef ref,
+    bool isActive,
   ) {
-    final isActive = currentMode == mode;
-    final theme = Theme.of(context);
-
     return Expanded(
       child: GestureDetector(
         onTap: () {
           HapticService.selection();
           ref.read(securityProvider.notifier).setSecurityMode(mode);
         },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isActive
-                ? theme.colorScheme.primary.withOpacity(0.15)
-                : Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isActive
-                  ? theme.colorScheme.primary.withOpacity(0.4)
-                  : Colors.white10,
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isActive ? theme.colorScheme.primary : Colors.white38,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? Colors.white : Colors.white38,
-                  fontSize: 9,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                  letterSpacing: 0.5,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.cyanAccent.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: isActive
+                      ? Colors.cyanAccent.withOpacity(0.5)
+                      : Colors.white.withOpacity(0.05),
+                  width: 1.5,
                 ),
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: Colors.cyanAccent.withOpacity(0.1),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : [],
               ),
-            ],
-          ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isActive ? Colors.cyanAccent : Colors.white24,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                color: isActive ? Colors.white : Colors.white24,
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _buildSensitivitySelector(
+    BuildContext context,
+    WidgetRef ref,
+    int current,
+  ) {
+    final levels = {20: 'LOW', 50: 'MID', 80: 'HIGH'};
+    return Row(
+      children: levels.entries.map((e) {
+        final isSel = current == e.key;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              HapticService.light();
+              ref.read(securityProvider.notifier).updateLdrThreshold(e.key);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: isSel
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSel ? Colors.white24 : Colors.transparent,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  e.value,
+                  style: GoogleFonts.outfit(
+                    color: isSel ? Colors.white : Colors.white12,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  IconData _getModeIcon(int mode) {
+    switch (mode) {
+      case 0:
+        return Icons.nights_stay_rounded;
+      case 1:
+        return Icons.schedule_rounded;
+      case 2:
+        return Icons.hub_rounded;
+      case 3:
+        return Icons.security_rounded;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
   String _getModeDescription(int mode) {
     switch (mode) {
       case 0:
-        return "LDR Mode: System activates based strictly on environmental light levels.";
+        return "DARKNESS: Security only activates when environmental light drops below threshold.";
       case 1:
-        return "Time Mode: System activates strictly during defined time slots.";
+        return "SCHEDULE: Security only activates during your defined time-slots.";
       case 2:
-        return "Hybrid Mode: Maximum reliability. Requires both Time slots and Darkness.";
+        return "HYBRID: Both conditions must be met (Time & Darkness). Maximum reliability.";
+      case 3:
+        return "ALWAYS: Maximum Security. System is active 24/7 regardless of light or time.";
       default:
         return "";
     }
@@ -974,6 +1127,67 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               "SAVE",
               style: GoogleFonts.outfit(color: Colors.cyanAccent),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMascot(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 120,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Cyber Grid Background
+          Opacity(
+            opacity: 0.1,
+            child: const Icon(
+              Icons.grid_4x4_rounded,
+              size: 200,
+              color: Colors.blue,
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                    Icons.shield_rounded,
+                    size: 40,
+                    color: Colors.cyanAccent,
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .shimmer(duration: 2.seconds)
+                  .scale(
+                    begin: const Offset(1, 1),
+                    end: const Offset(1.1, 1.1),
+                    duration: 1.seconds,
+                  ),
+              const SizedBox(height: 8),
+              Text(
+                "NEBULA CORE V1.6.8",
+                style: GoogleFonts.orbitron(
+                  color: Colors.cyanAccent.withOpacity(0.5),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 3,
+                ),
+              ),
+              Text(
+                "Sovereign Security Protocol Active",
+                style: GoogleFonts.outfit(
+                  color: Colors.white24,
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),

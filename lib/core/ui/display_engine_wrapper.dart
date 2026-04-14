@@ -104,7 +104,6 @@ class _NadeCalibrationOverlayState extends State<_NadeCalibrationOverlay> {
               color: Colors.black.withOpacity(0.9),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.cyanAccent.withOpacity(0.5)),
-              boxShadow: const [],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

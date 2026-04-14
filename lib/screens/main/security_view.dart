@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'neural_mapping_view.dart';
+import '../../widgets/security/calibration_hub_overlay.dart';
+import '../../core/system/display_engine.dart' hide DisplayEngineExtension;
 import '../../core/ui/responsive_layout.dart';
 import '../../widgets/common/premium_app_bar.dart';
 import '../../providers/security_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../widgets/common/pixel_led_border.dart';
-import '../security/pir_calibration_view.dart';
 import 'dart:ui';
 
 class SecurityView extends ConsumerStatefulWidget {
@@ -51,15 +52,39 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 horizontal: Responsive.horizontalPadding,
               ),
               sliver: SliverToBoxAdapter(
-                child: _buildMasterControl(
-                  context,
-                  securityState,
-                  securityNotifier,
-                ),
+                child:
+                    _buildMasterControl(
+                          context,
+                          securityState,
+                          securityNotifier,
+                        )
+                        .animate()
+                        .fadeIn(duration: 600.ms)
+                        .scale(begin: const Offset(0.95, 0.95)),
               ),
             ),
 
-            SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+            SliverToBoxAdapter(child: SizedBox(height: 20.h)),
+
+            // 1.5 GLOBAL MOTION PROTOCOL MASTER
+            SliverPadding(
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.horizontalPadding,
+              ),
+              sliver: SliverToBoxAdapter(
+                child:
+                    _buildGlobalMotionMaster(
+                          context,
+                          securityState,
+                          securityNotifier,
+                        )
+                        .animate()
+                        .fadeIn(delay: 100.ms, duration: 600.ms)
+                        .slideY(begin: 0.1, end: 0),
+              ),
+            ),
+
+            SliverToBoxAdapter(child: SizedBox(height: 20.h)),
 
             // 2. SYSTEM VITALITY DASHBOARD (High Priority Telemetry)
             SliverPadding(
@@ -67,11 +92,89 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 horizontal: Responsive.horizontalPadding,
               ),
               sliver: SliverToBoxAdapter(
-                child: _buildVitalityCard(context, securityState),
+                child: _buildVitalityCard(context, securityState)
+                    .animate()
+                    .fadeIn(delay: 200.ms, duration: 600.ms)
+                    .slideX(begin: 0.1, end: 0),
               ),
             ),
 
-            SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+            // 🚀 QUANTUM CALIBRATION HUB LAUNCHER (Premium Pill)
+            SliverPadding(
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.horizontalPadding,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticService.heavy();
+                    CalibrationHubOverlay.show(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(28.r),
+                      border: Border.all(color: Colors.white.withOpacity(0.12)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orangeAccent.withOpacity(0.05),
+                          blurRadius: 20,
+                          spreadRadius: -5,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orangeAccent.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.tune_rounded,
+                            color: Colors.orangeAccent,
+                            size: 20.sp,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "CALIBRATION HUB",
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              Text(
+                                "Advanced Diagnostic Console v1.9.7",
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white38,
+                                  fontSize: 10.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Colors.white24,
+                          size: 16.sp,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(child: SizedBox(height: 20.h)),
 
             // 3. CORE SECURITY CONTROLS & SCHEDULE
             SliverPadding(
@@ -82,34 +185,32 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 child: Column(
                   children: [
                     _buildActivePeriods(context, securityState, ref),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     _buildMasterLDR(context, securityState, ref),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
-                          child: _buildBuzzerTest(context, securityNotifier),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildNeuralAutomationCard(
+                          child: _buildLocalSirenToggle(
                             context,
-                            ref,
                             securityState,
+                            securityNotifier,
                           ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildBuzzerTest(context, securityNotifier),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _buildCalibrationButton(context),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                     _buildNeuralMappingButton(context, theme),
                   ],
                 ),
               ),
             ),
 
-            SliverToBoxAdapter(child: SizedBox(height: 24.h)),
+            SliverToBoxAdapter(child: SizedBox(height: 32.h)),
 
             // 4. SENSOR GRID HEADER
             SliverPadding(
@@ -121,7 +222,7 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               ),
             ),
 
-            SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+            SliverToBoxAdapter(child: SizedBox(height: 20.h)),
 
             // 5. SENSOR GRID
             SliverPadding(
@@ -143,19 +244,22 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                         );
                         final sensor = securityState.sensors[name]!;
                         return _SensorCard(
-                          name: name,
-                          sensor: sensor,
-                          onAcknowledge: () =>
-                              securityNotifier.acknowledge(name),
-                          onRename: (newName) =>
-                              securityNotifier.renameSensor(name, newName),
-                        );
+                              name: name,
+                              sensor: sensor,
+                              onAcknowledge: () =>
+                                  securityNotifier.acknowledge(name),
+                              onRename: (newName) =>
+                                  securityNotifier.renameSensor(name, newName),
+                            )
+                            .animate()
+                            .fadeIn(delay: (index * 50).ms)
+                            .scale(begin: const Offset(0.9, 0.9));
                       }, childCount: securityState.sensors.length),
                     ),
             ),
 
             // 6. EMERGENCY PANIC
-            SliverToBoxAdapter(child: SizedBox(height: 40.h)),
+            SliverToBoxAdapter(child: SizedBox(height: 32.h)),
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: Responsive.horizontalPadding,
@@ -170,8 +274,8 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
           ],
         ),
 
-        // ALARM OVERLAY (MODAL)
-        if (securityState.isAlarmActive)
+        // ALARM OVERLAY (MODAL) - Gated by Native Alarm toggle
+        if (securityState.isAlarmActive && securityState.isNativeAlarmEnabled)
           _buildAlarmOverlay(context, securityNotifier),
 
         // FIXED TOP BAR
@@ -197,18 +301,37 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
     );
   }
 
+  Widget _buildIndustrialContainer({
+    required Widget child,
+    EdgeInsets? padding,
+    bool isActive = false,
+    Color? activeColor,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: padding ?? const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isActive
+            ? (activeColor ?? Colors.cyanAccent).withOpacity(0.08)
+            : Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isActive
+              ? (activeColor ?? Colors.cyanAccent).withOpacity(0.3)
+              : Colors.white.withOpacity(0.08),
+          width: 1,
+        ),
+      ),
+      child: child,
+    );
+  }
+
   Widget _buildMasterLDR(
     BuildContext context,
     SecurityState state,
     WidgetRef ref,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-      ),
+    return _buildIndustrialContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -224,12 +347,12 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    "ECOSYSTEM LDR LINK",
+                    "LIGHT SENSITIVITY",
                     style: GoogleFonts.outfit(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w900,
                       color: Colors.white38,
-                      letterSpacing: 1,
+                      letterSpacing: 2,
                     ),
                   ),
                 ],
@@ -317,13 +440,71 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               },
             ),
           ),
-          const SizedBox(height: 12),
           _buildIndustrialGatingToggle(
             context,
             state,
             ref.read(securityProvider.notifier),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLocalSirenToggle(
+    BuildContext context,
+    SecurityState state,
+    SecurityNotifier notifier,
+  ) {
+    final bool isEnabled = state.isNativeAlarmEnabled;
+    return GestureDetector(
+      onTap: () {
+        HapticService.heavy();
+        notifier.toggleNativeAlarm();
+      },
+      child: _buildIndustrialContainer(
+        isActive: isEnabled,
+        activeColor: Colors.redAccent,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(
+                  isEnabled
+                      ? Icons.notifications_active_rounded
+                      : Icons.notifications_none_rounded,
+                  color: isEnabled ? Colors.redAccent : Colors.white38,
+                  size: 18.sp,
+                ),
+                CupertinoSwitch(
+                  value: isEnabled,
+                  onChanged: (_) {
+                    HapticService.heavy();
+                    notifier.toggleNativeAlarm();
+                  },
+                  activeColor: Colors.redAccent,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "NATIVE SIREN",
+              style: GoogleFonts.outfit(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w900,
+                color: isEnabled ? Colors.redAccent : Colors.white70,
+                letterSpacing: 1,
+              ),
+            ),
+            Text(
+              isEnabled ? "LOUD ACTIVE" : "QUIET MODE",
+              style: GoogleFonts.outfit(fontSize: 8.sp, color: Colors.white38),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -339,20 +520,10 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
         HapticService.heavy();
         notifier.toggleLdrSecurity();
       },
-      child: AnimatedContainer(
-        duration: 200.ms,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isGated
-              ? Colors.amberAccent.withOpacity(0.08)
-              : Colors.white.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isGated
-                ? Colors.amberAccent.withOpacity(0.2)
-                : Colors.white.withOpacity(0.08),
-          ),
-        ),
+      child: _buildIndustrialContainer(
+        isActive: isGated,
+        activeColor: Colors.amberAccent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -361,24 +532,25 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 Icon(
                   isGated ? Icons.nightlight_round : Icons.wb_sunny_rounded,
                   color: isGated ? Colors.amberAccent : Colors.white38,
-                  size: 16.sp,
+                  size: 14.sp,
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isGated ? "LDR GATING ACTIVE" : "INDUSTRIAL BYPASS",
+                      isGated ? "AUTO DARKNESS GATED" : "ALWAYS ACTIVE (24/7)",
                       style: GoogleFonts.outfit(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w900,
                         color: isGated ? Colors.amberAccent : Colors.white70,
+                        letterSpacing: 1,
                       ),
                     ),
                     Text(
                       isGated
-                          ? "Alarms/Relays trigger only in darkness"
-                          : "Alarms/Relays active 24/7 on motion",
+                          ? "Detects only in darkness"
+                          : "Active day and night",
                       style: GoogleFonts.outfit(
                         fontSize: 8.sp,
                         color: Colors.white38,
@@ -408,13 +580,9 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
         HapticService.heavy();
         notifier.testBuzzer();
       },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.redAccent.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.redAccent.withOpacity(0.08)),
-        ),
+      child: _buildIndustrialContainer(
+        isActive: false,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -440,99 +608,21 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
             Text(
               "PANIC BUZZER",
               style: GoogleFonts.outfit(
-                fontSize: 14.sp,
+                fontSize: 10.sp,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
+                letterSpacing: 1,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
             Text(
-              "Manual Test Check",
-              style: GoogleFonts.outfit(fontSize: 10.sp, color: Colors.white38),
+              "HARDWARE TEST",
+              style: GoogleFonts.outfit(fontSize: 8.sp, color: Colors.white38),
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCalibrationButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticService.heavy();
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const PIRCalibrationView()),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.cyanAccent.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.cyanAccent.withOpacity(0.1)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.cyanAccent.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child:
-                  Icon(
-                        Icons.settings_input_antenna_rounded,
-                        color: Colors.cyanAccent,
-                        size: 24,
-                      )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
-                      .scale(
-                        duration: 2.seconds,
-                        begin: const Offset(1, 1),
-                        end: const Offset(1.15, 1.15),
-                        curve: Curves.elasticOut,
-                      )
-                      .rotate(
-                        duration: 2.seconds,
-                        begin: -0.05,
-                        end: 0.05,
-                        curve: Curves.easeInOut,
-                      ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "PIR PRO TUNING",
-                    style: GoogleFonts.outfit(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    "SENSITIVITY & DEBOUNCE",
-                    style: GoogleFonts.outfit(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white38,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.cyanAccent.withOpacity(0.3),
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
+    ).animate().fadeIn(delay: 400.ms, duration: 600.ms);
   }
 
   Widget _buildNeuralMappingButton(BuildContext context, ThemeData theme) {
@@ -543,13 +633,8 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
           MaterialPageRoute(builder: (context) => const NeuralMappingView()),
         );
       },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
-        ),
+      child: _buildIndustrialContainer(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             Container(
@@ -558,7 +643,11 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.hub_rounded, color: theme.colorScheme.primary),
+              child: Icon(
+                Icons.hub_rounded,
+                color: theme.colorScheme.primary,
+                size: 18.sp,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -566,92 +655,33 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "NEURAL LINK",
+                    "NEURAL MAPPING ENGINE",
                     style: GoogleFonts.outfit(
-                      fontSize: 14.sp,
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
+                      letterSpacing: 1.5,
                     ),
                   ),
                   Text(
-                    "MAP SENSORS TO GRID",
+                    "Orchestrate complex node interactions",
                     style: GoogleFonts.outfit(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white38,
+                      fontSize: 9.sp,
+                      color: Colors.white30,
                     ),
                   ),
                 ],
               ),
             ),
             Icon(
-              Icons.arrow_forward_ios_rounded,
+              Icons.chevron_right_rounded,
               color: theme.colorScheme.primary.withOpacity(0.3),
-              size: 16,
+              size: 20,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildNeuralAutomationCard(
-    BuildContext context,
-    WidgetRef ref,
-    SecurityState state,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: state.autoLightOnMotion
-            ? Colors.cyanAccent.withOpacity(0.08)
-            : Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: state.autoLightOnMotion
-              ? Colors.cyanAccent.withOpacity(0.3)
-              : Colors.white.withOpacity(0.08),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(
-                Icons.bolt_rounded,
-                color: state.autoLightOnMotion
-                    ? Colors.cyanAccent
-                    : Colors.white24,
-                size: 18.sp,
-              ),
-              Switch.adaptive(
-                value: state.autoLightOnMotion,
-                activeColor: Colors.cyanAccent,
-                onChanged: (_) {
-                  HapticService.light();
-                  ref.read(securityProvider.notifier).toggleAutoLightOnMotion();
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            "NEURAL LIGHT",
-            style: GoogleFonts.outfit(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w900,
-              color: state.autoLightOnMotion ? Colors.cyanAccent : Colors.white,
-            ),
-          ),
-          Text(
-            "Auto-Light on Motion",
-            style: GoogleFonts.outfit(fontSize: 10.sp, color: Colors.white38),
-          ),
-        ],
-      ),
-    );
+    ).animate().fadeIn(delay: 500.ms);
   }
 
   Widget _buildActivePeriods(
@@ -659,39 +689,32 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
     SecurityState state,
     WidgetRef ref,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Row(
+    return _buildIndustrialContainer(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Icon(
                 Icons.calendar_today_rounded,
                 size: 12.sp,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
               ),
               const SizedBox(width: 8),
               Text(
-                "ALARM ACTIVE SCHEDULE",
+                "ACTIVE SCHEDULE",
                 style: GoogleFonts.outfit(
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w900,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Colors.white38,
                   letterSpacing: 2,
                 ),
               ),
             ],
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.06)),
-          ),
-          child: LayoutBuilder(
+          const SizedBox(height: 16),
+          LayoutBuilder(
             builder: (context, constraints) {
               final itemWidth = (constraints.maxWidth - 24) / 3;
               return Wrap(
@@ -752,15 +775,15 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
               );
             },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildVitalityCard(BuildContext context, SecurityState state) {
     final bool isLdrOk = state.ldrValid;
     final int rssi = state.rssi;
-    final bool isOnline = state.isNodeActive;
+    final bool isOnline = state.isHubOnline;
 
     Color getRssiColor(int val) {
       if (val > -65) return Colors.greenAccent;
@@ -1253,6 +1276,157 @@ class _SecurityViewState extends ConsumerState<SecurityView> {
       ),
     );
   }
+
+  Widget _buildGlobalMotionMaster(
+    BuildContext context,
+    SecurityState state,
+    SecurityNotifier notifier,
+  ) {
+    final bool isNightOnly = state.globalMotionMode == 4;
+
+    return _buildIndustrialContainer(
+      isActive: true,
+      activeColor: isNightOnly ? Colors.amberAccent : Colors.cyanAccent,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.security_update_good_rounded,
+                    color: isNightOnly ? Colors.amberAccent : Colors.cyanAccent,
+                    size: 14.sp,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "GLOBAL MOTION PROTOCOL",
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: (isNightOnly ? Colors.amberAccent : Colors.cyanAccent)
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color:
+                        (isNightOnly ? Colors.amberAccent : Colors.cyanAccent)
+                            .withOpacity(0.3),
+                  ),
+                ),
+                child: Text(
+                  isNightOnly ? "NIGHT GATED" : "ALWAYS ACTIVE",
+                  style: GoogleFonts.outfit(
+                    fontSize: 8.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isNightOnly ? Colors.amberAccent : Colors.cyanAccent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildProtocolPill(
+                  label: "ALWAYS ACTIVE",
+                  subtitle: "24/7 Detection",
+                  icon: Icons.wb_sunny_rounded,
+                  isActive: !isNightOnly,
+                  activeColor: Colors.cyanAccent,
+                  onTap: () => notifier.setGlobalMotionMode(0),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildProtocolPill(
+                  label: "NIGHT ONLY",
+                  subtitle: "18:00 - 06:00",
+                  icon: Icons.nightlight_round,
+                  isActive: isNightOnly,
+                  activeColor: Colors.amberAccent,
+                  onTap: () => notifier.setGlobalMotionMode(4),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProtocolPill({
+    required String label,
+    required String subtitle,
+    required IconData icon,
+    required bool isActive,
+    required Color activeColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.heavy();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isActive
+              ? activeColor.withOpacity(0.15)
+              : Colors.white.withOpacity(0.02),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive
+                ? activeColor.withOpacity(0.5)
+                : Colors.white.withOpacity(0.05),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isActive ? activeColor : Colors.white24,
+              size: 20.sp,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w900,
+                color: isActive ? Colors.white : Colors.white24,
+                letterSpacing: 0.5,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: GoogleFonts.outfit(
+                fontSize: 7.sp,
+                color: isActive ? activeColor.withOpacity(0.7) : Colors.white10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SensorCard extends ConsumerStatefulWidget {
@@ -1314,21 +1488,6 @@ class _SensorCardState extends ConsumerState<_SensorCard> {
               onTap: () {
                 Navigator.pop(ctx);
                 _showRenameDialog(context);
-              },
-            ),
-            _buildOptionTile(
-              ctx,
-              icon: Icons.settings_input_antenna_rounded,
-              label: "CALIBRATION HUB",
-              color: Colors.cyanAccent,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PIRCalibrationView(),
-                  ),
-                );
               },
             ),
             const Divider(color: Colors.white10, height: 32),
@@ -1543,7 +1702,14 @@ class _SensorCardState extends ConsumerState<_SensorCard> {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: accentColor.withOpacity(
-                            widget.sensor.isAlarmEnabled ? 0.12 : 0.05,
+                            ref.watch(
+                                  securityProvider.select(
+                                    (s) =>
+                                        s.localArmStatus[widget.name] ?? true,
+                                  ),
+                                )
+                                ? 0.12
+                                : 0.05,
                           ),
                           shape: BoxShape.circle,
                         ),
@@ -1553,7 +1719,14 @@ class _SensorCardState extends ConsumerState<_SensorCard> {
                               : Icons.sensors_rounded,
                           size: 18.sp,
                           color: accentColor.withOpacity(
-                            widget.sensor.isAlarmEnabled ? 1.0 : 0.3,
+                            ref.watch(
+                                  securityProvider.select(
+                                    (s) =>
+                                        s.localArmStatus[widget.name] ?? true,
+                                  ),
+                                )
+                                ? 1.0
+                                : 0.3,
                           ),
                         ),
                       )
@@ -1573,14 +1746,23 @@ class _SensorCardState extends ConsumerState<_SensorCard> {
                   const SizedBox(width: 8),
                   Transform.scale(
                     scale: 0.7,
-                    child: CupertinoSwitch(
-                      value: widget.sensor.isAlarmEnabled,
-                      activeColor: Colors.redAccent,
-                      onChanged: (v) {
-                        HapticService.selection();
-                        ref
-                            .read(securityProvider.notifier)
-                            .toggleSensorAlarm(widget.name);
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        final localArm = ref.watch(
+                          securityProvider.select(
+                            (s) => s.localArmStatus[widget.name] ?? true,
+                          ),
+                        );
+                        return CupertinoSwitch(
+                          value: localArm,
+                          activeColor: Colors.redAccent,
+                          onChanged: (v) {
+                            HapticService.selection();
+                            ref
+                                .read(securityProvider.notifier)
+                                .toggleSensorAlarm(widget.name);
+                          },
+                        );
                       },
                     ),
                   ),
@@ -1614,7 +1796,7 @@ class _SensorCardState extends ConsumerState<_SensorCard> {
                     child: Text(
                       timeStr == "00:00" ? "IDLE" : timeStr,
                       style: GoogleFonts.outfit(
-                        fontSize: 9.sp,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.w900,
                         color: Theme.of(context).colorScheme.primary
                             .withOpacity(hasMotion ? 0.8 : 0.4),

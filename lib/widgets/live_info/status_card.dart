@@ -16,11 +16,13 @@ import '../../core/ui/pill_layout_engine.dart';
 class StatusCard extends ConsumerStatefulWidget {
   final double voltage;
   final String systemState;
+  final bool isOnline;
 
   const StatusCard({
     super.key,
     required this.voltage,
     required this.systemState,
+    this.isOnline = true,
   });
 
   @override
@@ -91,9 +93,11 @@ class _StatusCardState extends ConsumerState<StatusCard>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final voltageColor = widget.voltage < 100
+    final voltageColor = !widget.isOnline
+        ? Colors.grey
+        : (widget.voltage < 100)
         ? Colors
-              .redAccent // CRITICAL POWER CUT
+              .redAccent // CRITICAL POWER CUT (Hub on Battery)
         : (widget.voltage >= 100 && widget.voltage < 180)
         ? Colors
               .orangeAccent // Low Voltage
@@ -247,14 +251,20 @@ class _StatusCardState extends ConsumerState<StatusCard>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    widget.voltage < 100 ? 'SYSTEM CRITICAL' : 'AC MAIN',
+                    !widget.isOnline
+                        ? 'HUB OFFLINE'
+                        : (widget.voltage < 100
+                              ? 'SYSTEM CRITICAL'
+                              : 'AC MAIN'),
                     style: GoogleFonts.outfit(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
-                      color: widget.voltage < 100
-                          ? Colors.redAccent
-                          : theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: !widget.isOnline
+                          ? Colors.white24
+                          : (widget.voltage < 100
+                                ? Colors.redAccent
+                                : theme.colorScheme.onSurface.withOpacity(0.5)),
                     ),
                   ),
                 ],
@@ -276,11 +286,15 @@ class _StatusCardState extends ConsumerState<StatusCard>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          widget.voltage < 100
-                              ? 'POWER CUT'
-                              : widget.voltage.toStringAsFixed(1),
+                          !widget.isOnline
+                              ? 'NODATA'
+                              : (widget.voltage < 100
+                                    ? 'POWER CUT'
+                                    : widget.voltage.toStringAsFixed(1)),
                           style: GoogleFonts.outfit(
-                            fontSize: widget.voltage < 100 ? 20.sp : 28.sp,
+                            fontSize: (!widget.isOnline || widget.voltage < 100)
+                                ? 20.sp
+                                : 28.sp,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                           ),
@@ -345,14 +359,18 @@ class _StatusCardState extends ConsumerState<StatusCard>
               ),
               const SizedBox(height: 6),
               Text(
-                widget.voltage < 100 ? "GRID OFFLINE" : "SYSTEM ACTIVE",
+                !widget.isOnline
+                    ? "LINK LOST"
+                    : (widget.voltage < 100 ? "GRID OFFLINE" : "SYSTEM ACTIVE"),
                 style: GoogleFonts.outfit(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
-                  color: widget.voltage < 100
-                      ? Colors.red
-                      : theme.colorScheme.primary,
+                  color: !widget.isOnline
+                      ? Colors.grey
+                      : (widget.voltage < 100
+                            ? Colors.red
+                            : theme.colorScheme.primary),
                 ),
               ),
               const SizedBox(height: 4),
@@ -406,14 +424,20 @@ class _StatusCardState extends ConsumerState<StatusCard>
             ? Icons.cloud_done_rounded
             : Icons.wifi_rounded;
         color = Colors.cyanAccent;
-        break;
       default:
-        label = widget.voltage < 160
-            ? 'POWER FAULT'
-            : '${voltage.toInt()}V GRID';
-        subLabel = widget.voltage < 160 ? "Check Mains" : "Stable Voltage";
+        label = !widget.isOnline
+            ? 'NO LINK'
+            : (widget.voltage < 160
+                  ? 'POWER FAULT'
+                  : '${widget.voltage.toInt()}V GRID');
+        subLabel = !widget.isOnline
+            ? "Syncing..."
+            : (widget.voltage < 160 ? "Check Mains" : "Stable Voltage");
         icon = Icons.bolt_rounded;
-        color = widget.voltage < 160 ? Colors.red : Colors.yellowAccent;
+        color = !widget.isOnline
+            ? Colors.grey
+            : (widget.voltage < 160 ? Colors.red : Colors.yellowAccent);
+        break;
     }
 
     return Container(

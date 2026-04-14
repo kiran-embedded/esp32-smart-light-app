@@ -15,6 +15,7 @@ import 'screens/intro/cinematic_splash_screen.dart';
 import 'widgets/navigation/custom_transitions.dart';
 import 'screens/setup/firebase_setup_screen.dart';
 import 'screens/security/alarm_screen.dart';
+import 'providers/security_provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'screens/main/main_screen.dart';
@@ -37,6 +38,7 @@ import 'core/ui/responsive_layout.dart';
 import 'widgets/debug/global_fps_meter.dart';
 import 'widgets/debug/developer_test_overlay.dart';
 import 'services/performance_monitor_service.dart';
+import 'core/system/display_engine.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -51,6 +53,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    debugPrint("FATAL_RENDER_ERROR: ${details.exceptionAsString()}");
+    return Material(
+      color: Colors.redAccent,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "UI Crash:\n${details.exceptionAsString()}\n\nStack:\n${details.stack.toString()}",
+              style: const TextStyle(color: Colors.white, fontSize: 10),
+            ),
+          ),
+        ),
+      ),
+    );
+  };
   // Preload ONLY what is absolutely critical for the UI tree to exist
   final prefs = await SharedPreferences.getInstance();
 
@@ -72,7 +91,7 @@ void main() async {
   );
 
   // Consolidate Firebase & Critical Services (Optimize for Startup Speed)
-  _initCriticalSystems(prefs);
+  await _initCriticalSystems(prefs);
 
   runApp(
     RestartWidget(
@@ -124,7 +143,10 @@ Future<void> _initCriticalSystems(SharedPreferences prefs) async {
         return Firebase.app(); // Return default app instance on error to satisfy FutureOr<FirebaseApp>
       });
 
-  // 2. Critical Services (Non-blocking where possible)
+  // Only wait for Firebase before proceeding to ensure data flows
+  await firebaseFuture;
+
+  // 2. Critical Services (Now dependent on Firebase being initialized)
   final servicesFuture = Future.wait([
     SchedulerService.init(),
     NotificationService.init(),
@@ -136,8 +158,6 @@ Future<void> _initCriticalSystems(SharedPreferences prefs) async {
 
   _initBackgroundSystems(prefs);
 
-  // Only wait for Firebase before proceeding to ensure data flows
-  await firebaseFuture;
   await servicesFuture;
 }
 
@@ -213,7 +233,19 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
     // Check if we launched for an alarm immediately
     _checkForAlarm();
 
-    // Initialize BLE using the provider instance
+    // Global Alarm Listener: Navigate to AlarmScreen when security state is active
+    ref.listenManual<SecurityState>(securityProvider, (previous, next) {
+      if (next.isAlarmActive && (previous == null || !previous.isAlarmActive)) {
+        if (mounted && next.isNativeAlarmEnabled) {
+          final String zone = next.activeBreaches.isNotEmpty
+              ? next.activeBreaches.first['sensor'].toString()
+              : "Unknown Zone";
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => AlarmScreen(zone: zone)),
+          );
+        }
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
@@ -292,6 +324,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
           scaleMultiplier: displaySettings.displayScale,
           fontMultiplier: displaySettings.fontSizeMultiplier,
         );
+        DisplayEngine.init(context);
         return Consumer(
           builder: (context, ref, _) {
             final stats = ref.watch(performanceStatsProvider);

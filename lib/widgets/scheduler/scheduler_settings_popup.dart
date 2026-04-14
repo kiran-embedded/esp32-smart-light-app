@@ -181,6 +181,42 @@ class _SchedulerSettingsPopupState
                 ),
                 onPressed: _showLogicDialog,
               ),
+              // NEW: Prominent Motion AI Button
+              IconButton(
+                    icon: const Icon(
+                      Icons.psychology_rounded,
+                      color: Colors.cyanAccent,
+                      size: 26,
+                    ),
+                    onPressed: () {
+                      HapticService.selection();
+                      if (widget.initialDeviceId == null) return;
+                      final deviceId = widget.initialDeviceId!;
+                      final relayIndex =
+                          int.tryParse(
+                            deviceId.replaceAll(RegExp(r'[^0-9]'), ''),
+                          ) ??
+                          1;
+                      final devices = ref.read(switchDevicesProvider);
+                      final targetDevice = devices.firstWhere(
+                        (d) => d.id == deviceId,
+                      );
+
+                      showDialog(
+                        context: context,
+                        barrierColor: Colors.black.withOpacity(0.8),
+                        builder: (context) => AutomationSettingsPopup(
+                          relayIndex: relayIndex,
+                          switchName: targetDevice.name,
+                        ),
+                      );
+                    },
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .shimmer(
+                    duration: 3.seconds,
+                    color: Colors.cyanAccent.withOpacity(0.3),
+                  ),
               // Rename Button (Restored)
               IconButton(
                 icon: const Icon(

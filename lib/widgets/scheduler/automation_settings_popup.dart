@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/firebase_switch_service.dart';
 import '../../services/haptic_service.dart';
 import '../../core/constants/app_constants.dart';
 import 'dart:ui';
+import 'package:flutter_animate/flutter_animate.dart';
 
 final automationProvider = StreamProvider.family<Map<String, dynamic>, int>((
   ref,
@@ -77,21 +79,24 @@ class _AutomationSettingsPopupState
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF111111).withOpacity(0.85),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              color: const Color(0xFF0A0A0A).withOpacity(0.9),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 30,
-                  spreadRadius: 5,
+                  color: Colors.cyanAccent.withOpacity(0.05),
+                  blurRadius: 40,
+                  spreadRadius: -10,
                 ),
               ],
             ),
             child: automationAsync.when(
               data: (data) {
                 _loadFromData(data);
-                return _buildContent();
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: _buildContent(),
+                );
               },
               loading: () => const SizedBox(
                 height: 200,
@@ -226,21 +231,21 @@ class _AutomationSettingsPopupState
           },
         ),
 
+        // QUICK DAYTIME TOGGLE
+        _buildQuickDaytimeToggle(),
+        const SizedBox(height: 24),
+
         // TIME OF DAY PRESETS
         Text(
-          'Environment Preset',
-          style: GoogleFonts.outfit(color: Colors.white70),
+          'Detailed Environment Preset',
+          style: GoogleFonts.outfit(
+            color: Colors.white70,
+            fontSize: 13,
+            letterSpacing: 1,
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildTimeModeChip('Morning', 70, Icons.wb_twilight, 1),
-            _buildTimeModeChip('Day', 40, Icons.wb_sunny_rounded, 2),
-            _buildTimeModeChip('Midnight', 5, Icons.nightlight_round, 3),
-            _buildTimeModeChip('Always', _ldrThreshold, Icons.all_inclusive, 0),
-          ],
-        ),
+        const SizedBox(height: 16),
+        _buildIndustrialModeSelector(),
         const SizedBox(height: 24),
 
         // LDR
@@ -305,50 +310,188 @@ class _AutomationSettingsPopupState
     );
   }
 
-  Widget _buildTimeModeChip(String label, int value, IconData icon, int mode) {
-    final bool isSelected = _timeMode == mode;
+  Widget _buildQuickDaytimeToggle() {
+    final bool isDaytimeEnabled = _timeMode == 0;
     return GestureDetector(
       onTap: () {
         HapticService.heavy();
         setState(() {
-          _ldrThreshold = value;
-          _timeMode = mode;
+          _timeMode = isDaytimeEnabled ? 4 : 0;
+          if (_timeMode == 4) _ldrThreshold = 10;
+          if (_timeMode == 0) _ldrThreshold = 0;
         });
         _saveCurrentState();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.cyanAccent.withOpacity(0.1)
-              : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(10),
+          color: isDaytimeEnabled
+              ? Colors.cyanAccent.withOpacity(0.08)
+              : Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? Colors.cyanAccent : Colors.transparent,
+            color: isDaytimeEnabled
+                ? Colors.cyanAccent.withOpacity(0.3)
+                : Colors.white.withOpacity(0.08),
             width: 1,
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isSelected ? Colors.cyanAccent : Colors.white54,
+            Row(
+              children: [
+                Icon(
+                  isDaytimeEnabled ? Icons.wb_sunny_rounded : Icons.nights_stay,
+                  color: isDaytimeEnabled ? Colors.cyanAccent : Colors.white38,
+                  size: 20,
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "DAYTIME MOTION",
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: isDaytimeEnabled ? Colors.white : Colors.white70,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    Text(
+                      isDaytimeEnabled
+                          ? "Triggers 24/7 (Always)"
+                          : "Triggers Night Only (18:00 - 06:00)",
+                      style: GoogleFonts.outfit(
+                        fontSize: 9,
+                        color: Colors.white30,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                color: isSelected ? Colors.cyanAccent : Colors.white70,
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
+            CupertinoSwitch(
+              value: isDaytimeEnabled,
+              onChanged: (val) {
+                HapticService.heavy();
+                setState(() {
+                  _timeMode = val ? 0 : 4;
+                  if (_timeMode == 4) _ldrThreshold = 10;
+                  if (_timeMode == 0) _ldrThreshold = 0;
+                });
+                _saveCurrentState();
+              },
+              activeColor: Colors.cyanAccent,
             ),
           ],
         ),
-      ),
+      ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.05, end: 0),
     );
+  }
+
+  Widget _buildIndustrialModeSelector() {
+    final modes = [
+      {'label': 'Always', 'mode': 0, 'icon': Icons.all_inclusive, 'ldr': 0},
+      {'label': 'Night 6-6', 'mode': 4, 'icon': Icons.nights_stay, 'ldr': 10},
+      {'label': 'Noon', 'mode': 2, 'icon': Icons.wb_sunny_rounded, 'ldr': 40},
+      {'label': 'Mid', 'mode': 3, 'icon': Icons.nightlight_round, 'ldr': 5},
+    ];
+
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: Stack(
+        children: [
+          // Animated Background Pill
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutQuint,
+            alignment: Alignment(
+              -1.0 +
+                  (_timeMode != 0
+                      ? (modes.indexWhere((m) => m['mode'] == _timeMode) /
+                                (modes.length - 1)) *
+                            2
+                      : 0),
+              0,
+            ),
+            child: FractionallySizedBox(
+              widthFactor: 1 / modes.length,
+              child:
+                  Container(
+                        decoration: BoxDecoration(
+                          color: Colors.cyanAccent.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.cyanAccent.withOpacity(0.4),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.cyanAccent.withOpacity(0.1),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .shimmer(duration: 2.seconds, color: Colors.white10),
+            ),
+          ),
+          // Clickable Icons/Labels
+          Row(
+            children: modes.map((m) {
+              final isSelected = _timeMode == m['mode'];
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticService.heavy();
+                    setState(() {
+                      _timeMode = m['mode'] as int;
+                      _ldrThreshold = m['ldr'] as int;
+                    });
+                    _saveCurrentState();
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          m['icon'] as IconData,
+                          size: 18,
+                          color: isSelected
+                              ? Colors.cyanAccent
+                              : Colors.white30,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          m['label'] as String,
+                          style: GoogleFonts.outfit(
+                            fontSize: 9,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected ? Colors.white : Colors.white24,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.98, 0.98));
   }
 }

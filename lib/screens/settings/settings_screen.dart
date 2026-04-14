@@ -771,8 +771,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         ),
                         _buildPremiumSettingTile(
                           context,
-                          title: 'ESP32 Firmware',
-                          subtitle: 'Generate C++ controller code',
+                          title: 'Firmware Hub',
+                          subtitle: 'Data Map, ESP32 & ESP8266 Templates',
+                          leading: _buildPremiumIcon(
+                            Icons.hub,
+                            Colors.deepPurple,
+                          ),
                           onTap: () => _showEsp32FirmwareDialog(context, ref),
                         ),
                         _buildPremiumSettingTile(
@@ -1698,83 +1702,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   void _showEsp32FirmwareDialog(BuildContext context, WidgetRef ref) {
-    final devices = ref.read(switchDevicesProvider);
-    final code = Esp32CodeGenerator.generateFirebaseFirmware(
-      devices: devices,
-      wifiSsid: AppConstants.defaultWifiSsid,
-      wifiPassword: AppConstants.defaultWifiPassword,
-      firebaseApiKey: 'YOUR_FIREBASE_API_KEY',
-      firebaseDatabaseUrl: 'YOUR_FIREBASE_DATABASE_URL',
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ESP32 Firmware'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: SelectableText(
-              code,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final fileService = FileService();
-              await fileService.copyToClipboard(code);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Code copied to clipboard'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Copy'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                final fileService = FileService();
-                final fileName = 'nebula_core_firmware.ino';
-                final path = await fileService.saveEsp32Code(code, fileName);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('File saved to: $path'),
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error saving file: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Download'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+    _showFirmwareHub(context, ref);
   }
 
-  // BLE Toggle Removed per User Request
+  void _showFirmwareHub(BuildContext context, WidgetRef ref) {
+    final deviceId = ref.read(switchDevicesProvider.notifier).currentDeviceId;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _FirmwareHubSheet(deviceId: deviceId),
+    );
+  }
 
   // Unused container removed
 
@@ -2239,4 +2179,592 @@ class _ScannerLineAnimationState extends State<_ScannerLineAnimation>
       },
     );
   }
+}
+
+// ===========================================================================
+// FIRMWARE HUB SHEET — Premium animated modal with Data Map + Firmware Download
+// ===========================================================================
+class _FirmwareHubSheet extends StatefulWidget {
+  final String deviceId;
+  const _FirmwareHubSheet({required this.deviceId});
+
+  @override
+  State<_FirmwareHubSheet> createState() => _FirmwareHubSheetState();
+}
+
+class _FirmwareHubSheetState extends State<_FirmwareHubSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _fileService = FileService();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0A0F),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF141420), Color(0xFF080810)],
+        ),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 48,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.hub, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Firmware Hub',
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Device: ${widget.deviceId}',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 11,
+                          color: const Color(0xFF6366F1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.white38),
+                ),
+              ],
+            ),
+          ),
+          // Tabs
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.5),
+                ),
+              ),
+              dividerHeight: 0,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white38,
+              labelStyle: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              tabs: const [
+                Tab(text: 'Data Map'),
+                Tab(text: 'ESP32'),
+                Tab(text: 'ESP8266'),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildDataMapTab(),
+                _buildFirmwareTab(
+                  title: 'ESP32 Hub Firmware',
+                  subtitle: 'v2.0.0 Template — Arduino Framework',
+                  icon: Icons.memory,
+                  color: const Color(0xFF10B981),
+                  fileName: 'esp32_template.ino',
+                ),
+                _buildFirmwareTab(
+                  title: 'ESP8266 Satellite Firmware',
+                  subtitle: 'v2.1.0 Template — 4-Zone PIR Scanner',
+                  icon: Icons.satellite_alt,
+                  color: const Color(0xFF3B82F6),
+                  fileName: 'esp8266_template.ino',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataMapTab() {
+    final id = widget.deviceId;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildAddressGroup(
+          'Commands (App → ESP32)',
+          Colors.cyan,
+          Icons.gamepad,
+          {
+            'Relay 1-7': 'devices/$id/commands/relay1..7',
+            'Inverted Logic': 'devices/$id/commands/invert1..7',
+            'Armed State': 'devices/$id/commands/isArmed',
+            'PIR Timer': 'devices/$id/commands/pirTimer',
+            'PIR Maps (bitmask)': 'devices/$id/commands/mapPIR1..5',
+            'Automation Mode': 'devices/$id/commands/globalMotionMode',
+            'LDR Threshold': 'devices/$id/commands/ldrThreshold',
+            'Panic Alarm': 'devices/$id/commands/panic',
+            'Buzzer Mute': 'devices/$id/commands/buzzerMute',
+            'Eco Mode': 'devices/$id/commands/ecoMode',
+          },
+        ),
+        _buildAddressGroup('Security Config', Colors.amber, Icons.shield, {
+          'Security Mode': 'devices/$id/commands/security/securityMode',
+          'Morning Period':
+              'devices/$id/commands/security/activePeriods/morning',
+          'Afternoon': 'devices/$id/commands/security/activePeriods/afternoon',
+          'Evening': 'devices/$id/commands/security/activePeriods/evening',
+          'Night': 'devices/$id/commands/security/activePeriods/night',
+          'Midnight': 'devices/$id/commands/security/activePeriods/midnight',
+          'PIR Sensitivity':
+              'devices/$id/commands/security/calibration/PIR1/sensitivity',
+        }),
+        _buildAddressGroup(
+          'Telemetry (ESP32 → App)',
+          Colors.green,
+          Icons.speed,
+          {
+            'Relay States': 'devices/$id/telemetry/relay1..7',
+            'Voltage': 'devices/$id/telemetry/voltage',
+            'Free Heap': 'devices/$id/telemetry/heap',
+            'WiFi RSSI': 'devices/$id/telemetry/rssi',
+            'Uptime': 'devices/$id/telemetry/uptime',
+          },
+        ),
+        _buildAddressGroup('Hub Status', Colors.tealAccent, Icons.favorite, {
+          'Online': 'devices/$id/status/online',
+          'Last Seen': 'devices/$id/status/lastSeen',
+          'Version': 'devices/$id/status/version',
+        }),
+        _buildAddressGroup(
+          'Satellite (ESP8266)',
+          Colors.blue,
+          Icons.satellite_alt,
+          {
+            'Status': 'devices/$id/satellite/status/...',
+            'Sensors': 'devices/$id/security/sensors/PIR1..4',
+            'Config': 'devices/$id/satellite/config/pulses,window,hold...',
+          },
+        ),
+        _buildAddressGroup('Security Events', Colors.redAccent, Icons.warning, {
+          'Breach Log': 'devices/$id/events/{pushId}',
+          'Alarm Active': 'devices/$id/security/alarmActive',
+          'Active Breaches': 'devices/$id/security/activeBreaches/...',
+        }),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildAddressGroup(
+    String title,
+    Color color,
+    IconData icon,
+    Map<String, String> addresses,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Group header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Address rows
+          ...addresses.entries.map(
+            (e) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: Text(
+                      e.key,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: Colors.white54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: SelectableText(
+                      e.value,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9.5,
+                        color: color.withValues(alpha: 0.8),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFirmwareTab({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required String fileName,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Big icon card
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withValues(alpha: 0.1), Colors.transparent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: color.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withValues(alpha: 0.2),
+                        color.withValues(alpha: 0.05),
+                      ],
+                    ),
+                    border: Border.all(color: color.withValues(alpha: 0.4)),
+                  ),
+                  child: Icon(icon, size: 48, color: color),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: Colors.white38,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'SKELETON — No credentials included',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9,
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Info chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildInfoChip('WiFi Config', Icons.wifi, color),
+              _buildInfoChip('Firebase RTDB', Icons.cloud, color),
+              _buildInfoChip('Pin Mapping', Icons.developer_board, color),
+              _buildInfoChip('OTA Support', Icons.system_update, color),
+            ],
+          ),
+          const Spacer(),
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  label: 'Copy Code',
+                  icon: Icons.copy,
+                  color: Colors.white24,
+                  onTap: () => _copyFirmware(fileName),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: _buildActionButton(
+                  label: 'Download $fileName',
+                  icon: Icons.download,
+                  color: color,
+                  filled: true,
+                  onTap: () => _saveFirmware(fileName),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(String label, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color.withValues(alpha: 0.7)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    bool filled = false,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: filled
+              ? color.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: filled
+                ? color.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: filled ? color : Colors.white54),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: filled ? color : Colors.white54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getFirmwareCode(String fileName) {
+    // Return embedded skeleton code based on firmware type
+    if (fileName.contains('esp32')) {
+      return _esp32SkeletonCode;
+    } else {
+      return _esp8266SkeletonCode;
+    }
+  }
+
+  Future<void> _copyFirmware(String fileName) async {
+    final code = _getFirmwareCode(fileName);
+    await _fileService.copyToClipboard(code);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$fileName copied to clipboard'),
+          backgroundColor: const Color(0xFF6366F1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveFirmware(String fileName) async {
+    try {
+      final code = _getFirmwareCode(fileName);
+      final path = await _fileService.saveEsp32Code(code, fileName);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saved: $path'),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // Embedded skeleton code strings
+  static const String _esp32SkeletonCode = '''
+/*
+ * NEBULA CORE – ESP32 HUB FIRMWARE TEMPLATE v2.0.0
+ * Fill in YOUR credentials below.
+ */
+
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include <esp_task_wdt.h>
+#include "addons/RTDBHelper.h"
+#include "addons/TokenHelper.h"
+
+#define WIFI_SSID     "YOUR_WIFI_NAME"
+#define WIFI_PASS     "YOUR_WIFI_PASSWORD"
+#define API_KEY       "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL  "https://YOUR_PROJECT.firebasedatabase.app"
+String deviceId =     "YOUR_DEVICE_ID";
+
+// Pin Definitions
+#define RELAY1 26  #define RELAY2 27  #define RELAY3 25
+#define RELAY4 33  #define RELAY5 32  #define RELAY6 14  #define RELAY7 23
+#define VOLTAGE_SENSOR 34
+#define BUZZER_PIN 13
+#define LED_RED 19  #define LED_GREEN 16  #define LED_BLUE 17
+
+// See FIREBASE_DATA_MAP.md for full path reference
+// Download the complete firmware from the firmware/ folder
+''';
+
+  static const String _esp8266SkeletonCode = '''
+/*
+ * NEBULA CORE – ESP8266 SATELLITE TEMPLATE v2.1.0
+ * Fill in YOUR credentials below.
+ */
+
+#include <ESP8266WiFi.h>
+#include <Firebase_ESP_Client.h>
+
+#define WIFI_SSID    "YOUR_WIFI_NAME"
+#define WIFI_PASS    "YOUR_WIFI_PASSWORD"
+#define API_KEY      "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL "YOUR_PROJECT.firebasedatabase.app"
+#define DEVICE_ID    "YOUR_DEVICE_ID"
+
+// Pin Definitions
+const uint8_t PIR_PINS[4] = {5, 4, 14, 12}; // D1, D2, D5, D6
+// A0 = LDR Sensor
+
+// See FIREBASE_DATA_MAP.md for full path reference
+// Download the complete firmware from the firmware/ folder
+''';
 }

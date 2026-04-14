@@ -57,27 +57,31 @@ class TimeDateWidget extends ConsumerWidget {
                   ShaderMask(
                     shaderCallback: (bounds) => LinearGradient(
                       colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary,
                         Colors.white,
+                        theme.colorScheme.primary.withOpacity(0.8),
+                        theme.colorScheme.primary,
                       ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ).createShader(bounds),
                     child: Text(
                       timeStr,
-                      style: GoogleFonts.orbitron(
-                        fontSize: compact ? 32.sp : 58.sp,
+                      style: GoogleFonts.outfit(
+                        fontSize: compact ? 34.sp : 64.sp,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
+                        letterSpacing: -1.0,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     ampm,
-                    style: GoogleFonts.orbitron(
-                      fontSize: compact ? 12.sp : 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary.withOpacity(0.6),
+                    style: GoogleFonts.outfit(
+                      fontSize: compact ? 11.sp : 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary.withOpacity(0.4),
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ],

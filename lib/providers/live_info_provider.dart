@@ -93,6 +93,7 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
                   teleId: teleId,
                   signals: signals,
                 );
+                _lastDataSeen = DateTime.now().millisecondsSinceEpoch ~/ 1000;
               }
             },
             onError: (error) {
@@ -104,9 +105,23 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
     }
   }
 
+  int _lastDataSeen = 0;
+
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      state = state.copyWith(currentTime: DateTime.now());
+      final now = DateTime.now();
+      state = state.copyWith(currentTime: now);
+
+      // Reset stale telemetry if no data for 60s
+      final nowSec = now.millisecondsSinceEpoch ~/ 1000;
+      if (_lastDataSeen != 0 && (nowSec - _lastDataSeen > 60)) {
+        state = state.copyWith(
+          acVoltage: 0,
+          current: 0,
+          signals: [0, 0, 0, 0, 0],
+        );
+        _lastDataSeen = 0; // Reset monitor
+      }
     });
   }
 

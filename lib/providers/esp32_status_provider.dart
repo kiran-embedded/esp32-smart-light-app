@@ -117,12 +117,13 @@ class Esp32StatusNotifier extends StateNotifier<Esp32StatusState> {
 
   void _resetTimeout() {
     _timeoutTimer?.cancel();
-    _timeoutTimer = Timer(const Duration(seconds: 30), () {
+    // 60s timeout to match the new 10s heartbeat interval with margin
+    _timeoutTimer = Timer(const Duration(seconds: 60), () {
       if (state.status == Esp32Status.active ||
           state.status == Esp32Status.connecting) {
         final now = DateTime.now();
         final lastSeen = state.lastSeen;
-        if (lastSeen == null || now.difference(lastSeen).inSeconds > 30) {
+        if (lastSeen == null || now.difference(lastSeen).inSeconds > 60) {
           state = state.copyWith(
             status: Esp32Status.offline,
             errorMessage: 'No telemetry received',

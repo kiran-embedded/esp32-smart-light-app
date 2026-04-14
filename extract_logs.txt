@@ -1,0 +1,894 @@
+04-14 12:40:32.140  1807  4615 W ActivityManager: pid 13546 com.android.settings sent binder code 1599295570 with flags 0 to frozen apps and got error -74
+04-14 12:40:32.148 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.151 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.152 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.158 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.159 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.161 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.162 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.172 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.175 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.177 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.178 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.180 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.181 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.183 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.184 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.186 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.193 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.195 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.196 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.196 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.277 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.279 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.279 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.286 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.290 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.291 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.298 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.300 13546 13739 W ProcStatsManager: No process com.whatsapp.w4b/10464 for service com.whatsapp.infra.crash.upload.ExceptionsUploadService
+04-14 12:40:32.300 13546 13739 W ProcStatsManager: No process com.whatsapp/10307 for service com.whatsapp.infra.crash.upload.ExceptionsUploadService
+04-14 12:40:32.303 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.313 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.330  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:40:32.342 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.344 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.345 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.360 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.402 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.403 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.404 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.405 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.406 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.416 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.496 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.517 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.519 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.522 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.523 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.526 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.528 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.529 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.530 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.533 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.537 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.539 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.539 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.540 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.543 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.544 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.545 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.547 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.547 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.547 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.549 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.553 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.553 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.554 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.558 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.559 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.566 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.567 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.569 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.571 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.585 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.585 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.586 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.590 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.591 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.591 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.593 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.595 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.596 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.598 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.599 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.602 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.604 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.609 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.611 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.613 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.613 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.614 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.615 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.616 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.617 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.618 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.619 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.625 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.628 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.629 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.631 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.633 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.636 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.638 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.640 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.643 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.645 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.647 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.650 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.655 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.657 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.658 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.662 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.664 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.668 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.671 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.673 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.676 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.678 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.680 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.691 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.692 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.693 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.700 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.702 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.721 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.726 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.726 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.755 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.758 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.759 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.763 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.769 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.770 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.776 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.778 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.779 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.782 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.784 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.784 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.786 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.795 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.796 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.798 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.802 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.804 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.806 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.807 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.808 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.809 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.811 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.812 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.815 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.835 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.837 13546 13609 I SystemPropPoker: java.lang.SecurityException
+04-14 12:40:32.849 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.851 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.947 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.948 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.953 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.955 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.958 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.959 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.961 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.965 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.970 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.971 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.972 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.974 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.978 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.980 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.984 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.985 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.987 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.988 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.991 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:32.999 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.001 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.005 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.007 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.007 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.008 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.014 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.027 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.033 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.033 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.035 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.035 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.036 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.038 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.040 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.041 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.042 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.042 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.044 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.046 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.047 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.049 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.050 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.051 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.052 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.053 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.058 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.059 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.060 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.062 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.064 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.071 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.079 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.081 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.084 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.086 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.087 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.088 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.088 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.089 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.091 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.093 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.095 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.096 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.099 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.100 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.101 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.105 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.106 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.107 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.109 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.111 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.114 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.116 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.118 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.120 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.121 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.125 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.125 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.128 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.128 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.130 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.132 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.133 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.135 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.136 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.137 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.143 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.144 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.145 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.147 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.148 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.150 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.166 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.168 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.169 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.170 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.172 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.189 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.195 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.200 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.201 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.203 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.204 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.205 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.208 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.211 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.211 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.215 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.217 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.219 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.221 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.225 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.226 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.228 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.232 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.234 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.236 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.236 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.238 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.239 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.243 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.244 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.247 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.247 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.249 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.252 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.258 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.264 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.276 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.282 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.284 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.327 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.331 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.333 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.335 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.341 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.345 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.349 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.351 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.351 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.353 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.355 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.357 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.358 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.359 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.375 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.378 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.378 13546 13609 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.380 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.381 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.382 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.383 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.384 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.384 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.385 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.386 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.387 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.388 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.388 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.388 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.389 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.389 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.390 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.391 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.391 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.392 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.393 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.394 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.394 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.421 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.422 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.423 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.423 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.424 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.424 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.425 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.426 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.429 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.434 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.434 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.434 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.436 13546 13587 W ProcStatsManager: No process com.whatsapp.w4b/10464 for service com.whatsapp.infra.crash.upload.ExceptionsUploadService
+04-14 12:40:33.436 13546 13587 W ProcStatsManager: No process com.whatsapp/10307 for service com.whatsapp.infra.crash.upload.ExceptionsUploadService
+04-14 12:40:33.439 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.455 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.455 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.455 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.455 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.455 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.456 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.464 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.466 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.466 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.469 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.470 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.470 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.471 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.472 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.472 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.472 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.473 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.473 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.473 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.474 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.474 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.475 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.476 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.478 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.478 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.479 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.479 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.479 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.480 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.480 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.481 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.481 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.483 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.483 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.483 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.484 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.484 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.484 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.485 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.485 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.485 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.486 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.487 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.487 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.487 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.488 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.488 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.488 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.488 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.489 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.489 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.490 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.490 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.491 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.492 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.492 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.493 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.493 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.494 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.495 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.495 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.496 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.496 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.499 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.499 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.500 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.500 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.501 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.501 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.502 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.503 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.504 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.504 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.505 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.505 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.506 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.506 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.506 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.507 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.507 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.507 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.508 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.509 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.510 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.510 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.511 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.511 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.512 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.513 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.513 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.517 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.517 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.518 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.519 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.519 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.520 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.520 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.521 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.521 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.521 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.522 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.522 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.522 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.524 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.524 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.525 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.525 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.527 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.528 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.528 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.530 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.531 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.531 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.532 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.532 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.536 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.536 13546 14031 I SystemPropPoker: java.lang.SecurityException
+04-14 12:40:33.539 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.540 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.545 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.545 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.546 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.546 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.546 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.547 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.547 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.548 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.549 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.549 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.550 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.550 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.551 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.552 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.553 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.553 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.554 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.554 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.555 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.556 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.557 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.558 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.559 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.559 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.559 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.560 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.561 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.562 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.562 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.564 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.564 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.565 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.566 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.567 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.567 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.568 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.569 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.569 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.570 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.571 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.572 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.572 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.573 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.573 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.573 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.574 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.574 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.575 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.575 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.576 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.576 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.576 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.577 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.577 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.580 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.580 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.581 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.582 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.583 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.583 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.584 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.584 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.585 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.586 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.586 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.587 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.588 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.588 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.589 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.589 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.590 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.590 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.591 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.591 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.596 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.597 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.598 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.598 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.599 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.600 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.600 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.601 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.602 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.602 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.602 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.603 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.610 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.613 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.615 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.616 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.616 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.617 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.620 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.620 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.621 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.622 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.623 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.626 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.629 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.632 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.633 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.633 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.633 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.634 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.635 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.635 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.636 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.637 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.637 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.638 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.638 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.638 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.639 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.640 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.640 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.642 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.643 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.644 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.645 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.645 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.646 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.647 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.648 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.648 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.649 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.650 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.652 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.652 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.655 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.657 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.657 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.661 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.661 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.661 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.661 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.663 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.665 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.666 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.666 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.666 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.667 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.668 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.669 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.669 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.670 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.672 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.672 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:33.673 13546 14031 D ActivityThread: Too many transaction errors, throttling freezer binder callback.
+04-14 12:40:39.744 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:40:39.744 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:40:42.224 12114 12138 V WindowManagerShell: Directly starting a new transition type=TO_FRONT wct=WindowContainerTransaction { changes= {} hops= [{pendingIntent: options=Bundle[{android.activity.splashScreenStyle=-1, android.activity.sourceInfo=Supplier{VAL_PARCELABLE@148+104}, android:activity.isMlLaunch=-1, android.activity.splitTaskDeferResume=false, android.pendingIntent.backgroundActivityAllowed=1, android:activity.isActiveLaunch=false, android.activity.launchTypeDnD=false, android:activity.startedFromWindowTypeLauncher=false, android.activity.launchDisplayId=0, android:activity.unhandledDropLaunch=false, android:activity.launchInFocusedStageRoot=false, android:activity.animAbortListener=null, android.activity.disableSplashScreen=false, android.activity.startAssistantActivity=false, android.activity.applySystemModalPolicy=false, android:activity.applyBigFreeformSize=false, android.activity.enterPipWhileLaunching=false, android.activity.splitPosition=0, android.activity.preserveTaskWindowingMode=false, android:activity.enterSplitSideWithAdjacentFlag=0, android.activity.transientLaunch=true}]}] errorCallbackToken=null taskFragmentOrganizer=null } handler=com.android.wm.shell.recents.RecentsTransitionHandler@4c9bbb6
+04-14 12:40:42.227 12114 12138 I WindowOrganizer: startNewTransition, type=3, t=WindowContainerTransaction { changes= {} hops= [{pendingIntent: options=Bundle[{android.activity.splashScreenStyle=-1, android.activity.sourceInfo=Supplier{VAL_PARCELABLE@148+104}, android:activity.isMlLaunch=-1, android.activity.splitTaskDeferResume=false, android.pendingIntent.backgroundActivityAllowed=1, android:activity.isActiveLaunch=false, android.activity.launchTypeDnD=false, android:activity.startedFromWindowTypeLauncher=false, android.activity.launchDisplayId=0, android:activity.unhandledDropLaunch=false, android:activity.launchInFocusedStageRoot=false, android:activity.animAbortListener=null, android.activity.disableSplashScreen=false, android.activity.startAssistantActivity=false, android.activity.applySystemModalPolicy=false, android:activity.applyBigFreeformSize=false, android.activity.enterPipWhileLaunching=false, android.activity.splitPosition=0, android.activity.preserveTaskWindowingMode=false, android:activity.enterSplitSideWithAdjacentFlag=0, android.activity.transientLaunch=true}]}] errorCallbackToken=null taskFragmentOrganizer=null }, caller=com.android.wm.shell.transition.Transitions.startTransition:100 com.android.wm.shell.recents.RecentsTransitionHandler.startRecentsTransition:431 com.android.wm.shell.recents.RecentTasksController$IRecentTasksImpl$$ExternalSyntheticLambda0.accept:17 com.android.wm.shell.common.ExternalInterfaceBinder$$ExternalSyntheticLambda0.run:10 android.os.Handler.handleCallback:995 
+04-14 12:40:42.380  1807  1826 V WindowManager:     startWCT=WindowContainerTransaction { changes= {} hops= [{pendingIntent: options=Bundle[{android.activity.splashScreenStyle=-1, android.activity.sourceInfo=android.app.ActivityOptions$SourceInfo@b5ad088, android:activity.isMlLaunch=-1, android.activity.splitTaskDeferResume=false, android.pendingIntent.backgroundActivityAllowed=1, android:activity.isActiveLaunch=false, android.activity.launchTypeDnD=false, android:activity.startedFromWindowTypeLauncher=false, android.activity.launchDisplayId=0, android:activity.unhandledDropLaunch=false, android:activity.launchInFocusedStageRoot=false, android:activity.animAbortListener=null, android.activity.disableSplashScreen=false, android.activity.startAssistantActivity=false, android.activity.applySystemModalPolicy=false, android:activity.applyBigFreeformSize=false, android.activity.enterPipWhileLaunching=false, android.activity.splitPosition=0, android.activity.preserveTaskWindowingMode=false, android:activity.enterSplitSideWithAdjacentFlag=0, android.activity.transientLaunch=true}]}] errorCallbackToken=null taskFragmentOrganizer=null }
+04-14 12:40:42.704  3159  3159 E HoneySpace.BadgeIconDecoratorCreator: NameNotFoundException /#UserHandle{0}
+04-14 12:40:42.709  3159  3159 E HoneySpace.BadgeIconDecoratorCreator: NameNotFoundException /#UserHandle{0}
+04-14 12:40:42.711  3159  3159 E HoneySpace.BadgeIconDecoratorCreator: NameNotFoundException /#UserHandle{0}
+04-14 12:40:42.712  3159  3159 E HoneySpace.BadgeIconDecoratorCreator: NameNotFoundException /#UserHandle{0}
+04-14 12:40:43.344  1807  1826 V WindowManager:     startWCT=WindowContainerTransaction { changes= {} hops= [] errorCallbackToken=null taskFragmentOrganizer=null }
+04-14 12:40:43.441  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:40:44.845  1807  4615 D MediaSessionService: onSessionPlaybackStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=NONE(0), position=0, buffered position=0, speed=1.0, updated=423520230, actions=6, custom actions=[], active item id=-1, error=null}
+04-14 12:40:44.877  1807  1826 V WindowManager:     startWCT=WindowContainerTransaction { changes= {} hops= [] errorCallbackToken=null taskFragmentOrganizer=null }
+04-14 12:40:45.123 12726 12726 W YT      : CueRangeManager state error: currentPosition=13413 lastPositionTracked=14093
+04-14 12:40:45.223 12726 12726 W YT      : CueRangeManager state error: currentPosition=13413 lastPositionTracked=14093
+04-14 12:40:45.230  1807  2575 W ActivityManager: pid 4569 com.google.android.gms.persistent sent binder code 1 with flags 1 to frozen apps and got error -32
+04-14 12:40:45.327 12726 12726 W YT      : CueRangeManager state error: currentPosition=13413 lastPositionTracked=14093
+04-14 12:40:45.431 12726 12726 W YT      : CueRangeManager state error: currentPosition=13413 lastPositionTracked=14093
+04-14 12:40:45.495  1277  3510 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:40:45.495  1277  3510 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:40:45.531 12726 12726 W YT      : CueRangeManager state error: currentPosition=13413 lastPositionTracked=14093
+04-14 12:40:47.641  1807  4616 D MediaSessionService: onSessionPlaybackStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423523038, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:40:48.085  1807  3373 D MediaSessionService: onSessionActiveStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423523038, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:40:48.087  1807  3373 D MediaSessionService: onSessionPlaybackStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423523483, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:40:48.093  1807  4627 D MediaSessionService: onSessionPlaybackStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423523490, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:40:48.449  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:40:48.782  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:40:48.849  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:40:48.890  5320 29724 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:40:48.907  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:40:48.935  5320 29724 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:40:48.980  1807  4616 D MediaSessionService: onSessionActiveStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423523490, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:40:49.099  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:40:49.130  1277  1277 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:40:49.130  1277  1277 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:40:49.157 12726 12726 W YT      : CueRangeManager state error: currentPosition=13413 lastPositionTracked=15511
+04-14 12:40:49.221 12726 12814 W WindDownApi: Unexpected error calling Digital Wellbeing
+04-14 12:40:49.221 12726 12814 W WindDownApi: java.lang.IllegalArgumentException: Unknown authority com.google.android.apps.wellbeing.api
+04-14 12:40:53.450  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:40:57.227 12403 12466 E msys    : E[N WA]_WAJMNSStreamImplOnMNSFailure(287)=>[LogLevel:I] WAJMNSStream/impl/callback/onMNSFailure/p=0xb400007cd21fd680 (error=MNSTCPSocketReceive(): Software caused connection abort)
+04-14 12:40:58.031  1277 30523 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:40:58.031  1277 30523 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:41:02.510  5320 29725 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:03.167 12403 12466 E msys    : E[N WA]_WAJMNSStreamImplOnMNSFailure(287)=>[LogLevel:I] WAJMNSStream/impl/callback/onMNSFailure/p=0xb400007cd228fa00 (error=MNSTCPSocketReceive(): Software caused connection abort)
+04-14 12:41:03.240  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:04.140  5320 29715 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:04.527  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:06.785  5320 29725 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:07.697  5320 29724 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:07.731  5320 29721 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:07.758  5320 29715 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:07.777  5320 29721 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:07.780  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:07.827  5320 29721 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:07.869  5320 29721 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:08.184  5320 29715 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:08.235  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:08.326  5320 29721 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:09.519 15172 15190 E FirebaseSessions: Error failed to fetch the remote configs: Unable to resolve host "firebase-settings.crashlytics.com": No address associated with hostname
+04-14 12:41:09.527  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:09.734 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:41:09.734 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:41:11.381 15172 15232 D RNFBCrashlyticsInit: isErrorGenerationOnJSCrashEnabled via RNFBMeta: true
+04-14 12:41:11.381 15172 15232 D RNFBCrashlyticsInit: isErrorGenerationOnJSCrashEnabled final value: true
+04-14 12:41:11.381 15172 15232 D RNFBCrashlyticsInit: isCrashlyticsJavascriptExceptionHandlerChainingEnabled via RNFBMeta: true
+04-14 12:41:11.381 15172 15232 D RNFBCrashlyticsInit: isCrashlyticsJavascriptExceptionHandlerChainingEnabled final value: true
+04-14 12:41:11.832 27569 27627 W statsig::Http: android.system.GaiException: android_getaddrinfo failed: EAI_NODATA (No address associated with hostname)
+04-14 12:41:11.845 27569 27702 E statsig::StatsigNetwork: Error posting logs, saving for retry...
+04-14 12:41:14.531  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:16.590  1215  6401 E AudioALSAPlaybackHandlerBase: getQueuedFramesInfo(), pcm_get_htimestamp or trylock fail, ret -1, pcm_get_error 
+04-14 12:41:20.032  1807  1903 D MediaSessionService: onSessionActiveStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423523490, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:41:20.033  1807  3373 D MediaSessionService: onSessionPlaybackStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423555429, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:41:20.169  5320 29722 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:41:20.365 12726 12726 W YT      : CueRangeManager state error: currentPosition=22244 lastPositionTracked=22247
+04-14 12:41:20.440  1277  1803 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:41:20.440  1277  1803 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:41:21.219  1807  4627 D MediaSessionService: onSessionActiveStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423555429, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:41:21.241 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=732
+04-14 12:41:21.305  1277  1803 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:41:21.305  1277  1803 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:41:21.845  2376  2376 E SatelliteModemInterface: Error binding to the satellite service. Retrying in 47398 ms.
+04-14 12:41:25.634  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:30.640  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:32.308 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=10863
+04-14 12:41:32.360  1277  8373 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:41:32.360  1277  8373 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:41:32.411 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=10863
+04-14 12:41:35.145  1807  1835 W ProcessCpuTracker: Failed to stat(/proc/15942): android.system.ErrnoException: stat failed: ENOENT (No such file or directory)
+04-14 12:41:35.643  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:39.735 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:41:39.735 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:41:40.719  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:43.927  2860  3009 E SimpleEventLog: PreciseAlarmManager resize failed! java.nio.charset.MalformedInputException: Input length = 1
+04-14 12:41:44.136  2860  3009 E SimpleEventLog: PreciseAlarmManager resize failed! java.nio.charset.MalformedInputException: Input length = 1
+04-14 12:41:45.720  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:50.725  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:41:55.790  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:42:00.790  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:42:03.261  1277  3511 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:03.261  1277  3511 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:04.694  1807  4456 D MediaSessionService: onSessionPlaybackStateChanged: record=com.google.android.gms/cast_rcn_media_session/168 (userId=0) playbackState=PlaybackState {state=PLAYING(3), position=34171, buffered position=0, speed=1.0, updated=423600090, actions=816, custom actions=[Action:mName='Unmute, mIcon=2131234362, mExtras=null, Action:mName='Stop casting, mIcon=2131234330, mExtras=null], active item id=-1, error=null}
+04-14 12:42:05.791  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:42:09.251  2376  2376 E SatelliteModemInterface: Error binding to the satellite service. Retrying in 54421 ms.
+04-14 12:42:09.735 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:42:09.735 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:42:13.590  1807  4619 W ProcessCpuTracker: Failed to stat(/proc/16949): android.system.ErrnoException: stat failed: ENOENT (No such file or directory)
+04-14 12:42:19.907  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:42:20.025  1277  1277 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:20.025  1277  1277 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:21.755 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=1650
+04-14 12:42:21.800  1277  8373 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:21.800  1277  8373 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:24.907  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:42:29.911  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:42:35.028 12726 12726 W YT      : CueRangeManager state error: currentPosition=5470 lastPositionTracked=13085
+04-14 12:42:35.128 12726 12726 W YT      : CueRangeManager state error: currentPosition=5470 lastPositionTracked=13085
+04-14 12:42:35.228 12726 12726 W YT      : CueRangeManager state error: currentPosition=5470 lastPositionTracked=13085
+04-14 12:42:35.329 12726 12726 W YT      : CueRangeManager state error: currentPosition=5470 lastPositionTracked=13085
+04-14 12:42:35.388  1277  8373 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:35.388  1277  8373 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:35.429 12726 12726 W YT      : CueRangeManager state error: currentPosition=5470 lastPositionTracked=13085
+04-14 12:42:35.870  1225 14470 D C2MtkVdec: [0xB400007D21654000] onError: index 1056993, frameIndex 6069, err 1
+04-14 12:42:35.890 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=5842
+04-14 12:42:35.992 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=5842
+04-14 12:42:36.021  1277  1803 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:36.021  1277  1803 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:36.093 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=5842
+04-14 12:42:39.734 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:42:39.734 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:42:41.782 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=5618
+04-14 12:42:41.858  1277 30523 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:41.858  1277 30523 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:44.948 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=2969
+04-14 12:42:45.004  1277 30523 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:45.004  1277 30523 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:46.036 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=917
+04-14 12:42:46.068  1277  9664 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:42:46.068  1277  9664 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:42:49.526 12726 12868 E YT.qoe  : Pinging https://s.youtube.com/api/stats/qoe?cl=898671672&event=streamingstats&ns=yt&cpn=s2aCDzxIwfniP-r3&welc=CgIIDA%3D%3D&cplatform=mobile&cbr=com.google.android.youtube&cff=SMALL_FORM_FACTOR&c=android&cmodel=SM-A166P&cos=Android&soc=Mediatek%3AMT6835&csdk=36&cbrver=21.14.484&cver=21.14.484&cosver=16&cbrand=samsung&qclc=ChBzMmFDRHp4SXdmbmlQLXIzGgxDZ0lJREElM0QlM0Q&conn=3.407:3&bat=3.407:0.460:1&error=3.404:qoe.client::0.000:ForcedFinishCreate&seq=2 
+04-14 12:43:03.677  2376  2376 E SatelliteModemInterface: Error binding to the satellite service. Retrying in 39497 ms.
+04-14 12:43:06.217 18265 18336 E GoogleApiManager: java.lang.SecurityException: Unknown calling package name 'com.google.android.gms'.
+04-14 12:43:06.217 18265 18336 E GoogleApiManager: 	at android.os.Parcel.createExceptionOrNull(Parcel.java:3354)
+04-14 12:43:06.217 18265 18336 E GoogleApiManager: 	at android.os.Parcel.createException(Parcel.java:3338)
+04-14 12:43:06.217 18265 18336 E GoogleApiManager: 	at android.os.Parcel.readException(Parcel.java:3321)
+04-14 12:43:06.217 18265 18336 E GoogleApiManager: 	at android.os.Parcel.readException(Parcel.java:3263)
+04-14 12:43:06.219 18265 18336 W GoogleApiManager: Not showing notification since connectionResult is not user-facing: ConnectionResult{statusCode=DEVELOPER_ERROR, resolution=null, message=null, clientMethodKey=null}
+04-14 12:43:06.232 18265 18334 W FlagRegistrar: giyd: 17: 17: API: Phenotype.API is not available on this device. Connection failed with: ConnectionResult{statusCode=DEVELOPER_ERROR, resolution=null, message=null, clientMethodKey=null}
+04-14 12:43:06.232 18265 18334 W FlagRegistrar: Caused by: bhry: 17: API: Phenotype.API is not available on this device. Connection failed with: ConnectionResult{statusCode=DEVELOPER_ERROR, resolution=null, message=null, clientMethodKey=null}
+04-14 12:43:06.401  5320 29724 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:43:06.808 18265 18300 W hLibraryCallCredentials: java.lang.NoSuchMethodException: com.google.auth.oauth2.ServiceAccountCredentials.getScopes []
+04-14 12:43:07.181  5320 29722 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:43:09.734 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:43:09.734 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:43:11.161  1277  3510 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:43:11.161  1277  3510 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:43:11.841  1807  1850 E BluetoothPowerStatsCollector: java.util.concurrent.ExecutionException: java.lang.RuntimeException: error: 11
+04-14 12:43:11.841  1807  1850 E BluetoothPowerStatsCollector: Caused by: java.lang.RuntimeException: error: 11
+04-14 12:43:11.841  1807  1850 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector$1.onBluetoothActivityEnergyInfoError(qb/106569698 0e55e92b0c79bb07e655448ffdba1a20148d16d41bd632aaeb60f22b004004e4:12)
+04-14 12:43:12.406 18627 18669 W System.err: java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:12.409 18627 18669 W GWT:PreviewSessionManager: [calendar] PreviewSession is finished by java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:12.661 18627 18681 W System.err: java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:12.662 18627 18681 W GWT:PreviewSessionManager: [calendar] PreviewSession is finished by java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:12.908 18627 18681 W System.err: java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:12.909 18627 18681 W GWT:PreviewSessionManager: [calendar] PreviewSession is finished by java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:12.998 18627 18686 W DIAGMON_SDK[605079]: UncaughtExceptionLogging can't be enabled because Configuration is null
+04-14 12:43:13.501 18627 18627 W System.err: java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:13.504 18627 18627 W GWT:PreviewSessionManager: [calendar] PreviewSession is finished by java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:13.794 18627 18627 W System.err: java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:13.796 18627 18627 W GWT:PreviewSessionManager: [calendar] PreviewSession is finished by java.util.concurrent.CancellationException: Finish coroutine session
+04-14 12:43:13.864 12726 12726 W YT      : CueRangeManager state error: currentPosition=0 lastPositionTracked=2629
+04-14 12:43:13.961  1277 30524 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:43:13.961  1277 30524 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:43:14.433 12726 12863 E YT      : There was an error
+04-14 12:43:14.433 12726 12863 E YT      : java.util.concurrent.CancellationException: Task was cancelled.
+04-14 12:43:16.345 18265 18336 E GoogleApiManager: java.lang.SecurityException: Unknown calling package name 'com.google.android.gms'.
+04-14 12:43:16.345 18265 18336 E GoogleApiManager: 	at android.os.Parcel.createExceptionOrNull(Parcel.java:3354)
+04-14 12:43:16.345 18265 18336 E GoogleApiManager: 	at android.os.Parcel.createException(Parcel.java:3338)
+04-14 12:43:16.345 18265 18336 E GoogleApiManager: 	at android.os.Parcel.readException(Parcel.java:3321)
+04-14 12:43:16.345 18265 18336 E GoogleApiManager: 	at android.os.Parcel.readException(Parcel.java:3263)
+04-14 12:43:16.345 18265 18336 W GoogleApiManager: Not showing notification since connectionResult is not user-facing: ConnectionResult{statusCode=DEVELOPER_ERROR, resolution=null, message=null, clientMethodKey=null}
+04-14 12:43:39.734 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:43:39.734 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:43:41.206  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:43:43.179  2376  2376 E SatelliteModemInterface: Error binding to the satellite service. Retrying in 60695 ms.
+04-14 12:43:46.209  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:43:51.212  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:43:53.127 16693 27774 I adbd    : UsbFfs: connection terminated: read 32368 failed with error Cannot send after transport endpoint shutdown
+04-14 12:43:53.176  1807  3005 E [SS]BattUtils: [readNode]Exception - path:/efs/FactoryApp/bsoh
+04-14 12:43:53.176  1807  3005 E [SS]BattUtils: java.io.FileNotFoundException: /efs/FactoryApp/bsoh: open failed: ENOENT (No such file or directory)
+04-14 12:43:53.176  1807  3005 E [SS]BattUtils: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+04-14 12:43:53.176  1807  3005 E [SS]BattUtils: [readNodeAsDouble]NumberFormatException
+04-14 12:43:53.262  1277 12111 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:43:53.262  1277 12111 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:43:54.431  1807  1850 E BluetoothPowerStatsCollector: java.util.concurrent.ExecutionException: java.lang.RuntimeException: error: 11
+04-14 12:43:54.431  1807  1850 E BluetoothPowerStatsCollector: Caused by: java.lang.RuntimeException: error: 11
+04-14 12:43:54.431  1807  1850 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector$1.onBluetoothActivityEnergyInfoError(qb/106569698 0e55e92b0c79bb07e655448ffdba1a20148d16d41bd632aaeb60f22b004004e4:12)
+04-14 12:43:54.662  1807  1850 E BluetoothPowerStatsCollector: java.util.concurrent.ExecutionException: java.lang.RuntimeException: error: 11
+04-14 12:43:54.662  1807  1850 E BluetoothPowerStatsCollector: Caused by: java.lang.RuntimeException: error: 11
+04-14 12:43:54.662  1807  1850 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector$1.onBluetoothActivityEnergyInfoError(qb/106569698 0e55e92b0c79bb07e655448ffdba1a20148d16d41bd632aaeb60f22b004004e4:12)
+04-14 12:43:54.796 15565 15610 I WM-WorkerWrapper: java.util.concurrent.CancellationException: Task was cancelled.
+04-14 12:43:54.796 15565 15610 I WM-WorkerWrapper: 	at androidx.work.impl.utils.futures.AbstractFuture.cancellationExceptionWithCause(Unknown Source:2)
+04-14 12:44:09.389 15565 15597 I WM-WorkerWrapper: java.util.concurrent.CancellationException: Task was cancelled.
+04-14 12:44:09.389 15565 15597 I WM-WorkerWrapper: 	at androidx.work.impl.utils.futures.AbstractFuture.cancellationExceptionWithCause(Unknown Source:2)
+04-14 12:44:09.734 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:44:09.734 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:44:13.037  2445  2595 E EPDG -- SIM1 [EpdgNetworkMgmtObserver]: Error!!!, cid is not converted into number, returning
+04-14 12:44:14.396  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:44:16.282  2445  2595 E EPDG -- SIM1 [EpdgNetworkMgmtObserver]: Error!!!, cid is not converted into number, returning
+04-14 12:44:19.399  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:44:24.402  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:44:32.530  1277  3510 I AudioPolicyEffectException: MySpaceHandler::checkDetachCondition media 1, ring 0, mp 0
+04-14 12:44:32.530  1277  3510 I AudioPolicyEffectException: MySpace detach value 1
+04-14 12:44:33.519  1807  2313 E [SS]BattUtils: [readNode]Exception - path:/efs/FactoryApp/bsoh
+04-14 12:44:33.519  1807  2313 E [SS]BattUtils: java.io.FileNotFoundException: /efs/FactoryApp/bsoh: open failed: ENOENT (No such file or directory)
+04-14 12:44:33.519  1807  2313 E [SS]BattUtils: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+04-14 12:44:33.519  1807  2313 E [SS]BattUtils: [readNodeAsDouble]NumberFormatException
+04-14 12:44:34.151 12114 21049 W MediaPlayer: Error setting data source via ContentResolver
+04-14 12:44:34.151 12114 21049 W MediaPlayer: java.io.FileNotFoundException: No content provider: system/media/audio/ui/ChargingStarted.ogg
+04-14 12:44:34.388  1807  1850 E BluetoothPowerStatsCollector: java.util.concurrent.ExecutionException: java.lang.RuntimeException: error: 11
+04-14 12:44:34.388  1807  1850 E BluetoothPowerStatsCollector: Caused by: java.lang.RuntimeException: error: 11
+04-14 12:44:34.388  1807  1850 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector$1.onBluetoothActivityEnergyInfoError(qb/106569698 0e55e92b0c79bb07e655448ffdba1a20148d16d41bd632aaeb60f22b004004e4:12)
+04-14 12:44:34.437  1452 21051 V NuPlayer: checkOffloadExceptions is true, call canOffloadStream
+04-14 12:44:34.444  1452 21051 V NuPlayer: checkOffloadExceptions is true, call canOffloadStream
+04-14 12:44:34.496  1807  1850 E BluetoothPowerStatsCollector: java.util.concurrent.ExecutionException: java.lang.RuntimeException: error: 11
+04-14 12:44:34.496  1807  1850 E BluetoothPowerStatsCollector: Caused by: java.lang.RuntimeException: error: 11
+04-14 12:44:34.496  1807  1850 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector$1.onBluetoothActivityEnergyInfoError(qb/106569698 0e55e92b0c79bb07e655448ffdba1a20148d16d41bd632aaeb60f22b004004e4:12)
+04-14 12:44:34.930 21025 21025 I MAMInfo : MAMInfo initialized. Debug=false, Agent=PRODUCTION, ManagedDialogDisabled=false, PolicyRequired=false, MultiIdentityEnabled=true, FullBackupContent=true, DataExtractionRules=true, UseDefaultEnrollment=false, ExceptionOnInit=false, Debuggable=false, IsolatedProcessesAllowed=false
+04-14 12:44:35.601 21025 21025 W System.err: java.lang.IllegalStateException: Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
+04-14 12:44:35.691 21025 21025 E EventsSDK.RoomStorage: Exception in StoreRecords: call store
+04-14 12:44:36.758 21025 21140 E OneAuthLog: [OneAuth:0005:Error:96xl9:c7b22e6c] Setting correlation ID to identical value
+04-14 12:44:36.758 21025 21140 E OneAuthLog: [OneAuth:0005:Error:96q8r:c7b22e6c] Attempting to set a new correlation ID to a thread with an existing correlation ID.
+04-14 12:44:36.758 21025 21140 E OneAuthLog: [OneAuth:0005:Error:76xma:c7b22e6c] Setting a non empty transaction.
+04-14 12:44:36.782 21025 21140 V OneAuthLog: [MSAL:0005]	DEBUG  	ExecuteQueueItemThreadProc:407	Item 1 finished executing without throwing an error
+04-14 12:44:37.547 21142 21142 I [SC]SamsungCloudApp: time elapsed to initialize ExceptionFilterInitializer: 0
+04-14 12:44:37.554 21142 21175 W DIAGMON_SDK[605068]: UncaughtExceptionLogging can't be enabled because Configuration is null
+04-14 12:44:37.613 21142 21185 W Bundle  : Attempt to cast generated internal exception:
+04-14 12:44:37.613 21142 21185 W Bundle  : java.lang.ClassCastException: java.lang.Float cannot be cast to java.lang.String
+04-14 12:44:37.789   661  2704 E keystore2: system/security/keystore2/src/error.rs:185 - Rc(r#KEY_NOT_FOUND), "system/security/keystore2/src/service.rs:178: In get_key_entry, while trying to load key info. 5009, Some(\"com.samsung.android.scloud_SERVER_CERT\")"
+04-14 12:44:37.790   661  2704 E keystore2: system/security/keystore2/src/error.rs:185 - Rc(r#KEY_NOT_FOUND), "system/security/keystore2/src/service.rs:178: In get_key_entry, while trying to load key info. 5009, Some(\"com.samsung.android.scloud_SERVER_CERT\")"
+04-14 12:44:37.885 21142 21170 W [SC]i   : cannot init voice content : android.content.pm.PackageManager$NameNotFoundException: com.sec.android.app.voicenote
+04-14 12:44:38.465  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:44:38.552 21264 21297 W System.err: java.lang.UnsatisfiedLinkError: dlopen failed: library "libmOCR.camera.samsung.so" not found
+04-14 12:44:38.949  4205  7278 W Conscrypt: Could not set socket write timeout: java.net.SocketException: Socket closed
+04-14 12:44:39.041  4205  7278 W Conscrypt: Could not set socket write timeout: java.net.SocketException: Socket closed
+04-14 12:44:39.681  4205 21382 E InternalPeopleServiceGrpcClient: Error making Grpc request.
+04-14 12:44:39.734 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:44:39.734 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
+04-14 12:44:40.294 21398 21398 W DIAGMON_SDK[605068]: UncaughtExceptionLogging can't be enabled because Configuration is null
+04-14 12:44:41.456  4205 21418 W Conscrypt: Could not set socket write timeout: java.net.SocketException: Socket closed
+04-14 12:44:41.549  4205 21418 W Conscrypt: Could not set socket write timeout: java.net.SocketException: Socket closed
+04-14 12:44:42.576  4205  7278 E DCU_ContactsLogService: java.util.concurrent.ExecutionException: gduq: sync policy is not enabled
+04-14 12:44:43.465  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:44:43.882  2376  2376 E SatelliteModemInterface: Error binding to the satellite service. Retrying in 41382 ms.
+04-14 12:44:45.278  5320 29721 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:44:46.037  5320 29709 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:44:46.894  5320 29715 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:44:48.466  1807 28188 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2167 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl.$r8$lambda$9zIBb7iQw8awD01nYqR9TF42vDM:176 com.samsung.android.mcf.continuity.impl.common.ContinuityAbstractAdapterImpl$$ExternalSyntheticLambda3.run:7 com.samsung.android.mcf.continuity.common.ExecutorUtil$ThrowExceptionRunnable.run:3 java.util.concurrent.ThreadPoolExecutor.runWorker:1154 
+04-14 12:44:50.501  8213  8228 I [SCPMV2][GetLastError]: execute
+04-14 12:44:53.230 28831 21838 D CustomerMigrationStatusDataService: Response from AUDI: AUDIV2Response(data={GetCustomerMigrationStatus={migrated=false, migratedOn=0.0}}, errors=null)
+04-14 12:44:53.710  4569 27284 E LoadedApk: Exception : java.lang.NullPointerException: Attempt to invoke virtual method 'boolean android.os.Looper.isPerfLogEnable()' on a null object reference
+04-14 12:44:53.716  4205  2417 E LoadedApk: Exception : java.lang.NullPointerException: Attempt to invoke virtual method 'boolean android.os.Looper.isPerfLogEnable()' on a null object reference
+04-14 12:44:53.718  4205  2417 E LoadedApk: Exception : java.lang.NullPointerException: Attempt to invoke virtual method 'boolean android.os.Looper.isPerfLogEnable()' on a null object reference
+04-14 12:44:56.373  1807  3373 D MediaSessionService: onSessionActiveStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423555429, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:44:56.379  1807  4609 D MediaSessionService: onSessionPlaybackStateChanged: record=com.google.android.youtube/YouTube playerlib/169 (userId=0) playbackState=PlaybackState {state=STOPPED(1), position=0, buffered position=0, speed=1.0, updated=423771771, actions=0, custom actions=[], active item id=-1, error=null}
+04-14 12:44:56.615 21990 21990 W DIAGMON_SDK[605079]: UncaughtExceptionLogging can't be enabled because Configuration is null
+04-14 12:44:56.639  5320 29709 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:44:56.678 21990 22022 E SEMS:Social_13.8.52: [BLog][RxComputationThreadPool-1][ConditionRepositoryImpl] checkLegacy error
+04-14 12:44:56.956  5320 29721 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:44:56.981  5320 29723 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:44:57.309  5320 29715 W System.err: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.accessibility.AccessibilityNodeInfo android.view.accessibility.AccessibilityNodeInfo.getChild(int)' on a null object reference
+04-14 12:45:09.453 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.wearable.watch6plugin. android.content.pm.PackageManager$NameNotFoundException: com.samsung.wearable.watch6plugin
+04-14 12:45:09.461 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.homemode. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.homemode
+04-14 12:45:09.469 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.app.simplesharing. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.app.simplesharing
+04-14 12:45:09.470 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.app.social. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.app.social
+04-14 12:45:09.471 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.bixby.agent. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.bixby.agent
+04-14 12:45:09.472 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.spay. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.spay
+04-14 12:45:09.473 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.app.spage. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.app.spage
+04-14 12:45:09.479 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.waterplugin. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.waterplugin
+04-14 12:45:09.482 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.visionintelligence. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.visionintelligence
+04-14 12:45:09.483 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.app.reminder. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.app.reminder
+04-14 12:45:09.486 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.heartplugin. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.heartplugin
+04-14 12:45:09.490 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.app.find. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.app.find
+04-14 12:45:09.491 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.wearable.watchuniteplugin. android.content.pm.PackageManager$NameNotFoundException: com.samsung.wearable.watchuniteplugin
+04-14 12:45:09.496 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.android.oneconnect. android.content.pm.PackageManager$NameNotFoundException: com.samsung.android.oneconnect
+04-14 12:45:09.506 21990 22338 E SEMS:Common_13.8.52: [CommonLog][androidx.work-1][PreloadSignatureUtil] signature not allowed com.samsung.wearable.watch7plugin. android.content.pm.PackageManager$NameNotFoundException: com.samsung.wearable.watch7plugin
+04-14 12:45:09.734 30326 30326 I flutter : 🔍 [BleService] Periodic Background Scan Triggered...
+04-14 12:45:09.734 30326 30326 I flutter : 🔍 [BleService] Scan already in progress, skipping start.
