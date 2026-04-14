@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=40&pause=1000&color=00FFFF&center=true&vCenter=true&width=800&lines=Nebula+Core+v1.2.0%2B42;Industrial-Grade+Reliability;The+Stabilization+Protocol;Zero-Latency+Achieved" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=40&pause=1000&color=00FFFF&center=true&vCenter=true&width=800&lines=Nebula+Core+v1.2.0%2B42;Industrial-Grade+Reliability;In-App+Hardware+Flash;Zero-Latency+Achieved" alt="Typing SVG" />
 </p>
 
 <div align="center">
@@ -10,17 +10,35 @@
 
 <br/>
 
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=80&section=header&text=&fontSize=90" />
+</div>
+
+## 🌟 The In-App Maker Ecosystem (NEW FEATURE)
+We've brought the hardware right into your palm. Nebula Core is now a fully self-documenting ecosystem. Inside the **Flutter App Settings**, you now have native access to the newly engineered **Integrated Firmware Hub**:
+
+* 💾 **Direct Hardware Source Code:** Don't want to hunt for external repositories? You can now instantly copy or download the highly-optimized **ESP32 Hub** and **ESP8266 Satellite** C++ template pipelines directly from within the app settings!
+* 🗺️ **Visual Data Dictionary:** The entire `FIREBASE_DATA_MAP` schema is now interactively pushed to the app natively. Users can instantly visualize the exact JSON endpoints for their device (e.g., `/commands/relay1`, `/satellite/config/pulses`, `/events/{pushId}`) allowing makers to seamlessly intercept cloud data or link 3rd-party smart home integrations on the fly. 
+
+---
+
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=24&pause=1000&color=FF0055&center=true&vCenter=true&width=800&lines=System+Failures+Neutralized" alt="Typing SVG" />
+</p>
+
 ## ⛈️ The Storm We Endured
 Prior to **v1.2.0+42**, the ecosystem was plagued by cascading system failures. Let's be transparent about what we survived:
 - 🔴 **The RED-GREEN Death Loop**: ESP32 hubs were caught in a vicious cycle of WiFi dropping, watchdog triggering, and Firebase soft-recovery failures happening rapid-fire hundreds of times an hour. 
 - 👻 **Phantom UI Echoes**: Toggling a switch in the Flutter app resulted in visual "bouncing" or flickering because the hardware's old state was echoing back through Firebase up to 500ms faster than the new command could actually flip the 220V relays.
 - ⏱️ **Watchdog Suicides**: The legacy stagger-delay logic for the 7 relays physically blocked the processor for 480ms (`delay(80)` * 6). The RTOS watchdog detected this as a system freeze and mercilessly killed the entire board.
 - 🚨 **The Neural Disconnect**: Global PIR motion sensors flat-out refused to talk to the lighting relays because of strict path fragmentation and mismatched data payloads in the RTDB schema.
-- 🕳️ **Developer Blindspots**: The Flutter Developer console was pulling from non-existent hardware paths, rendering the satellite tracking and event logs completely completely dead.
+- 🕳️ **Developer Blindspots**: The Flutter Developer console was pulling from non-existent hardware paths, rendering the satellite tracking and event logs completely dead.
 
 ---
 
-## ⚡ The Architectural Override
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=24&pause=1000&color=00FF00&center=true&vCenter=true&width=800&lines=The+Architectural+Override" alt="Typing SVG" />
+</p>
 
 <details open>
 <summary><b>View System Data Flow Hierarchy</b></summary>
