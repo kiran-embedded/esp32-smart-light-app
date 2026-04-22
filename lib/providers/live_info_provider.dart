@@ -17,6 +17,7 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
   Timer? _timer;
   Timer? _weatherTimer;
   StreamSubscription<DatabaseEvent>? _sensorSubscription;
+  StreamSubscription<DatabaseEvent>? _satelliteSubscription;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
 
   LiveInfoNotifier(this.ref)
@@ -78,20 +79,12 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
                   teleId = int.tryParse(data['tele_id'].toString()) ?? 0;
                 }
 
-                // Parse Signal Strengths (P1-P5)
-                List<int> signals = List.from(state.signals);
-                for (int i = 0; i < 5; i++) {
-                  final key = 'signal_p${i + 1}';
-                  if (data.containsKey(key)) {
-                    signals[i] = int.tryParse(data[key].toString()) ?? 0;
-                  }
-                }
-
+                // Removed signal_p parsing from main telemetry to reduce stress
+                
                 state = state.copyWith(
                   acVoltage: voltage,
                   current: current,
                   teleId: teleId,
-                  signals: signals,
                 );
                 _lastDataSeen = DateTime.now().millisecondsSinceEpoch ~/ 1000;
               }
@@ -100,6 +93,31 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
               print('Firebase Telemetry Error: $error');
             },
           );
+
+      _satelliteSubscription?.cancel();
+      _satelliteSubscription = _database
+          .child('devices/$deviceId/satellite/status')
+          .onValue
+          .listen(
+            (event) {
+              final data = event.snapshot.value;
+              if (data != null && data is Map) {
+                // Parse Signal Strengths (P1-P5) from Satellite Heartbeat
+                List<int> signals = List.from(state.signals);
+                for (int i = 0; i < 5; i++) {
+                  final key = 'signal_p${i + 1}';
+                  if (data.containsKey(key)) {
+                    signals[i] = int.tryParse(data[key].toString()) ?? 0;
+                  }
+                }
+                state = state.copyWith(signals: signals);
+              }
+            },
+            onError: (error) {
+              print('Satellite Status Error: $error');
+            },
+          );
+
     } catch (e) {
       print('Error initializing Firebase listeners: $e');
     }
@@ -188,6 +206,7 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
     _timer?.cancel();
     _weatherTimer?.cancel();
     _sensorSubscription?.cancel();
+    _satelliteSubscription?.cancel();
     super.dispose();
   }
 }

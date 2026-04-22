@@ -112,14 +112,20 @@ class HelpSupportScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   _buildExpandableTile(
                     context,
+                    "🔥 v1.2.0+42 Patch Notes",
+                    "• **Zero-Latency UI:** Migrated PageView to advanced IndexedStack opacity trees, delivering uncompromised 120 FPS transitions.\n• **Neural Architectures:** Deployed logic splitting. ESP8266 is now the dedicated 'Neural Brain' handling intelligence, while ESP32 acts strictly as 'Passive Muscles' for physical relay triggering.\n• **Switch Echo Resolution:** Hardened optimistic data locks with a 2000ms latency inhibitor, completely neutralizing Firebase telemetry bounce.\n• **Nebula AI Evolved:** Deep-trained Nebula chat models with advanced Tensor conversational pathways.",
+                    0,
+                  ),
+                  _buildExpandableTile(
+                    context,
                     "Getting Started",
-                    "1. Power On: Connect your ESP32 device to a power source.\n2. Wi-Fi Sync: Ensure your phone is connected to the internet. The app will automatically sync with your configured Firebase switches.\n3. Indicators: The glowing border around the dashboard indicates system status and connection health.",
+                    "1. Power On: Connect your ESP32 and ESP8266 to a power source.\n2. Wi-Fi Sync: Ensure your phone is connected. The App will automatically bridge your hardware.\n3. The UI will instantly sync the hardware state using our optimistic UI pipeline.",
                     1,
                   ),
                   _buildExpandableTile(
                     context,
-                    "Nebula Security & Persistence",
-                    "Nebula Core v1.2.0 uses a unified background engine for 24/7 reliability.\n\n• Security Mode: Monitoring is active even if the app is closed. High-priority foreground services ensure real-time alerts.\n• Persistence: Schedules are stored in Firebase and synced to the local Android system alarm manager. They will trigger even after a device reboot.",
+                    "Hardware Pipeline (Neural & Passive)",
+                    "• ESP8266 (Brain): Processes all security algorithms, motion tracking, NTP scheduling, and pushes commands directly into the Cloud bypassing heavy local processing.\n• ESP32 (Muscles): Sits completely idle until it receives a direct physical toggle signal via Firebase.",
                     2,
                   ),
                   _buildExpandableTile(
@@ -156,7 +162,7 @@ class HelpSupportScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "v1.2.0+34.5 • Industrial Reliability",
+                          "v1.2.0+42 • Industrial Reliability",
                           style: GoogleFonts.outfit(
                             color: Colors.white.withOpacity(0.1),
                             fontSize: 10,

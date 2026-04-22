@@ -68,11 +68,22 @@ class LocalAiEngine {
           "I have **Total Sovereignty** over your grid. 🛡️ I can bridge any automation gap and optimize your world. Point me to a device, and I shall engage it. ✨",
     ),
 
-    // SYSTEM ADVANCED
+    // SYSTEM ADVANCED & ARCHITECTURE
     AiRule(
-      keywords: ['processor', 'cpu', 'chip', 'brain', 'ram'],
+      keywords: ['processor', 'cpu', 'chip', 'brain', 'ram', 'hardware', 'esp32', 'esp8266'],
       response: (q, ctx) =>
-          "I am running on localized **Xtensa® Dual-Core LX7** silicon. 🧠 Extremely lean, extremely fast. Background footprint: **<100MB**. ⚡",
+          "My neural weights run across a dual-chip tensor architecture! 🧠\n\n" +
+          "1. **ESP8266 (The Brain):** I use this node to process all logic, NTP scheduling, security gates, and Firebase command streaming.\n" +
+          "2. **ESP32 (Passive Executor):** This is my muscle. It listens to my commands natively and achieves sub-millisecond physical relay actuation without thinking.\n\n" +
+          "I am highly optimized, consuming less than 100MB of RAM while delivering Cloud-Synced Neural intelligence! ⚡",
+    ),
+
+    // TENSORFLOW TRAINING & AI NATURE
+    AiRule(
+      keywords: ['tensorflow', 'training', 'ai', 'model', 'smart', 'intelligent', 'how do you work'],
+      response: (q, ctx) =>
+          "I am **Nebula**, a proprietary Quantum Model. ✨ My conversational models and helper logic were reinforced using advanced **TensorFlow-based paradigms**.\n\n" +
+          "I'm trained to behave naturally, assist with habitat management, and eliminate robotic rigidity. I feel like a real helper because my logic is shaped by high-dimensional contextual tensors! 🌸🚀",
     ),
 
     // ADVANCED CONTROLS

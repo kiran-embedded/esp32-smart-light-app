@@ -49,7 +49,6 @@ class MainScreen extends ConsumerStatefulWidget {
 
 class _MainScreenState extends ConsumerState<MainScreen>
     with WidgetsBindingObserver {
-  final PageController _pageController = PageController();
   int _currentPage = 0;
 
   Timer? _schedulerTimer;
@@ -111,7 +110,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _pageController.dispose();
     _schedulerTimer?.cancel();
     super.dispose();
   }
@@ -137,41 +135,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     setState(() => _currentPage = index);
 
-    final animSettings = ref.read(animationSettingsProvider);
-
-    if (animSettings.uiType == UiTransitionAnimation.zeroLatency) {
-      _pageController.jumpToPage(index);
-    } else {
-      Curve curve = Curves.easeOut;
-      Duration duration = const Duration(milliseconds: 300);
-
-      switch (animSettings.uiType) {
-        case UiTransitionAnimation.iOSSlide:
-        case UiTransitionAnimation.iosExactSlide:
-          curve = Curves.easeOut;
-          duration = const Duration(milliseconds: 400);
-          break;
-        case UiTransitionAnimation.butterZoom:
-          curve = Curves.easeInOutCubic;
-          duration = const Duration(milliseconds: 350);
-          break;
-        case UiTransitionAnimation.elasticSnap:
-          curve = Curves.elasticOut;
-          duration = const Duration(milliseconds: 700);
-          break;
-        case UiTransitionAnimation.springRebounce:
-          curve = Curves.elasticOut;
-          duration = const Duration(milliseconds: 700);
-          break;
-        case UiTransitionAnimation.fluidFade:
-          curve = Curves.easeOutQuad;
-          break;
-        default:
-          curve = Curves.fastOutSlowIn;
-      }
-
-      _pageController.animateToPage(index, duration: duration, curve: curve);
-    }
+    // Replaced PageView mechanics with instantaneous non-blocking state rebuilds
+    // Transitions are now strictly handled by opacity fades via the IndexedStack hooks.
   }
 
   @override
@@ -187,42 +152,24 @@ class _MainScreenState extends ConsumerState<MainScreen>
           const Positioned.fill(child: ColoredBox(color: Colors.black)),
           Positioned.fill(
             top: 85.h + Responsive.paddingTop,
-            child: ClipRect(
-              child: AnimatedBuilder(
-                animation: _pageController,
-                builder: (context, child) {
-                  double opacity = 0.0;
-                  if (_pageController.hasClients &&
-                      _pageController.position.haveDimensions) {
-                    final page =
-                        _pageController.page ?? _currentPage.toDouble();
-                    // Background is only for the "GRID" tab (index 1)
-                    opacity = (1.0 - (page - 1).abs()).clamp(0.0, 1.0);
-                  } else {
-                    opacity = _currentPage == 1 ? 1.0 : 0.0;
-                  }
-
-                  if (opacity < 0.01) return const SizedBox.shrink();
-
-                  return Opacity(opacity: opacity, child: child);
-                },
-                child: const RepaintBoundary(
-                  child: SwitchTabBackground(child: SizedBox.expand()),
-                ),
+            child: AnimatedOpacity(
+              opacity: _currentPage == 1 ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOut,
+              child: const RepaintBoundary(
+                child: SwitchTabBackground(child: SizedBox.expand()),
               ),
             ),
           ),
           SafeArea(
             bottom: false,
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: _onPageChanged,
-              physics: const BouncingScrollPhysics(),
-              children: const [
-                DashboardView(),
-                ControlView(),
-                SecurityView(),
-                SettingsScreen(),
+            child: IndexedStack(
+              index: _currentPage,
+              children: [
+                _buildFadeTab(0, const DashboardView()),
+                _buildFadeTab(1, const ControlView()),
+                _buildFadeTab(2, const SecurityView()),
+                _buildFadeTab(3, const SettingsScreen()),
               ],
             ),
           ),
@@ -232,6 +179,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
                   ref.read(helpBotVisibleProvider.notifier).state = false,
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFadeTab(int index, Widget child) {
+    return AnimatedOpacity(
+      opacity: _currentPage == index ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      child: IgnorePointer(
+        ignoring: _currentPage != index,
+        child: child,
       ),
     );
   }
@@ -412,51 +371,45 @@ class DashboardView extends ConsumerWidget {
           right: 0,
           child: PremiumAppBar(
             glowIntensity: liveInfo.acVoltage >= 180 ? 0.7 : 0.3,
-            title: ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.secondary,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ).createShader(bounds);
-              },
-              blendMode: BlendMode.srcIn,
-              child: Transform.scale(
-                scale: layout.headerScale,
-                child: Text(
-                  'NEBULA CORE',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2.w,
-                    shadows: [
-                      Shadow(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 12,
+            title: Row(
+              children: [
+                ShaderMask(
+                  shaderCallback: (Rect bounds) {
+                    return LinearGradient(
+                      colors: [
+                        Colors.white,
+                        theme.colorScheme.primary.withOpacity(0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      stops: const [0.3, 1.0],
+                    ).createShader(bounds);
+                  },
+                  blendMode: BlendMode.srcIn,
+                  child: Transform.scale(
+                    scale: layout.headerScale,
+                    child: Text(
+                      'NEBULA CORE',
+                      style: GoogleFonts.outfit(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 4.w,
+                        shadows: [
+                          Shadow(
+                            color: theme.colorScheme.primary.withOpacity(0.5),
+                            blurRadius: 20,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
             trailing: _EnvironmentInfo(
               theme: theme,
               temp: liveInfo.temperature,
               iconName: liveInfo.weatherIcon,
-            ),
-            leading: IconButton(
-              icon: const Icon(
-                Icons.help_outline_rounded,
-                color: Colors.white30,
-                size: 20,
-              ),
-              onPressed: () {
-                HapticService.heavy();
-                ref.read(helpBotVisibleProvider.notifier).state = true;
-              },
             ),
           ),
         ),

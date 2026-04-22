@@ -14,8 +14,6 @@
 #include <WiFiUdp.h>
 #include <addons/RTDBHelper.h>
 #include <addons/TokenHelper.h>
-#include <esp_now.h>
-#include <esp_wifi.h> // Required for advanced WiFi/Mesh stability
 
 /* ================= CONFIGURATION ================= */
 #define WIFI_SSID "Kerala_Vision"
@@ -103,12 +101,6 @@ volatile bool isInternetLive = false;
 bool isOTAActive = false;
 bool isActivityFlashing = false;
 unsigned long activityStart = 0;
-unsigned long lastMeshPacketTime = 0;
-
-// --- DEADMAN SAFETY VARIABLES ---
-bool safetyTripped = false;
-unsigned long lastCloudActivity = 0;
-#define DEADMAN_TIMEOUT_MS 300000
 
 /* ================= SECURITY & BUZZER ================= */
 bool isAlarmActive = false;
@@ -116,19 +108,6 @@ unsigned long alarmStartTime = 0;
 unsigned long lastBeepToggle = 0;
 bool buzzerState = false;
 const int ALARM_DURATION_MS = 10000;
-
-/* ================= MESH STRUCTURE ================= */
-typedef struct struct_message {
-  bool pir1;
-  bool pir2;
-  bool pir3;
-  bool pir4;
-  bool pir5;
-  int lightLevel;
-} struct_message;
-
-struct_message incomingData;
-volatile bool meshDataPending = false;
 
 /* ================= LED ENGINE ================= */
 void initLEDs() {
@@ -508,13 +487,6 @@ void streamTimeoutCallback(bool timeout) {
   }
 }
 
-/* ================= ESP-NOW CALLBACK ================= */
-void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
-  memcpy(&incomingData, data, sizeof(incomingData));
-  lastMeshPacketTime = millis();
-  meshDataPending = true; // Minimal code in ISR/Callback ensures no crashes
-}
-
 /* ================= SETUP ================= */
 void setup() {
   Serial.begin(115200);
@@ -574,13 +546,6 @@ void setup() {
     triggerActivityLED();
   }
 
-  // Ensure ESP-NOW initiates exactly on the established WiFi channel
-  if (esp_now_init() == ESP_OK) {
-    esp_now_register_recv_cb(OnDataRecv);
-    Serial.println(
-        "🔗 ESP-NOW Bridge Initialized (Auto-Synced to WiFi Channel)");
-  }
-
   ArduinoOTA.setHostname(OTA_HOSTNAME);
   ArduinoOTA.setPassword(OTA_PASSWORD);
   ArduinoOTA.onStart([]() {
@@ -617,7 +582,6 @@ void setup() {
   Firebase.RTDB.setBoolAsync(&fbTele, pathArmed.c_str(), isArmed);
 
   xTaskCreatePinnedToCore(voltageTask, "VoltageTask", 10000, NULL, 1, NULL, 1);
-  lastCloudActivity = millis();
 }
 
 /* ================= LOOP ================= */
@@ -663,23 +627,18 @@ void loop() {
           sprintf(key, "signal_p%d", i + 1);
           j.set(key, pirSignalStrength[i]);
         }
-        j.set("mesh_ldr", incomingData.lightLevel);
-        j.set("mesh_motion", incomingData.pir1);
-        j.set("mesh_pir1", incomingData.pir1);
-        j.set("isNight", (incomingData.lightLevel < LDR_NIGHT_THRESHOLD));
-        j.set("mesh_age", (millis() - lastMeshPacketTime) / 1000);
+        
         j.set("ap_mac", WiFi.softAPmacAddress());
         j.set("ch", WiFi.channel());
         j.set("ecoMode", isEcoMode);
         j.set("lastSeen", millis());
         j.set("buzzer_active", isAlarmActive);
-        j.set("tele_id", tele_id++);
+        
         forceTelemetry = false;
 
         if (Firebase.RTDB.updateNodeAsync(&fbTele, pathTele.c_str(), &j)) {
           lastTelemetryTime = millis();
           lastReportedVoltage = currentV;
-          lastCloudActivity = millis();
           Serial.printf("🛰 TELEMETRY SENT | ID: %d | V: %.2f\n", tele_id - 1,
                         currentV);
         } else {
@@ -690,164 +649,7 @@ void loop() {
     }
   }
 
-  // --- AUTO-OFF LIGHT TIMER LOGIC ---
-  for (int i = 0; i < 7; i++) {
-    if (pirAutoOffTimer[i] > 0 &&
-        (millis() - pirAutoOffTimer[i] > PIR_ON_DURATION)) {
-      relayState[i] = false;
-      pirAutoOffTimer[i] = 0;
-      updateRelays = true;
-      forceTelemetry = true;
-      Serial.printf("💡 Auto-off triggered for Relay %d\n", i + 1);
-    }
-  }
 
-  // --- DEADMAN'S SWITCH LOGIC ---
-  if (millis() - lastCloudActivity > DEADMAN_TIMEOUT_MS) {
-    if (!safetyTripped) {
-      Serial.println("⛔ DEADMAN TRIP: No Cloud Contact. Safe Halting.");
-      for (int i = 0; i < 7; i++)
-        relayState[i] = false;
-      applyRelays();
-      safetyTripped = true;
-      isAlarmActive = false;
-    }
-    if (WiFi.status() != WL_CONNECTED) {
-      WiFi.disconnect();
-      WiFi.begin(WIFI_SSID, WIFI_PASS);
-      lastCloudActivity = millis() - (DEADMAN_TIMEOUT_MS - 30000);
-    }
-    if (millis() - lastCloudActivity > (DEADMAN_TIMEOUT_MS + 600000)) {
-      Serial.println("FATAL: Persistent Isolation. Rebooting...");
-      ESP.restart();
-    }
-  } else {
-    safetyTripped = false;
-  }
 
-  // --- MESH BRIDGE & SECURITY FORWARDING ---
-  if (meshDataPending) {
-    Serial.printf("🛰 MESH RECV | LDR: %d | PIRs: %d %d %d %d %d\n",
-                  incomingData.lightLevel, incomingData.pir1, incomingData.pir2,
-                  incomingData.pir3, incomingData.pir4, incomingData.pir5);
-
-    bool anyMotion =
-        (incomingData.pir1 || incomingData.pir2 || incomingData.pir3 ||
-         incomingData.pir4 || incomingData.pir5);
-    bool isNightTime = (incomingData.lightLevel < LDR_NIGHT_THRESHOLD);
-
-    if (isNightTime) {
-      bool localMeshPir[5] = {incomingData.pir1, incomingData.pir2,
-                              incomingData.pir3, incomingData.pir4,
-                              incomingData.pir5};
-
-      for (int p = 0; p < 5; p++) {
-        if (localMeshPir[p]) {
-          for (int r = 0; r < 7; r++) {
-            if (pirRelayMask[p] & (1 << r)) {
-              if (!relayState[r]) {
-                relayState[r] = true;
-                updateRelays = true;
-              }
-              // Always refresh timer when motion exists
-              pirAutoOffTimer[r] = millis();
-            }
-          }
-        }
-      }
-      if (updateRelays)
-        forceTelemetry = true;
-    }
-
-    const bool ldrPass = (!isLdrSecurityEnabled ||
-                          incomingData.lightLevel < LDR_NIGHT_THRESHOLD);
-
-    // --- NEURAL GRID TRIGGER LOGIC (Relay Automation) ---
-    // Works independently of Security Arming State if it's "NightTime" for
-    // mapped relays
-    if (incomingData.lightLevel < LDR_NIGHT_THRESHOLD) {
-      for (int p = 0; p < 5; p++) {
-        // Direct array access for incomingData PIRs
-        bool currentPirActive = false;
-        if (p == 0)
-          currentPirActive = incomingData.pir1;
-        else if (p == 1)
-          currentPirActive = incomingData.pir2;
-        else if (p == 2)
-          currentPirActive = incomingData.pir3;
-        else if (p == 3)
-          currentPirActive = incomingData.pir4;
-        else if (p == 4)
-          currentPirActive = incomingData.pir5;
-
-        if (currentPirActive) {
-          // --- ADVANCED CALIBRATION FILTER ---
-          unsigned long now = millis();
-          if (pirLastHighTime[p] == 0)
-            pirLastHighTime[p] = now;
-
-          unsigned long heldDuration = now - pirLastHighTime[p];
-          bool isStable = (heldDuration >= (unsigned long)pirDebounce[p]);
-
-          // Signal strength calculation for live UI (Simulated based on
-          // duration)
-          pirSignalStrength[p] =
-              map(min((int)heldDuration, 2000), 0, 2000, 0, 100);
-
-          if (isStable) {
-            for (int r = 0; r < 7; r++) {
-              if (pirRelayMask[p] & (1 << r)) {
-                if (!relayState[r]) {
-                  relayState[r] = true;
-                  updateRelays = true;
-                  Serial.printf(
-                      "🧬 NEURAL LINK (CALIBRATED): PIR%d -> RELAY%d ON\n",
-                      p + 1, r + 1);
-                }
-                pirAutoOffTimer[r] = millis();
-              }
-            }
-          }
-        } else {
-          pirLastHighTime[p] = 0;
-          pirSignalStrength[p] = 0;
-        }
-      }
-      if (updateRelays)
-        forceTelemetry = true;
-    }
-
-    // --- SECURITY ALARM LOGIC ---
-    if (anyMotion && isArmed && ldrPass) {
-      isAlarmActive = true;
-      alarmStartTime = millis();
-    }
-
-    if (isAlarmActive) {
-      if (!isBuzzerMuted) {
-        digitalWrite(BUZZER_PIN, HIGH);
-      } else {
-        digitalWrite(BUZZER_PIN, LOW);
-      }
-      triggerActivityLED();
-      Firebase.RTDB.setBoolAsync(&fbTele, pathAlarm.c_str(), true);
-      if (incomingData.pir1)
-        logMotionToFirebase("PIR_1");
-      if (incomingData.pir2)
-        logMotionToFirebase("PIR_2");
-      if (incomingData.pir3)
-        logMotionToFirebase("PIR_3");
-      if (incomingData.pir4)
-        logMotionToFirebase("PIR_4");
-      if (incomingData.pir5)
-        logMotionToFirebase("PIR_5");
-    }
-  }
-  meshDataPending = false;
-}
-
-// 🔥 CRITICAL FIX: True FreeRTOS Watchdog Feed.
-// delay(1) or vTaskDelay(1) explicitly hands control back to FreeRTOS
-// to clear the watchdog timer, totally eliminating random restarts.
-vTaskDelay(pdMS_TO_TICKS(1));
+  yield();
 }

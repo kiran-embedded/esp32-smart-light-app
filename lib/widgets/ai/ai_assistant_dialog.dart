@@ -373,6 +373,7 @@ class _AiAssistantDialogState extends ConsumerState<AiAssistantDialog> {
 
               child: MarkdownBody(
                 data: displayText,
+                selectable: true,
                 styleSheet: MarkdownStyleSheet(
                   p: GoogleFonts.outfit(
                     color: Colors.white,

@@ -596,10 +596,10 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
       final cleanZone = zone.replaceAll('PIR', '').replaceAll('_', ' ').trim();
       _voiceService.speak("$cleanZone motion detected. Security breach alert.");
     } else {
-      // 🔔 FALLBACK TO STANDARD NOTIFICATION
+      // 🔔 FALLBACK TO SILENT/STANDARD NOTIFICATION
       // We don't set isAlarmActive to true here, so no full-screen UI
       final sensorName = state.sensors[zone]?.nickname ?? zone;
-      _soundService.playAlarmMedium(); // Standard notification-like sound
+      // Removed audio alarm as per user request to keep notifications silent if native siren is off.
       _voiceService.speak("Alert: $sensorName motion discovered.");
     }
   }

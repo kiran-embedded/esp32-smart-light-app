@@ -8,6 +8,8 @@ import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../providers/security_provider.dart';
 import '../providers/auth_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class AiChatMessage {
   final String text;
@@ -16,6 +18,18 @@ class AiChatMessage {
 
   AiChatMessage({required this.text, required this.isUser, DateTime? timestamp})
     : timestamp = timestamp ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {
+        'text': text,
+        'isUser': isUser,
+        'timestamp': timestamp.toIso8601String(),
+      };
+
+  factory AiChatMessage.fromJson(Map<String, dynamic> json) => AiChatMessage(
+        text: json['text'],
+        isUser: json['isUser'],
+        timestamp: DateTime.parse(json['timestamp']),
+      );
 }
 
 class AiAssistantState {
@@ -64,6 +78,36 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     _tts.setErrorHandler((_) {
       state = state.copyWith(isSpeaking: false);
     });
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getString('ai_chat_history');
+      if (historyJson != null) {
+        final List<dynamic> decoded = jsonDecode(historyJson);
+        final messages = decoded.map((e) => AiChatMessage.fromJson(e)).toList();
+        state = state.copyWith(messages: messages);
+      }
+    } catch (e) {
+      print("Failed to load AI Memory: $e");
+    }
+  }
+
+  Future<void> _saveHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Keep only last 30 messages to avoid lag
+      final recentMessages = state.messages.length > 30 
+          ? state.messages.sublist(state.messages.length - 30) 
+          : state.messages;
+      
+      final encoded = jsonEncode(recentMessages.map((m) => m.toJson()).toList());
+      await prefs.setString('ai_chat_history', encoded);
+    } catch (e) {
+      print("Failed to save AI Memory: $e");
+    }
   }
 
   Future<void> sendMessage(String text) async {
@@ -114,6 +158,8 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
         messages: [...state.messages, aiMsg],
         isLoading: false,
       );
+      
+      await _saveHistory();
 
       // Speak response if voice is enabled
       if (_ref.read(voiceEnabledProvider)) {
@@ -258,8 +304,10 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     await _tts.speak(cleanText);
   }
 
-  void clearHistory() {
+  Future<void> clearHistory() async {
     state = AiAssistantState();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('ai_chat_history');
   }
 }
 

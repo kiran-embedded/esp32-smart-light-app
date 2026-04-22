@@ -47,6 +47,9 @@ class TimeDateWidget extends ConsumerWidget {
             builder: (context, snapshot) {
               final currentTime = DateTime.now();
               final timeStr = DateFormat('hh:mm').format(currentTime);
+              final parts = timeStr.split(':');
+              final hours = parts[0];
+              final minutes = parts[1];
               final ampm = DateFormat('a').format(currentTime);
 
               return Row(
@@ -57,7 +60,6 @@ class TimeDateWidget extends ConsumerWidget {
                   ShaderMask(
                     shaderCallback: (bounds) => LinearGradient(
                       colors: [
-                        Colors.white,
                         theme.colorScheme.primary.withOpacity(0.8),
                         theme.colorScheme.primary,
                       ],
@@ -65,13 +67,30 @@ class TimeDateWidget extends ConsumerWidget {
                       end: Alignment.bottomCenter,
                     ).createShader(bounds),
                     child: Text(
-                      timeStr,
+                      hours,
                       style: GoogleFonts.outfit(
                         fontSize: compact ? 34.sp : 64.sp,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                         letterSpacing: -1.0,
                       ),
+                    ),
+                  ),
+                  Text(
+                    ':',
+                    style: GoogleFonts.outfit(
+                      fontSize: compact ? 34.sp : 50.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                  Text(
+                    minutes,
+                    style: GoogleFonts.outfit(
+                      fontSize: compact ? 34.sp : 64.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1.0,
                     ),
                   ),
                   const SizedBox(width: 6),

@@ -1,7 +1,7 @@
 name: nebula_core
 description: "Ultra-Advanced Smart Switch Control App - NEBULA CORE"
 publish_to: 'none'
-version: 1.2.0+42
+version: 1.2.0+44
 environment:
   sdk: ^3.10.4
 
@@ -31,8 +31,7 @@ dependencies:
   flutter_tts: ^4.0.2
   speech_to_text: ^7.0.0
 
-  # AI Assistant (Gemini)
-  google_generative_ai: ^0.4.0
+  # AI Assistant Web Proxy
   http: ^1.2.2
 
   # UI & Animation
@@ -101,6 +100,7 @@ flutter:
   assets:
     - assets/icon/
     - assets/audio/
+    - assets/ai_model.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

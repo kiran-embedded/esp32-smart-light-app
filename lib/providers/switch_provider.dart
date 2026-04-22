@@ -304,27 +304,14 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        // Extended to 5s to fully suppress firmware telemetry echo
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 5000) {
+        // STRICT OPTIMISTIC LOCK: Lock state fully for 2 seconds (2000ms) to ignore Firebase bounce echo.
+        // During this period, the optimistic UI takes absolute precedence over any stale telemetry packets.
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
           final existing = currentDeviceMap[id];
           if (existing != null && existing.isPending) {
             // PIN THE STATE: Force the optimistic state during the transition
             newIsActive = existing.isActive;
             isPending = true;
-
-            // Strict Clear: Only remove pending if telemetry ACTUALLY matches the intent
-            final telemetryVal = telemetry[id];
-            bool remoteMatches = false;
-            if (telemetryVal is int)
-              remoteMatches = (telemetryVal == (newIsActive ? 1 : 0));
-            else if (telemetryVal is bool)
-              remoteMatches = (telemetryVal == newIsActive);
-
-            if (remoteMatches &&
-                DateTime.now().difference(pendingTime).inMilliseconds > 1000) {
-              _pendingSwitches.remove(id);
-              isPending = false;
-            }
           }
         } else {
           _pendingSwitches.remove(id);

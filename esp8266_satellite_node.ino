@@ -40,7 +40,7 @@ int REQUIRED_PULSES = 2;
 unsigned long WINDOW_TIME = 15000;
 unsigned long HOLD_TIME = 3000;
 unsigned long MIN_GAP = 2000;
-unsigned long HIGH_VALID_TIME = 150;
+int highValidTimeArr[4] = {150, 150, 150, 150};
 
 struct PirZone {
   unsigned long firstPulseTime;
@@ -57,6 +57,17 @@ FirebaseData fbData, fbStream, fbStatus;
 FirebaseAuth auth;
 FirebaseConfig config;
 bool isFirebaseReady = false;
+
+// --- Neural Link Globals ---
+uint8_t pirRelayMask[4] = {1, 2, 4, 8}; 
+unsigned long PIR_ON_DURATION = 60000;
+bool isArmed = true;
+bool isLdrSecurityEnabled = false;
+int LDR_NIGHT_THRESHOLD = 30;
+bool activePeriods[5] = {true, true, true, true, true}; // morning, afternoon, evening, night, midnight
+
+unsigned long pirAutoOffTimer[7] = {0, 0, 0, 0, 0, 0, 0};
+bool relayState[7] = {false, false, false, false, false, false, false};
 
 // LED Engine
 int pendingPulses = 0;
@@ -100,16 +111,65 @@ void tokenStatusCallback(TokenInfo info) {
 void configStreamCallback(FirebaseStream data) {
   triggerLedPulse(4);
   String p = data.dataPath();
-  if (p == F("/pulses"))
-    REQUIRED_PULSES = data.intData();
-  else if (p == F("/window"))
-    WINDOW_TIME = data.intData();
-  else if (p == F("/hold"))
-    HOLD_TIME = data.intData();
-  else if (p == F("/gap"))
-    MIN_GAP = data.intData();
-  else if (p == F("/valid"))
-    HIGH_VALID_TIME = data.intData();
+  
+  if (p == F("/")) {
+    FirebaseJson *json = data.jsonObjectPtr();
+    FirebaseJsonData d;
+    if (json->get(d, "mapPIR1")) pirRelayMask[0] = d.intValue;
+    if (json->get(d, "mapPIR2")) pirRelayMask[1] = d.intValue;
+    if (json->get(d, "mapPIR3")) pirRelayMask[2] = d.intValue;
+    if (json->get(d, "mapPIR4")) pirRelayMask[3] = d.intValue;
+    if (json->get(d, "pirTimer")) PIR_ON_DURATION = (unsigned long)d.intValue * 1000;
+    if (json->get(d, "ldrThreshold")) LDR_NIGHT_THRESHOLD = d.intValue;
+    
+    // Relay State Sync
+    for(int r=0; r<7; r++) {
+      String rKey = "relay" + String(r+1);
+      if (json->get(d, rKey)) relayState[r] = (d.intValue > 0);
+    }
+    
+    // Security config (App syncs these to commands stream)
+    if (json->get(d, "security/isArmed")) isArmed = d.boolValue;
+    if (json->get(d, "security/isLdrSecurityEnabled")) isLdrSecurityEnabled = d.boolValue;
+
+    if (json->get(d, "security/activePeriods/morning")) activePeriods[0] = d.boolValue;
+    if (json->get(d, "security/activePeriods/afternoon")) activePeriods[1] = d.boolValue;
+    if (json->get(d, "security/activePeriods/evening")) activePeriods[2] = d.boolValue;
+    if (json->get(d, "security/activePeriods/night")) activePeriods[3] = d.boolValue;
+    if (json->get(d, "security/activePeriods/midnight")) activePeriods[4] = d.boolValue;
+
+    for (int i=1; i<=4; i++) {
+        char key[64];
+        sprintf(key, "security/calibration/PIR%d/debounce", i);
+        if (json->get(d, key)) highValidTimeArr[i-1] = d.intValue;
+    }
+  } else {
+    int intV = data.intData();
+    if (p == F("/mapPIR1")) pirRelayMask[0] = intV;
+    else if (p == F("/mapPIR2")) pirRelayMask[1] = intV;
+    else if (p == F("/mapPIR3")) pirRelayMask[2] = intV;
+    else if (p == F("/mapPIR4")) pirRelayMask[3] = intV;
+    else if (p == F("/pirTimer")) PIR_ON_DURATION = (unsigned long)intV * 1000;
+    else if (p == F("/ldrThreshold")) LDR_NIGHT_THRESHOLD = intV;
+    else if (p.startsWith(F("/relay"))) {
+      int rIdx = p.substring(6).toInt() - 1;
+      if (rIdx >= 0 && rIdx < 7) relayState[rIdx] = (intV > 0);
+    }
+    else if (p.startsWith(F("/security/activePeriods/"))) {
+       if (p.endsWith(F("morning"))) activePeriods[0] = data.boolData();
+       else if (p.endsWith(F("afternoon"))) activePeriods[1] = data.boolData();
+       else if (p.endsWith(F("evening"))) activePeriods[2] = data.boolData();
+       else if (p.endsWith(F("night"))) activePeriods[3] = data.boolData();
+       else if (p.endsWith(F("midnight"))) activePeriods[4] = data.boolData();
+    }
+    else if (p.indexOf(F("/calibration/PIR")) != -1 && p.endsWith(F("/debounce"))) {
+       int pirIdx = p.substring(p.indexOf(F("PIR")) + 3, p.indexOf(F("PIR")) + 4).toInt() - 1;
+       if (pirIdx >= 0 && pirIdx < 4) highValidTimeArr[pirIdx] = intV;
+    }
+    
+    if (p.indexOf(F("isArmed")) != -1) isArmed = data.boolData();
+    if (p.indexOf(F("isLdrSecurityEnabled")) != -1) isLdrSecurityEnabled = data.boolData();
+  }
 }
 
 void initFirebase() {
@@ -122,7 +182,7 @@ void initFirebase() {
 
   String p = F("devices/");
   p += DEVICE_ID;
-  p += F("/satellite/config");
+  p += F("/commands");
   Firebase.RTDB.beginStream(&fbStream, p);
   Firebase.RTDB.setStreamCallback(&fbStream, configStreamCallback,
                                   [](bool t) {});
@@ -207,7 +267,7 @@ void loop() {
     } else
       z.highStart = 0;
 
-    if (z.highStart > 0 && (now - z.highStart >= HIGH_VALID_TIME)) {
+    if (z.highStart > 0 && (now - z.highStart >= (unsigned long)highValidTimeArr[i])) {
       if (z.lastPirState == LOW) {
         if (!(z.pulseCount > 0 && (now - z.lastPulseTime < MIN_GAP))) {
           if (z.pulseCount == 0)
@@ -261,6 +321,46 @@ void loop() {
     shouldPush = true; // Force periodic push
 
   if (isFirebaseReady && shouldPush) {
+    // Neural Grid Trigger Logic (Relay Automation)
+    bool isNightTime = (currentLdr < LDR_NIGHT_THRESHOLD);
+    if (isNightTime) {
+      for (int i = 0; i < 4; i++) {
+        if (zones[i].motionDetected) {
+          // Keep active timer refreshed
+          for (int r = 0; r < 7; r++) {
+            if (pirRelayMask[i] & (1 << r)) {
+              if (!relayState[r]) {
+                relayState[r] = true;
+                String pRelay = F("devices/"); pRelay += DEVICE_ID; pRelay += F("/commands/relay"); pRelay += (r+1);
+                Firebase.RTDB.setIntAsync(&fbData, pRelay, 1);
+              }
+              pirAutoOffTimer[r] = now;
+            }
+          }
+        }
+      }
+    }
+
+    // --- NTP Schedule Evaluation ---
+    time_t rawtime = time(NULL);
+    struct tm* timeinfo = localtime(&rawtime);
+    int hour = timeinfo->tm_hour;
+    
+    bool isTimeActive = true;
+    if (timeinfo->tm_year > 100) { // Year > 2000 means NTP synced properly
+       if (hour >= 6 && hour < 12) isTimeActive = activePeriods[0];
+       else if (hour >= 12 && hour < 17) isTimeActive = activePeriods[1];
+       else if (hour >= 17 && hour < 21) isTimeActive = activePeriods[2];
+       else if (hour >= 21 || hour < 0) isTimeActive = activePeriods[3];
+       else isTimeActive = activePeriods[4];
+    }
+
+    const bool ldrPass = (!isLdrSecurityEnabled || isNightTime);
+    if (isArmed && ldrPass && isTimeActive && currentMask != 0 && (currentMask != lastMask)) {
+        String pAlarm = F("devices/"); pAlarm += DEVICE_ID; pAlarm += F("/commands/emergencyAlert");
+        Firebase.RTDB.setBoolAsync(&fbData, pAlarm, true);
+    }
+
     lastMask = currentMask;
     lastLdr = currentLdr;
     lastUpdate = now;
@@ -289,12 +389,31 @@ void loop() {
     status.set(F("online"), true);
     status.set(F("lastSeen"), (int)time(NULL));
     status.set(F("signal"), WiFi.RSSI());
-    status.set(F("version"), F("v2.1.0"));
+    status.set(F("version"), F("v2.5.0-NEURAL"));
+
+    // Dev Console Emulated Telegraphs
+    for(int i=0; i<4; i++) {
+        char key[16];
+        sprintf(key, "signal_p%d", i+1);
+        status.set(key, zones[i].pulseCount * 15); // simulate spike for visual analyzer
+    }
 
     String p2 = F("devices/");
     p2 += DEVICE_ID;
     p2 += F("/satellite/status");
     Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &status);
+  }
+
+  // ---- ESP8266 Managed Auto-Off Logic ----
+  if (isFirebaseReady) {
+      for(int r = 0; r < 7; r++) {
+         if (relayState[r] && pirAutoOffTimer[r] > 0 && (now - pirAutoOffTimer[r] > PIR_ON_DURATION)) {
+             relayState[r] = false;
+             pirAutoOffTimer[r] = 0;
+             String pRelay = F("devices/"); pRelay += DEVICE_ID; pRelay += F("/commands/relay"); pRelay += (r+1);
+             Firebase.RTDB.setIntAsync(&fbData, pRelay, 0);
+         }
+      }
   }
 
   // ---- Force push heartbeat even if no sensor change (every 30s) ----

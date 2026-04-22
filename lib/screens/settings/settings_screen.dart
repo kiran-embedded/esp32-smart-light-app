@@ -2397,6 +2397,7 @@ class _FirmwareHubSheetState extends State<_FirmwareHubSheet>
             'Status': 'devices/$id/satellite/status/...',
             'Sensors': 'devices/$id/security/sensors/PIR1..4',
             'Config': 'devices/$id/satellite/config/pulses,window,hold...',
+            'Dev Console Signals': 'devices/$id/satellite/status/signal_px',
           },
         ),
         _buildAddressGroup('Security Events', Colors.redAccent, Icons.warning, {
@@ -2718,13 +2719,13 @@ class _FirmwareHubSheetState extends State<_FirmwareHubSheet>
   // Embedded skeleton code strings
   static const String _esp32SkeletonCode = '''
 /*
- * NEBULA CORE – ESP32 HUB FIRMWARE TEMPLATE v2.0.0
- * Fill in YOUR credentials below.
+ * NEBULA CORE – ESP32 PASSIVE MUSCLES v3.0.0
+ * The ESP32 is now entirely stripped of Neural Logic.
+ * It is a pure actuator that listens to Firebase and triggers GPIO.
  */
 
 #include <WiFi.h>
 #include <Firebase_ESP_Client.h>
-#include <esp_task_wdt.h>
 #include "addons/RTDBHelper.h"
 #include "addons/TokenHelper.h"
 
@@ -2741,18 +2742,20 @@ String deviceId =     "YOUR_DEVICE_ID";
 #define BUZZER_PIN 13
 #define LED_RED 19  #define LED_GREEN 16  #define LED_BLUE 17
 
-// See FIREBASE_DATA_MAP.md for full path reference
-// Download the complete firmware from the firmware/ folder
+// Full firmware available in firmware/esp32_nebula_controller.ino
 ''';
 
   static const String _esp8266SkeletonCode = '''
 /*
- * NEBULA CORE – ESP8266 SATELLITE TEMPLATE v2.1.0
- * Fill in YOUR credentials below.
+ * NEBULA CORE – ESP8266 NEURAL BRAIN v3.0.0
+ * The ESP8266 is now the primary Neural link controller.
+ * Processes PIR, Alarms, NTP Scheduling, and directly issues Firebase Commands.
  */
 
 #include <ESP8266WiFi.h>
 #include <Firebase_ESP_Client.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
 #define WIFI_SSID    "YOUR_WIFI_NAME"
 #define WIFI_PASS    "YOUR_WIFI_PASSWORD"
@@ -2764,7 +2767,6 @@ String deviceId =     "YOUR_DEVICE_ID";
 const uint8_t PIR_PINS[4] = {5, 4, 14, 12}; // D1, D2, D5, D6
 // A0 = LDR Sensor
 
-// See FIREBASE_DATA_MAP.md for full path reference
-// Download the complete firmware from the firmware/ folder
+// Full firmware available in esp8266_satellite_node.ino
 ''';
 }
