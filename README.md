@@ -11,8 +11,8 @@
 
 *A stunning Flutter application for controlling ESP32-based smart power grids with real-time Firebase synchronization, dynamic configuration, and AI-powered voice control.*
 
-### 🚀 Lights Release 3.0 is here!
-*10 New Matching Themes • AI Auto-Tune • Dynamic Nav Animations • 20+ Switch Styles*
+### 🚀 Security Evolution v1.2.0+44
+*AI Proxy Architecture • Dynamic JWT Auth • XOR Hardware Handshake • Hybrid Neural Engine*
 
 </div>
 
@@ -28,10 +28,11 @@
 - **🌈 Dynamic Backgrounds** - 20+ Custom Painter backgrounds that react to switch states and themes
 - **🤖 AI Auto-Tune** - Design Advisor service for one-tap aesthetic optimization
 - **🔊 Zero-Latency Audio** - Instant sound effects for startup, tab switching, and toggles
-- **🤖 AI Voice Assistant** - Text-to-speech and speech recognition for hands-free control
-- **📊 Live Telemetry** - Real-time voltage, current, and power monitoring
-- **🌡️ Weather Integration** - Location-based weather data display
-- **🔐 Google Sign-In** - Secure authentication with dynamic OAuth configuration
+- **🔐 Secure AI Proxy** - No more API keys in the APK. All Generative AI runs through a secure Node.js proxy
+- **🛡️ Dynamic JWT Auth** - Short-lived cryptographic tokens (5-min rotation) for all AI requests
+- **🤖 XOR Handshake** - Hardware-level verification prevents unauthorized backend access
+- **🎛️ Hybrid Intelligence** - Local TensorFlow edge inference + Secure Cloud fallback
+- **🌪️ Sandbox Enforcement** - Backend-level stripping of unauthorized hardware commands from AI output
 
 ### 🛠️ Advanced Features
 - **🔧 Zero Hardcoding** - Fully dynamic Firebase configuration at runtime
