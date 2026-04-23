@@ -582,7 +582,7 @@ void setup() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   pathTele = "devices/" + deviceId + "/telemetry";
-  pathEvents = "devices/" + deviceId + "/events";
+  pathEvents = "devices/" + deviceId + "/security/logs";
   pathCmds = "devices/" + deviceId + "/commands";
   pathSensors = "devices/" + deviceId + "/security/sensors";
 

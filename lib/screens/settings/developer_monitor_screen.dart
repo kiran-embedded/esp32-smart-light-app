@@ -44,7 +44,7 @@ class _DeveloperMonitorScreenState
       }
     });
 
-    _satSub = _db.child('devices/$deviceId/satellite/status').onValue.listen((
+    _satSub = _db.child('devices/$deviceId/security/nodeActive').onValue.listen((
       event,
     ) {
       if (mounted && event.snapshot.value != null) {
@@ -55,7 +55,7 @@ class _DeveloperMonitorScreenState
     });
 
     _logSub = _db
-        .child('devices/$deviceId/events')
+        .child('devices/$deviceId/security/logs')
         .orderByChild('ts')
         .limitToLast(30)
         .onValue

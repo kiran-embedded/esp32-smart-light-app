@@ -75,10 +75,16 @@ unsigned long lastLedAction = 0;
 unsigned long hbStart = 0;
 
 // WiFi reconnect state
-unsigned long lastWiFiCheck = 0;
 unsigned long lastForcePush = 0;
 unsigned long lastTokenCheck = 0;
 bool wasConnected = false;
+
+// Precomputed Firebase Paths
+String basePath;
+String pathStatus;
+String pathPanic;
+String pathRelays[7];
+String pathPIRs[4];
 
 void triggerLedPulse(int count) { pendingPulses = count * 2; }
 
@@ -125,12 +131,12 @@ void configStreamCallback(FirebaseStream data) {
     // Relay State Sync
     for(int r=0; r<7; r++) {
       String rKey = "relay" + String(r+1);
-      if (json->get(d, rKey)) relayState[r] = (d.intValue > 0);
+      if (json->get(d, rKey)) relayState[r] = (d.intValue > 0 || d.boolValue || d.stringValue == "true");
     }
     
     // Security config (App syncs these to commands stream)
-    if (json->get(d, "security/isArmed")) isArmed = d.boolValue;
-    if (json->get(d, "security/isLdrSecurityEnabled")) isLdrSecurityEnabled = d.boolValue;
+    if (json->get(d, "isArmed")) isArmed = d.boolValue;
+    if (json->get(d, "ldrSecurity")) isLdrSecurityEnabled = d.boolValue;
 
     if (json->get(d, "security/activePeriods/morning")) activePeriods[0] = d.boolValue;
     if (json->get(d, "security/activePeriods/afternoon")) activePeriods[1] = d.boolValue;
@@ -153,7 +159,7 @@ void configStreamCallback(FirebaseStream data) {
     else if (p == F("/ldrThreshold")) LDR_NIGHT_THRESHOLD = intV;
     else if (p.startsWith(F("/relay"))) {
       int rIdx = p.substring(6).toInt() - 1;
-      if (rIdx >= 0 && rIdx < 7) relayState[rIdx] = (intV > 0);
+      if (rIdx >= 0 && rIdx < 7) relayState[rIdx] = (data.intData() > 0 || data.boolData() || data.stringData() == "true");
     }
     else if (p.startsWith(F("/security/activePeriods/"))) {
        if (p.endsWith(F("morning"))) activePeriods[0] = data.boolData();
@@ -168,7 +174,7 @@ void configStreamCallback(FirebaseStream data) {
     }
     
     if (p.indexOf(F("isArmed")) != -1) isArmed = data.boolData();
-    if (p.indexOf(F("isLdrSecurityEnabled")) != -1) isLdrSecurityEnabled = data.boolData();
+    if (p.indexOf(F("ldrSecurity")) != -1) isLdrSecurityEnabled = data.boolData();
   }
 }
 
@@ -211,6 +217,17 @@ void setup() {
   if (WiFi.status() == WL_CONNECTED) {
     wasConnected = true;
     configTime(19800, 0, "pool.ntp.org");
+    basePath = "devices/" + String(DEVICE_ID);
+    pathStatus = basePath + "/security/nodeActive";
+    pathPanic = basePath + "/commands/panic";
+    for(int i=0; i<7; i++) pathRelays[i] = basePath + "/commands/relay" + String(i+1);
+    for(int i=0; i<4; i++) pathPIRs[i] = basePath + "/security/sensors/PIR" + String(i+1);
+    
+    // Set minimal SSL buffer sizes to save memory on ESP8266
+    fbData.setBSSLBufferSize(2048, 1024);
+    fbStream.setBSSLBufferSize(2048, 1024);
+    fbStatus.setBSSLBufferSize(2048, 1024);
+    
     initFirebase();
   }
 
@@ -224,26 +241,15 @@ void loop() {
   animateLED();
   unsigned long now = millis();
 
-  // ---- WiFi auto-reconnect ----
-  if (now - lastWiFiCheck > 10000) {
-    lastWiFiCheck = now;
-    if (WiFi.status() != WL_CONNECTED) {
-      WiFi.disconnect();
-      delay(500);
-      WiFi.begin(WIFI_SSID, WIFI_PASS);
-      unsigned long wt = millis();
-      while (WiFi.status() != WL_CONNECTED && millis() - wt < 8000) {
-        delay(200);
-        yield();
-      }
-      if (WiFi.status() == WL_CONNECTED) {
-        if (!wasConnected) {
-          configTime(19800, 0, "pool.ntp.org");
-          initFirebase();
-          wasConnected = true;
-        }
-        triggerLedPulse(3);
-      }
+  // ---- WiFi auto-reconnect state tracking ----
+  if (WiFi.status() != WL_CONNECTED) {
+    if (wasConnected) {
+      wasConnected = false;
+    }
+  } else {
+    if (!wasConnected) {
+      wasConnected = true;
+      triggerLedPulse(3);
     }
   }
 
@@ -331,8 +337,7 @@ void loop() {
             if (pirRelayMask[i] & (1 << r)) {
               if (!relayState[r]) {
                 relayState[r] = true;
-                String pRelay = F("devices/"); pRelay += DEVICE_ID; pRelay += F("/commands/relay"); pRelay += (r+1);
-                Firebase.RTDB.setIntAsync(&fbData, pRelay, 1);
+                Firebase.RTDB.setIntAsync(&fbData, pathRelays[r], 1);
               }
               pirAutoOffTimer[r] = now;
             }
@@ -357,8 +362,7 @@ void loop() {
 
     const bool ldrPass = (!isLdrSecurityEnabled || isNightTime);
     if (isArmed && ldrPass && isTimeActive && currentMask != 0 && (currentMask != lastMask)) {
-        String pAlarm = F("devices/"); pAlarm += DEVICE_ID; pAlarm += F("/commands/emergencyAlert");
-        Firebase.RTDB.setBoolAsync(&fbData, pAlarm, true);
+        Firebase.RTDB.setBoolAsync(&fbData, pathPanic, true);
     }
 
     lastMask = currentMask;
@@ -376,11 +380,7 @@ void loop() {
         if (state == 1)
           zoneData.set(F("lastTriggered"), (int)time(NULL));
 
-        String p = F("devices/");
-        p += DEVICE_ID;
-        p += F("/security/sensors/PIR");
-        p += (i + 1);
-        Firebase.RTDB.updateNodeAsync(&fbData, p, &zoneData);
+        Firebase.RTDB.updateNodeAsync(&fbData, pathPIRs[i], &zoneData);
       }
     }
 
@@ -398,10 +398,7 @@ void loop() {
         status.set(key, zones[i].pulseCount * 15); // simulate spike for visual analyzer
     }
 
-    String p2 = F("devices/");
-    p2 += DEVICE_ID;
-    p2 += F("/satellite/status");
-    Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &status);
+    Firebase.RTDB.updateNodeAsync(&fbStatus, pathStatus, &status);
   }
 
   // ---- ESP8266 Managed Auto-Off Logic ----
@@ -410,8 +407,7 @@ void loop() {
          if (relayState[r] && pirAutoOffTimer[r] > 0 && (now - pirAutoOffTimer[r] > PIR_ON_DURATION)) {
              relayState[r] = false;
              pirAutoOffTimer[r] = 0;
-             String pRelay = F("devices/"); pRelay += DEVICE_ID; pRelay += F("/commands/relay"); pRelay += (r+1);
-             Firebase.RTDB.setIntAsync(&fbData, pRelay, 0);
+             Firebase.RTDB.setIntAsync(&fbData, pathRelays[r], 0);
          }
       }
   }
@@ -424,9 +420,6 @@ void loop() {
     status.set(F("lastSeen"), (int)time(NULL));
     status.set(F("signal"), WiFi.RSSI());
 
-    String p2 = F("devices/");
-    p2 += DEVICE_ID;
-    p2 += F("/satellite/status");
-    Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &status);
+    Firebase.RTDB.updateNodeAsync(&fbStatus, pathStatus, &status);
   }
 }

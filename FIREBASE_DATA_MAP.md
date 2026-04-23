@@ -72,7 +72,7 @@ Path: `devices/{DEVICE_ID}/telemetry/`
 | `rssi` | `int` | `-45` | WiFi signal |
 | `version` | `string` | `v2.0.0` | Firmware version |
 
-### ESP8266 Satellite: `devices/{DEVICE_ID}/satellite/status/`
+### ESP8266 Satellite: `devices/{DEVICE_ID}/security/nodeActive/`
 
 | Key | Type | Example | Description |
 |-----|------|---------|-------------|
@@ -95,7 +95,7 @@ Path: `devices/{DEVICE_ID}/telemetry/`
 | `nickname` | `string` | `"Front Door"` | User-given name |
 | `isAlarmEnabled` | `bool` | `true` | Per-sensor alarm toggle |
 
-### Breach Logs: `devices/{DEVICE_ID}/events/{pushId}/`
+### Breach Logs: `devices/{DEVICE_ID}/security/logs/{pushId}/`
 
 | Key | Type | Example | Description |
 |-----|------|---------|-------------|

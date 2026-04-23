@@ -273,7 +273,7 @@ void loop() {
     s.set(F("version"), F("v2.1.0"));
     String p2 = F("devices/");
     p2 += DEVICE_ID;
-    p2 += F("/satellite/status");
+    p2 += F("/security/nodeActive");
     Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &s);
   }
 
@@ -286,7 +286,7 @@ void loop() {
     s.set(F("signal"), WiFi.RSSI());
     String p2 = F("devices/");
     p2 += DEVICE_ID;
-    p2 += F("/satellite/status");
+    p2 += F("/security/nodeActive");
     Firebase.RTDB.updateNodeAsync(&fbStatus, p2, &s);
   }
 }

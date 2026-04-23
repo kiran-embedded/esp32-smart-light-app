@@ -96,7 +96,7 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
 
       _satelliteSubscription?.cancel();
       _satelliteSubscription = _database
-          .child('devices/$deviceId/satellite/status')
+          .child('devices/$deviceId/security/nodeActive')
           .onValue
           .listen(
             (event) {

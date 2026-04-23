@@ -2394,14 +2394,14 @@ class _FirmwareHubSheetState extends State<_FirmwareHubSheet>
           Colors.blue,
           Icons.satellite_alt,
           {
-            'Status': 'devices/$id/satellite/status/...',
+            'Status': 'devices/$id/security/nodeActive/...',
             'Sensors': 'devices/$id/security/sensors/PIR1..4',
             'Config': 'devices/$id/satellite/config/pulses,window,hold...',
-            'Dev Console Signals': 'devices/$id/satellite/status/signal_px',
+            'Dev Console Signals': 'devices/$id/security/nodeActive/signal_px',
           },
         ),
         _buildAddressGroup('Security Events', Colors.redAccent, Icons.warning, {
-          'Breach Log': 'devices/$id/events/{pushId}',
+          'Breach Log': 'devices/$id/security/logs/{pushId}',
           'Alarm Active': 'devices/$id/security/alarmActive',
           'Active Breaches': 'devices/$id/security/activeBreaches/...',
         }),

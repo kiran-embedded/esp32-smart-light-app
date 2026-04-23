@@ -14,7 +14,6 @@
 #include <ESPmDNS.h>
 #include <Firebase_ESP_Client.h>
 #include <WiFi.h>
-#include <esp_task_wdt.h>
 #include <time.h>
 
 #include "addons/RTDBHelper.h"
@@ -110,7 +109,7 @@ int masterLightLevel = 0;
 int globalMotionMode =
     -1; // -1: disabled, 0: Always, 4: Night-Only (synced from app)
 
-String pathTele, pathLogs, pathCmds, pathSensors;
+String pathTele, pathLogs, pathCmds, pathSensors, pathStatus;
 bool isActivityFlashing = false;
 unsigned long activityStart = 0;
 bool isPanicActive = false;
@@ -122,7 +121,6 @@ bool safetyTripped = false;
 unsigned long lastCloudActivity = 0;
 
 // Recovery & Debounce State
-unsigned long lastRecoveryTime = 0;
 int lowHeapCount = 0;
 unsigned long lastCommandTime = 0;   // Suppress telemetry echo after command
 unsigned long lastHeartbeatTime = 0; // Independent heartbeat timer
@@ -201,40 +199,6 @@ void triggerBuzzer(int ms) {
 }
 
 /* ================= STABILITY ENGINES ================= */
-void softRecoveryEngine() {
-  unsigned long now = millis();
-  // Cooldown: prevent rapid-fire recovery
-  if (now - lastRecoveryTime < RECOVERY_COOLDOWN_MS)
-    return;
-  lastRecoveryTime = now;
-  lowHeapCount = 0;
-
-  Serial.println("⚠️ SOFT RECOVERY. Resetting network stack...");
-
-  // End streams BEFORE disconnecting WiFi
-  Firebase.RTDB.endStream(&fbStream);
-  Firebase.RTDB.endStream(&fbSensors);
-  WiFi.disconnect(true);
-  delay(500);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-
-  // Wait for WiFi to reconnect BEFORE re-opening streams
-  unsigned long wifiStart = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 8000) {
-    delay(100);
-    animateLEDs();
-    esp_task_wdt_reset();
-  }
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Firebase.RTDB.beginStream(&fbStream, pathCmds.c_str());
-    Firebase.RTDB.beginStream(&fbSensors, pathSensors.c_str());
-    Serial.println("✅ Recovery complete. Streams restored.");
-  } else {
-    Serial.println("❌ Recovery: WiFi failed. Will retry next cycle.");
-  }
-}
-
 void cpuMemoryHealthCheck() {
   uint32_t freeHeap = ESP.getFreeHeap();
   uint32_t maxBlock = ESP.getMaxAllocHeap();
@@ -242,9 +206,9 @@ void cpuMemoryHealthCheck() {
 
   if (freeHeap < MIN_FREE_HEAP || frag > MAX_FRAG_PERCENT) {
     lowHeapCount++;
-    // Only trigger recovery after 3 consecutive bad readings
     if (lowHeapCount >= 3) {
-      softRecoveryEngine();
+      Serial.println("⚠️ CRITICAL MEMORY FRAGMENTATION. Restarting safely.");
+      ESP.restart();
     }
   } else {
     lowHeapCount = 0;
@@ -323,9 +287,6 @@ void voltageTask(void *pvParameters) {
 
 /* ================= HARDWARE CONTROL ================= */
 void applyRelays() {
-  // Feed watchdog BEFORE relay application to prevent crash
-  esp_task_wdt_reset();
-
   int pins[] = {RELAY1, RELAY2, RELAY3, RELAY4, RELAY5, RELAY6, RELAY7};
   for (int i = 0; i < 7; i++) {
     bool target = (relayState[i] != invertedLogic[i]);
@@ -619,9 +580,10 @@ void setup() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   pathTele = "devices/" + deviceId + "/telemetry";
-  pathLogs = "devices/" + deviceId + "/events";
+  pathLogs = "devices/" + deviceId + "/security/logs";
   pathCmds = "devices/" + deviceId + "/commands";
   pathSensors = "devices/" + deviceId + "/security/sensors";
+  pathStatus = "devices/" + deviceId + "/status";
 
   unsigned long startT = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - startT < 15000) {
@@ -668,13 +630,6 @@ void setup() {
   Firebase.RTDB.setStreamCallback(&fbSensors, sensorCallback,
                                   streamTimeoutCallback);
 
-  // Watchdog: 30 seconds (generous to handle Firebase operations)
-  esp_task_wdt_config_t twdt_config = {.timeout_ms = 30000,
-                                       .idle_core_mask =
-                                           (1 << portNUM_PROCESSORS) - 1,
-                                       .trigger_panic = true};
-  esp_task_wdt_init(&twdt_config);
-
   xTaskCreatePinnedToCore(voltageTask, "VoltageTask", 5120, NULL, 1, NULL, 0);
 
   lastCloudActivity = millis();
@@ -687,7 +642,6 @@ void setup() {
 void loop() {
   animateLEDs();
   ArduinoOTA.handle();
-  esp_task_wdt_reset();
 
   // Memory health check (runs every 5 seconds, not every loop)
   static unsigned long lastHealthCheck = 0;
@@ -743,8 +697,7 @@ void loop() {
       stat.set("heap", (int)ESP.getFreeHeap());
       stat.set("rssi", (int)WiFi.RSSI());
       stat.set("version", "v2.0.0");
-      Firebase.RTDB.updateNodeAsync(
-          &fbStatus, ("devices/" + deviceId + "/status").c_str(), &stat);
+      Firebase.RTDB.updateNodeAsync(&fbStatus, pathStatus.c_str(), &stat);
     }
   }
 

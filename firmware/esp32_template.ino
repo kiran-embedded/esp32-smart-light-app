@@ -520,7 +520,7 @@ void setup() {
   WiFi.setSleep(false);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   pathTele = "devices/" + deviceId + "/telemetry";
-  pathLogs = "devices/" + deviceId + "/events";
+  pathLogs = "devices/" + deviceId + "/security/logs";
   pathCmds = "devices/" + deviceId + "/commands";
   pathSensors = "devices/" + deviceId + "/security/sensors";
   unsigned long st = millis();

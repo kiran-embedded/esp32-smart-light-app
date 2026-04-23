@@ -27,7 +27,7 @@ class SecurityService {
   }
 
   Stream<Map<String, dynamic>> get satStatusStream {
-    return _database.ref('devices/$deviceId/satellite/status').onValue.map((
+    return _database.ref('devices/$deviceId/security/nodeActive').onValue.map((
       event,
     ) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
@@ -46,7 +46,7 @@ class SecurityService {
 
   Stream<List<Map<String, dynamic>>> get securityLogsStream {
     return _database
-        .ref('devices/$deviceId/events')
+        .ref('devices/$deviceId/security/logs')
         .orderByChild('timestamp')
         .limitToLast(50)
         .onValue
