@@ -1150,19 +1150,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
 
     if (animationsEnabled) {
-      card = card
-          .animate(onPlay: (c) => c.repeat(reverse: true))
-          .boxShadow(
-            begin: BoxShadow(
-              color: primaryColor.withOpacity(0.05),
-              blurRadius: 15,
-            ),
-            end: BoxShadow(
-              color: primaryColor.withOpacity(0.15),
-              blurRadius: 25,
-            ),
-            duration: 3000.ms,
-          );
+      // Removed the heavy BoxShadow bleeding bug (neon effect). 
+      // Now it only leverages internal structural animations cleanly.
+      card = card.animate(onPlay: (c) => c.repeat(reverse: true));
     }
 
     return GestureDetector(

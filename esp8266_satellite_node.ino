@@ -91,7 +91,7 @@ void triggerLedPulse(int count) { pendingPulses = count * 2; }
 void animateLED() {
   unsigned long now = millis();
   if (pendingPulses > 0) {
-    if (now - lastLedAction > 80) {
+    if (now - lastLedAction > 40) {
       digitalWrite(STATUS_LED, !digitalRead(STATUS_LED));
       lastLedAction = now;
       pendingPulses--;
@@ -144,10 +144,13 @@ void configStreamCallback(FirebaseStream data) {
     if (json->get(d, "security/activePeriods/night")) activePeriods[3] = d.boolValue;
     if (json->get(d, "security/activePeriods/midnight")) activePeriods[4] = d.boolValue;
 
-    for (int i=1; i<=4; i++) {
-        char key[64];
-        sprintf(key, "security/calibration/PIR%d/debounce", i);
-        if (json->get(d, key)) highValidTimeArr[i-1] = d.intValue;
+    // Load Global Satellite Sensor Config
+    if (json->get(d, "satellite/config/pulses")) REQUIRED_PULSES = d.intValue;
+    if (json->get(d, "satellite/config/window")) WINDOW_TIME = (unsigned long)d.intValue;
+    if (json->get(d, "satellite/config/hold")) HOLD_TIME = (unsigned long)d.intValue;
+    if (json->get(d, "satellite/config/gap")) MIN_GAP = (unsigned long)d.intValue;
+    if (json->get(d, "satellite/config/valid")) {
+        for (int i=0; i<4; i++) highValidTimeArr[i] = d.intValue;
     }
   } else {
     int intV = data.intData();
@@ -168,9 +171,14 @@ void configStreamCallback(FirebaseStream data) {
        else if (p.endsWith(F("night"))) activePeriods[3] = data.boolData();
        else if (p.endsWith(F("midnight"))) activePeriods[4] = data.boolData();
     }
-    else if (p.indexOf(F("/calibration/PIR")) != -1 && p.endsWith(F("/debounce"))) {
-       int pirIdx = p.substring(p.indexOf(F("PIR")) + 3, p.indexOf(F("PIR")) + 4).toInt() - 1;
-       if (pirIdx >= 0 && pirIdx < 4) highValidTimeArr[pirIdx] = intV;
+    else if (p.startsWith(F("/satellite/config/"))) {
+       if (p.endsWith(F("pulses"))) REQUIRED_PULSES = intV;
+       else if (p.endsWith(F("window"))) WINDOW_TIME = (unsigned long)intV;
+       else if (p.endsWith(F("hold"))) HOLD_TIME = (unsigned long)intV;
+       else if (p.endsWith(F("gap"))) MIN_GAP = (unsigned long)intV;
+       else if (p.endsWith(F("valid"))) {
+           for (int i=0; i<4; i++) highValidTimeArr[i] = intV;
+       }
     }
     
     if (p.indexOf(F("isArmed")) != -1) isArmed = data.boolData();
@@ -327,6 +335,8 @@ void loop() {
     shouldPush = true; // Force periodic push
 
   if (isFirebaseReady && shouldPush) {
+    FirebaseJson batch;
+    
     // Neural Grid Trigger Logic (Relay Automation)
     bool isNightTime = (currentLdr < LDR_NIGHT_THRESHOLD);
     if (isNightTime) {
@@ -337,7 +347,7 @@ void loop() {
             if (pirRelayMask[i] & (1 << r)) {
               if (!relayState[r]) {
                 relayState[r] = true;
-                Firebase.RTDB.setIntAsync(&fbData, pathRelays[r], 1);
+                batch.set("commands/relay" + String(r+1), 1);
               }
               pirAutoOffTimer[r] = now;
             }
@@ -362,27 +372,31 @@ void loop() {
 
     const bool ldrPass = (!isLdrSecurityEnabled || isNightTime);
     if (isArmed && ldrPass && isTimeActive && currentMask != 0 && (currentMask != lastMask)) {
-        Firebase.RTDB.setBoolAsync(&fbData, pathPanic, true);
+        batch.set("commands/panic", true);
     }
 
     lastMask = currentMask;
     lastLdr = currentLdr;
     lastUpdate = now;
-    triggerLedPulse(2);
+    triggerLedPulse(6);
 
     for (int i = 0; i < 4; i++) {
       int state = (currentMask & (1 << i)) != 0 ? 1 : 0;
       if (state != lastStates[i]) {
         lastStates[i] = state;
-        FirebaseJson zoneData;
-        zoneData.set(F("status"), state == 1);
-        zoneData.set(F("lightLevel"), currentLdr);
-        if (state == 1)
-          zoneData.set(F("lastTriggered"), (int)time(NULL));
-
-        Firebase.RTDB.updateNodeAsync(&fbData, pathPIRs[i], &zoneData);
+        String p1 = "security/sensors/PIR" + String(i+1) + "/status";
+        String p2 = "security/sensors/PIR" + String(i+1) + "/lightLevel";
+        batch.set(p1.c_str(), state == 1);
+        batch.set(p2.c_str(), currentLdr);
+        if (state == 1) {
+          String p3 = "security/sensors/PIR" + String(i+1) + "/lastTriggered";
+          batch.set(p3.c_str(), (int)time(NULL));
+        }
       }
     }
+
+    // PUSH ALL AS A SINGLE SYNCHRONOUS BATCH
+    Firebase.RTDB.updateNode(&fbData, basePath, &batch);
 
     // Satellite heartbeat
     FirebaseJson status;
@@ -403,13 +417,17 @@ void loop() {
 
   // ---- ESP8266 Managed Auto-Off Logic ----
   if (isFirebaseReady) {
+      FirebaseJson offBatch;
+      bool hasOff = false;
       for(int r = 0; r < 7; r++) {
          if (relayState[r] && pirAutoOffTimer[r] > 0 && (now - pirAutoOffTimer[r] > PIR_ON_DURATION)) {
              relayState[r] = false;
              pirAutoOffTimer[r] = 0;
-             Firebase.RTDB.setIntAsync(&fbData, pathRelays[r], 0);
+             offBatch.set("commands/relay" + String(r+1), 0);
+             hasOff = true;
          }
       }
+      if (hasOff) Firebase.RTDB.updateNode(&fbData, basePath, &offBatch);
   }
 
   // ---- Force push heartbeat even if no sensor change (every 30s) ----

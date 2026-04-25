@@ -69,21 +69,25 @@ class SwitchGrid extends ConsumerWidget {
                             .read(switchDevicesProvider.notifier)
                             .toggleSwitch(device.id);
 
-                        // Sound Effect
+                        // 1. INSTANT: Fire Sound Effect on microtask to guarantee 0ms UI lock
                         final soundService = ref.read(soundServiceProvider);
-                        if (!device.isActive) {
-                          soundService.playSwitchOn();
-                        } else {
-                          soundService.playSwitchOff();
-                        }
+                        Future.microtask(() {
+                          if (!device.isActive) {
+                            soundService.playSwitchOn();
+                          } else {
+                            soundService.playSwitchOff();
+                          }
+                        });
 
-                        // Trigger robo reaction
+                        // 2. INSTANT: Visual Reaction
                         robo.triggerRoboReaction(ref, robo.RoboReaction.nod);
 
-                        // Voice feedback
+                        // 3. DEFERRED: Voice Synthesis (MethodChannels can block the thread, causing huge latency jank)
                         final voiceService = ref.read(voiceServiceProvider);
                         final status = !device.isActive ? 'on' : 'off';
-                        voiceService.speak('${device.name} is $status.');
+                        Future.delayed(const Duration(milliseconds: 150), () {
+                          voiceService.speak('${device.name} is $status.');
+                        });
                       },
                       onLongPress: () {
                         HapticService.medium();

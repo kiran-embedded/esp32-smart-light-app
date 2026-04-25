@@ -13,6 +13,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/ui/responsive_layout.dart';
 import 'dart:math' as math; // For Cyberpunk jitter
 import 'dart:ui'; // For blur effects
+import 'package:flutter/physics.dart'; // REAL iOS-LIKE PHYSICS
 
 class SwitchTile extends ConsumerStatefulWidget {
   final SwitchDevice device;
@@ -33,6 +34,7 @@ class SwitchTile extends ConsumerStatefulWidget {
 class _SwitchTileState extends ConsumerState<SwitchTile>
     with TickerProviderStateMixin {
   late AnimationController _pressController;
+  late Animation<double> _scaleAnimation;
   late AnimationController _iconAnimController;
   late AnimationController _rippleController;
   late AnimationController _rgbController; // New for Gaming RGB
@@ -43,8 +45,10 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     _pressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 50),
+      // reverse duration removed because physics simulation automatically controls the duration
     );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.93).animate(_pressController);
 
     _iconAnimController = AnimationController(
       vsync: this,
@@ -105,8 +109,23 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
 
     // Fire toggle immediately — zero delay
     widget.onTap();
-    // Run press animation concurrently (non-blocking)
-    _pressController.forward().then((_) => _pressController.reverse());
+    // Real Physics-engine powered reverse animation (iOS Critical Damped Spring)
+    _pressController.forward().then((_) {
+      if (mounted) {
+        final spring = SpringDescription.withDampingRatio(
+          mass: 1.0,
+          stiffness: 800.0, // High tension for fast response
+          ratio: 0.65, // Slight bounce for premium feel, well damped
+        );
+        final simulation = SpringSimulation(
+          spring,
+          _pressController.value,
+          0.0,
+          _pressController.velocity,
+        );
+        _pressController.animateWith(simulation);
+      }
+    });
   }
 
   @override
@@ -201,7 +220,7 @@ class _SwitchTileState extends ConsumerState<SwitchTile>
                       animation: _pressController,
                       builder: (context, child) {
                         return Transform.scale(
-                          scale: 1.0 - (_pressController.value * 0.05),
+                          scale: _scaleAnimation.value,
                           child: Container(
                             decoration: BoxDecoration(boxShadow: const []),
                             child: _buildStyleDispatcher(

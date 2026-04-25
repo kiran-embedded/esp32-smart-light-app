@@ -106,7 +106,7 @@ Path: `devices/{DEVICE_ID}/telemetry/`
 
 ## 🛰️ SATELLITE CONFIG (App → ESP8266)
 
-Path: `devices/{DEVICE_ID}/satellite/config/`
+Path: `devices/{DEVICE_ID}/commands/satellite/config/`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|

@@ -57,7 +57,7 @@ float calibrationFactor = 313.3;
 #define MIN_FREE_HEAP 20000
 #define MAX_FRAG_PERCENT 50
 #define RECOVERY_COOLDOWN_MS 30000 // Min 30s between soft recoveries
-#define RELAY_CMD_DEBOUNCE_MS 2000 // Suppress telemetry echo after command
+#define RELAY_CMD_DEBOUNCE_MS 150 // Allow fast telemetry push (Flutter handles UI lock)
 
 /* ================= GLOBALS ================= */
 FirebaseData fbTele;
@@ -144,7 +144,7 @@ void animateLEDs() {
   if (isOTAActive) {
     targetColor = ((now / 100) % 2 == 0) ? 1 : 3;
   } else if (isActivityFlashing) {
-    if (now - activityStart < 80)
+    if (now - activityStart < 200)
       targetColor = 3;
     else
       isActivityFlashing = false;
@@ -327,6 +327,8 @@ int getCurrentPeriodIdx() {
 void sensorCallback(FirebaseStream data) {
   String path = data.dataPath();
   lastCloudActivity = millis();
+  isActivityFlashing = true;
+  activityStart = millis();
 
   if (path == "/")
     return;
@@ -402,6 +404,8 @@ void streamCallback(FirebaseStream data) {
   isInternetLive = true;
   fbConnected = true;
   lastCloudActivity = millis();
+  isActivityFlashing = true;
+  activityStart = millis();
   String path = data.dataPath();
   bool wasRelayUpdated = false;
 

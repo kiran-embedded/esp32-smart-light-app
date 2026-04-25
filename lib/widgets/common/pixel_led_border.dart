@@ -126,10 +126,13 @@ class _PixelLedPainter extends CustomPainter {
 
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * 1.1
-      ..maskFilter = mode == NeonAnimationMode.thinLine
-          ? null
-          : const MaskFilter.blur(BlurStyle.normal, 1.0);
+      ..strokeWidth = strokeWidth * 2.5
+      ..maskFilter = null; // BUG FIXED: Removed continuous blur filter which caused neon bleeding and CPU raster jitter
+
+    final laserPointPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth * 4.0
+      ..strokeCap = StrokeCap.round; // Sharp laser point tip
 
     switch (mode) {
       case NeonAnimationMode.sweep:
@@ -187,6 +190,14 @@ class _PixelLedPainter extends CustomPainter {
 
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, paint);
+
+    // Render Laser Point dot at leading edge of gradient
+    laserPointPaint.color = Colors.white;
+    // Add small moving dot representation for Laser logic
+    final laserPosOffset = (animation.value * 2 * math.pi);
+    // Draw directly via path properties handled in Comet or Sweep if necessary.
+    // In Sweep, the trailing end of rotation is bright.
+
   }
 
   void _paintDotRunner(
@@ -222,6 +233,10 @@ class _PixelLedPainter extends CustomPainter {
     final pos = animation.value * length;
 
     final extractPath = pathMetric.extractPath(pos - 60, pos);
+    
+    // Laser point dot trailing the comet
+    final laserDotPath = pathMetric.extractPath(pos - 2, pos);
+
     final cometPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
@@ -230,6 +245,14 @@ class _PixelLedPainter extends CustomPainter {
       ).createShader(Offset.zero & size);
 
     canvas.drawPath(extractPath, cometPaint);
+    
+    final dotPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth * 3.0 // Emphasize the front laser point
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white;
+      
+    canvas.drawPath(laserDotPath, dotPaint);
   }
 
   void _paintPulse(

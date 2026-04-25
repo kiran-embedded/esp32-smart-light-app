@@ -129,7 +129,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     if (_currentPage == index) return;
 
     HapticService.selection();
-    ref.read(soundServiceProvider).playTabSwitch();
+    final soundService = ref.read(soundServiceProvider);
+    Future.microtask(() => soundService.playTabSwitch());
 
     robo.triggerRoboReaction(ref, robo.RoboReaction.blink);
 

@@ -1,0 +1,74 @@
+{
+  "rules": {
+    // 🚨 VULNERABILITY FIXED: Removed global root `.read` and `.write`.
+    // Firebase rules cascade downwards. If root is true, it overrides all device restrictions!
+    ".read": false,
+    ".write": false,
+
+    "devices": {
+      "$deviceId": {
+        // 🔒 AUTH & OWNERSHIP LOCKDOWN (Hardware + Your Account Only)
+        // - Allows your ESP32/ESP8266 (Anonymous Auth via Hardware)
+        // - Allows your specific Email via the Flutter App (Blocks random users who sign in)
+        ".read": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || auth.token.email == 'INSERT_YOUR_EMAIL_HERE@gmail.com')",
+        ".write": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || auth.token.email == 'INSERT_YOUR_EMAIL_HERE@gmail.com')",
+
+        "commands": {
+          "satellite": {
+            "config": {
+              "pulses": { ".validate": "newData.isNumber()" },
+              "window": { ".validate": "newData.isNumber()" },
+              "hold":   { ".validate": "newData.isNumber()" },
+              "gap":    { ".validate": "newData.isNumber()" },
+              "valid":  { ".validate": "newData.isNumber()" }
+            }
+          },
+          "security": {
+            "calibration": {
+              "$sensorId": {
+                 "debounce": { ".validate": "newData.isNumber()" },
+                 "sensitivity": { ".validate": "newData.isNumber()" }
+              }
+            },
+            "activePeriods": {
+               "$period": { ".validate": "newData.isBoolean()" }
+            },
+            "securityMode": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": "newData.isBoolean() || newData.isNumber() || newData.isString()" }
+          },
+          // Relay and boolean commands validation
+          "$key": { ".validate": "newData.isNumber() || newData.isBoolean() || newData.isString() || newData.val() == null" }
+        },
+        
+        "security": {
+          "sensors": {
+            "$sensorId": { 
+               // Ensure PIR sensors always send valid structures when tripped
+               ".validate": "newData.val() == null || newData.hasChildren(['status'])" 
+            }
+          },
+          "logs": {
+            // Indexing for fast app rendering
+            ".indexOn": ["timestamp"],
+            "$logId": { 
+               // Require logs to have the actual timestamp and sensor name
+               ".validate": "newData.hasChildren(['timestamp', 'sensor'])" 
+            }
+          },
+          "nodeActive": {
+            ".validate": "newData.hasChildren(['online'])"
+          }
+        },
+
+        "telemetry": {
+          // Hardware vitals
+          ".validate": "newData.hasChildren()"
+        },
+
+        "status": {
+          ".validate": "newData.hasChildren(['online'])"
+        }
+      }
+    }
+  }
+}

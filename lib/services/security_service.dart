@@ -162,7 +162,7 @@ class SecurityService {
   }
 
   Stream<Map<String, dynamic>> get satConfigStream {
-    return _database.ref('devices/$deviceId/satellite/config').onValue.map((
+    return _database.ref('devices/$deviceId/commands/satellite/config').onValue.map((
       event,
     ) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
@@ -258,7 +258,7 @@ class SecurityService {
   }
 
   Future<void> setSatConfig(String key, dynamic value) async {
-    await _database.ref('devices/$deviceId/satellite/config/$key').set(value);
+    await _database.ref('devices/$deviceId/commands/satellite/config/$key').set(value);
   }
 
   Future<void> deleteSensor(String sensorName) async {

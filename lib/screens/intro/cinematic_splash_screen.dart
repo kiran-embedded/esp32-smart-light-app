@@ -418,31 +418,34 @@ class _NebulaPainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), 0.5, starPaint);
     }
 
-    // 2. Animated Nebula Dust
+    // 2. Animated Nebula Dust (Optimized: Replaced heavy MaskFilter Blur with Hardware Shader)
     final center = Offset(size.width / 2, size.height / 2);
     for (int i = 0; i < 5; i++) {
-      final nebulaPaint = Paint()
-        ..color = (i % 2 == 0 ? Colors.indigo : Colors.deepPurple).withOpacity(
-          0.02 + (0.01 * math.sin(time * 2 + i)),
-        )
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 80.r);
+        final radius = 150.0 + (20.0 * i);
+        final offset = Offset(
+            center.dx + 50.0 * math.cos(time * 0.5 + i),
+            center.dy + 50.0 * math.sin(time * 0.5 + i),
+        );
+        
+        final color = (i % 2 == 0 ? Colors.indigo : Colors.deepPurple)
+            .withOpacity(0.04 + (0.02 * math.sin(time * 2 + i)));
+            
+        final nebulaPaint = Paint()
+            ..shader = RadialGradient(
+                colors: [color, Colors.transparent],
+                stops: const [0.3, 1.0],
+            ).createShader(Rect.fromCircle(center: offset, radius: radius));
 
-      final offset = Offset(
-        center.dx + 50.w * math.cos(time * 0.5 + i),
-        center.dy + 50.h * math.sin(time * 0.5 + i),
-      );
-      canvas.drawCircle(offset, 150.0.r + (20.0.r * i), nebulaPaint);
+      canvas.drawCircle(offset, radius, nebulaPaint);
     }
 
-    // 3. star drift
+    // 3. star drift (Optimized math)
     final driftPaint = Paint()..color = Colors.white.withOpacity(0.3);
     for (int i = 0; i < 30; i++) {
-      final seed = i * 777;
-      final speed = 0.05 + (0.1 * math.Random(seed).nextDouble());
-      final x =
-          (math.Random(seed).nextDouble() * size.width + (time * 20 * speed)) %
-          size.width;
-      final y = math.Random(seed + 1).nextDouble() * size.height;
+      final random = math.Random(i * 777);
+      final speed = 0.05 + (0.1 * random.nextDouble());
+      final x = (random.nextDouble() * size.width + (time * 20 * speed)) % size.width;
+      final y = math.Random(i * 777 + 1).nextDouble() * size.height;
       canvas.drawCircle(Offset(x, y), 0.8, driftPaint);
     }
   }

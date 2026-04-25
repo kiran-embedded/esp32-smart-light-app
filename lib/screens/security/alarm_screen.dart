@@ -10,8 +10,6 @@ import '../../providers/security_provider.dart';
 import '../../services/sound_service.dart';
 import '../../services/voice_service.dart';
 import '../../services/haptic_service.dart';
-import '../../widgets/security/nebula_bot.dart';
-
 class AlarmScreen extends ConsumerStatefulWidget {
   final String zone;
 
@@ -120,9 +118,10 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Auto-dismiss logic: if alarm stopped or system disarmed
+    // Auto-dismiss logic: if alarm stopped, system disarmed, or native alarm toggled off
     ref.listen(securityProvider, (previous, next) {
       if (!next.isArmed ||
+          !next.isNativeAlarmEnabled ||
           (!next.isAlarmActive && (previous?.isAlarmActive ?? false))) {
         if (mounted) {
           ref.read(soundServiceProvider).stopAlarm();
@@ -163,8 +162,62 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen>
               children: [
                 const SizedBox(height: 60),
 
-                // Mascot
-                NebulaBotWidget(isAlarmActive: !_isSnoozed),
+                // Premium iOS Siren Icon
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Ambient Glass Glow
+                        Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: (_isSnoozed ? Colors.amberAccent : Colors.redAccent)
+                                    .withOpacity(0.8 * _pulseController.value),
+                                blurRadius: 80,
+                                spreadRadius: 30,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // High Performance Coded Danger Logo
+                        Transform.scale(
+                          scale: 1.0 + (_pulseController.value * 0.08),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(50),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                              child: Container(
+                                height: 200,
+                                width: 200,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                  color: Colors.white.withOpacity(0.04),
+                                  border: Border.all(
+                                    color: (_isSnoozed ? Colors.amberAccent : Colors.redAccent).withOpacity(0.4),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.warning_rounded,
+                                    size: 110,
+                                    color: _isSnoozed ? Colors.amberAccent : Colors.redAccent,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 40),
 
