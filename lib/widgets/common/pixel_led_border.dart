@@ -192,7 +192,7 @@ class _PixelLedPainter extends CustomPainter {
     canvas.drawPath(path, paint);
 
     // Render Laser Point dot at leading edge of gradient
-    laserPointPaint.color = Colors.white;
+    final laserPointPaint = Paint()..color = Colors.white;
     // Add small moving dot representation for Laser logic
     final laserPosOffset = (animation.value * 2 * math.pi);
     // Draw directly via path properties handled in Comet or Sweep if necessary.

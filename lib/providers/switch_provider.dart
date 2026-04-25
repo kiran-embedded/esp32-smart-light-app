@@ -304,9 +304,9 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        // STRICT OPTIMISTIC LOCK: Lock state fully for 3 seconds (3000ms) to ignore Firebase bounce echo.
-        // During this period, the optimistic UI takes absolute precedence over any stale telemetry packets.
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 3000) {
+        // OPTIMISTIC LOCK: Lock state fully for 300ms to ignore immediate Firebase bounce echo.
+        // During this short period, the optimistic UI takes precedence.
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 300) {
           final existing = currentDeviceMap[id];
           if (existing != null && existing.isPending) {
             // PIN THE STATE: Force the optimistic state during the transition

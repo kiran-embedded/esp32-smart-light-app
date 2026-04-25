@@ -661,17 +661,14 @@ void loop() {
 
   unsigned long now = millis();
 
-  // ---- TELEMETRY PUSH (with echo suppression) ----
+  // ---- TELEMETRY PUSH (ZERO-LATENCY ARCHITECTURE) ----
   static unsigned long lastTeleCheck = 0;
-  if (now - lastTeleCheck > (unsigned long)(isEcoMode ? 3000 : 800)) {
+  bool throttleBypass = forceTelemetry; // Bypass throttle for command confirmations
+  if (throttleBypass || (now - lastTeleCheck > (unsigned long)(isEcoMode ? 3000 : 800))) {
     lastTeleCheck = now;
 
-    // Suppress telemetry push for 2s after a command to prevent echo
-    bool echoSuppressed = (now - lastCommandTime < RELAY_CMD_DEBOUNCE_MS);
-
-    if ((forceTelemetry ||
-         (now - lastTelemetryTime > (unsigned long)reportInterval)) &&
-        !echoSuppressed) {
+    if (forceTelemetry ||
+        (now - lastTelemetryTime > (unsigned long)reportInterval)) {
       if (Firebase.ready() && fbConnected) {
         FirebaseJson j;
         for (int i = 0; i < 7; i++) {
