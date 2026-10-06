@@ -1,6 +1,6 @@
-# Contributing to Nebula Core
+# Contributing to Aurexa
 
-First off, thank you for considering contributing to Nebula Core! 🌌
+First off, thank you for considering contributing to Aurexa! 🌌
 
 ## 🎯 How Can I Contribute?
 
@@ -152,4 +152,4 @@ Instances of abusive behavior may be reported to the project maintainers. All co
 
 ---
 
-**Thank you for contributing to Nebula Core!** 🚀
+**Thank you for contributing to Aurexa!** 🚀

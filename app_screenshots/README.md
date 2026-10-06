@@ -1,6 +1,6 @@
 # 📸 App Screenshots & Visual Guide
 
-This folder contains screenshots and visual assets for the Nebula Core project.
+This folder contains screenshots and visual assets for the Aurexa project.
 
 ## 📁 Folder Structure
 
@@ -74,7 +74,7 @@ app_screenshots/
 #!/bin/bash
 # Save as capture_screenshots.sh
 
-echo "📸 Capturing Nebula Core Screenshots..."
+echo "📸 Capturing Aurexa Screenshots..."
 
 # Array of screen names
 screens=("home" "settings" "firebase_setup" "robo" "login" "splash")

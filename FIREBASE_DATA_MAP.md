@@ -1,6 +1,6 @@
 # 🌐 NEBULA CORE – Firebase Data Map & Address Guide
 
-> **Complete reference for all Firebase Realtime Database paths used by the Nebula Core ecosystem.**
+> **Complete reference for all Firebase Realtime Database paths used by the Aurexa ecosystem.**
 > This guide helps you understand what data flows between your **App**, **ESP32 Hub**, and **ESP8266 Satellite**.
 
 ---

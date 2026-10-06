@@ -1,6 +1,6 @@
 # Firebase Production Setup Guide
 
-Follow these steps to set up your own Firebase backend for the Nebula Core IoT application.
+Follow these steps to set up your own Firebase backend for the Aurexa IoT application.
 
 ## 1. Create a Firebase Project
 1. Go to the [Firebase Console](https://console.firebase.google.com/).
@@ -9,10 +9,10 @@ Follow these steps to set up your own Firebase backend for the Nebula Core IoT a
 
 ## 2. Register Android App
 1. In the Project Overview, click the **Android** icon.
-2. **Android package name**: `com.iot.nebulacontroller` (This MUST match exactly).
-3. **App nickname**: `Nebula Core`.
+2. **Android package name**: `com.iot.aurexacontroller` (This MUST match exactly).
+3. **App nickname**: `Aurexa`.
 4. **Debug signing certificate SHA-1**:
-    - Open the Nebula Core app on your phone.
+    - Open the Aurexa app on your phone.
     - Go to the **Login Screen**.
     - Scroll down to find the **SHA-1** fingerprint.
     - Copy and paste it here.
@@ -43,7 +43,7 @@ Follow these steps to set up your own Firebase backend for the Nebula Core IoT a
 5. Find the **Web client (Auto-created by Google Service)**.
 6. Copy the **Client ID** (it looks like `1234567-abc.apps.googleusercontent.com`).
 
-## 6. Configure the Nebula Core App
+## 6. Configure the Aurexa App
 ### Method A: One-Click Easy Import (Recommended)
 1. Launch the app and go to the **Production Setup** screen.
 2. Click the **IMPORT GOOGLE-SERVICES.JSON** button.
@@ -63,7 +63,7 @@ Follow these steps to set up your own Firebase backend for the Nebula Core IoT a
 3. Restart the app.
 
 ## 7. Flash your ESP32
-1. Open the [firmware/esp32_nebula_controller.ino](firmware/esp32_nebula_controller.ino) file.
+1. Open the [firmware/esp32_aurexa_controller.ino](firmware/esp32_aurexa_controller.ino) file.
 2. Replace `YOUR_FIREBASE_API_KEY` and `DATABASE_URL` with your values.
 3. Upload to your ESP32.
 4. The Serial Monitor will show your unique **Device ID** (derived from Chip ID).

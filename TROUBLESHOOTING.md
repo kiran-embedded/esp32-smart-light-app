@@ -1,6 +1,6 @@
 # 🩺 Troubleshooting Guide
 
-This guide covers common issues you might encounter while setting up or using **Nebula Core** and the **ESP32 Firmware**.
+This guide covers common issues you might encounter while setting up or using **Aurexa** and the **ESP32 Firmware**.
 
 ---
 
@@ -22,7 +22,7 @@ This guide covers common issues you might encounter while setting up or using **
 
 **Solution**:
 1.  **SHA-1 Fingerprint is Missing**: This is the #1 cause.
-2.  **Wrong Package Name**: Your `google-services.json` must match `com.iot.nebulacontroller`.
+2.  **Wrong Package Name**: Your `google-services.json` must match `com.iot.aurexacontroller`.
 3.  **Support Email**: You haven't set a support email in Firebase Console -> Project Settings.
 
 👉 **See the dedicated guide**: [TROUBLESHOOTING_GOOGLE_SIGNIN.md](TROUBLESHOOTING_GOOGLE_SIGNIN.md)

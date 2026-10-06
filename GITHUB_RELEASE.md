@@ -102,7 +102,7 @@ Prior to this release, the ecosystem was plagued by 19 critical cascading system
 ```mermaid
 sequenceDiagram
     autonumber
-    participant App as 📱 Nebula App
+    participant App as 📱 Aurexa App
     participant Cloud as ☁️ Firebase Cloud
     participant Hub as 🧠 ESP32 Power Hub
     participant Sat as 🛰️ ESP8266 Satellite

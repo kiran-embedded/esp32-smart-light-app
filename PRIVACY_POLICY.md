@@ -2,10 +2,10 @@
 
 **Effective Date: January 6, 2026**
 
-Welcome to **Nebula Core Restore**. Your privacy is paramount to us. This Privacy Policy outlines how we collect, use, and protect your information when you use our application.
+Welcome to **Aurexa Restore**. Your privacy is paramount to us. This Privacy Policy outlines how we collect, use, and protect your information when you use our application.
 
 ### 1. Data Collection
-Nebula Core Restore is designed as a privacy-first smart switching application. 
+Aurexa Restore is designed as a privacy-first smart switching application. 
 - **Local Data**: Most of your settings, including switch nicknames and theme preferences, are stored locally on your device.
 - **Firebase Realtime Database**: We use Firebase to synchronize switch states, hardware names, and voltage calibration data across your devices. This data is linked to your authorized Google account.
 - **Location Data**: The app may request location access solely to provide local weather information and optimize device connectivity. We do not track or store your historical movement.

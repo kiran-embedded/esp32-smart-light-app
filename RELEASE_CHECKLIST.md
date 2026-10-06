@@ -88,9 +88,9 @@ These features work **immediately** - just build and run:
 #### 1. Set Up Firebase (30 min)
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create new project: "Nebula Core"
+2. Create new project: "Aurexa"
 3. Add Android app:
-   - Package: `com.example.nebula_core` (check your build.gradle.kts)
+   - Package: `com.example.aurexa_core` (check your build.gradle.kts)
    - Download `google-services.json`
    - Place in: `android/app/google-services.json`
 4. Add iOS app (if releasing iOS):

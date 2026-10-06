@@ -1,6 +1,6 @@
-# 🧠 Nebula Core: Hardware Architecture Guide
+# 🧠 Aurexa: Hardware Architecture Guide
 
-To understand how the **Nebula Core** system works, you need to think of it as a central brain (Firebase), a heavy-lifter (ESP32), a scout (ESP8266), and a commander (Flutter App).
+To understand how the **Aurexa** system works, you need to think of it as a central brain (Firebase), a heavy-lifter (ESP32), a scout (ESP8266), and a commander (Flutter App).
 
 Here is exactly how these three components talk to each other in real-time.
 

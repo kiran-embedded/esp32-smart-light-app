@@ -1,6 +1,6 @@
 # 🌟 Firebase Visual Guide for Beginners
 
-Welcome to the **Nebula Core** data guide! This document is designed to help you easily understand what goes on behind the scenes when your app talks to your ESP32 / ESP8266 hardware through the Firebase Realtime Database. 
+Welcome to the **Aurexa** data guide! This document is designed to help you easily understand what goes on behind the scenes when your app talks to your ESP32 / ESP8266 hardware through the Firebase Realtime Database. 
 
 Think of Firebase as a live spreadsheet. Whenever an ESP pushes data, or your Phone pushes a button, the cells in this spreadsheet change instantly. Below is exactly what your database looks like!
 

@@ -10,7 +10,7 @@ If you're getting "Google Sign-In Failed" or "Login Failed", follow these steps:
 
 ### Enable Google Sign-In in Firebase:
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Select your project: **nebula-smartpowergrid**
+2. Select your project: **aurexa-smartpowergrid**
 3. Click **Authentication** → **Sign-in method**
 4. Click **Google** provider
 5. Toggle **Enable** to ON
@@ -44,7 +44,7 @@ keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -sto
 ### Add to Firebase:
 1. Firebase Console → **Project Settings** (gear icon)
 2. Scroll to **"Your apps"** section
-3. Click your Android app: **com.iot.nebulacontroller**
+3. Click your Android app: **com.iot.aurexacontroller**
 4. Scroll to **"SHA certificate fingerprints"**
 5. Click **"Add fingerprint"**
 6. Paste your SHA-1
@@ -65,7 +65,7 @@ Should show the file exists.
 
 ### Verify Package Name:
 Open `android/app/google-services.json` and check:
-- Package name should be: `com.iot.nebulacontroller`
+- Package name should be: `com.iot.aurexacontroller`
 - Should match your `android/app/build.gradle.kts` applicationId
 
 ---
@@ -131,7 +131,7 @@ adb logcat | grep -i "google.*sign"
 - [ ] Google Sign-In enabled in Firebase Console
 - [ ] SHA-1 fingerprint added to Firebase Console
 - [ ] google-services.json in `android/app/`
-- [ ] Package name matches: `com.iot.nebulacontroller`
+- [ ] Package name matches: `com.iot.aurexacontroller`
 - [ ] App rebuilt after adding SHA-1
 - [ ] App reinstalled on device
 
@@ -147,7 +147,7 @@ adb logcat | grep -i "google.*sign"
 
 2. **Reinstall:**
    ```bash
-   adb uninstall com.iot.nebulacontroller
+   adb uninstall com.iot.aurexacontroller
    adb install build/app/outputs/flutter-apk/app-release.apk
    ```
 

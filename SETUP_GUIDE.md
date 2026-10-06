@@ -31,12 +31,12 @@
 #### Step 1: Create Firebase Project
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click "Add Project"
-3. Enter project name: "Nebula Core"
+3. Enter project name: "Aurexa"
 4. Follow setup wizard
 
 #### Step 2: Add Android App
 1. In Firebase Console → Project Settings → Add App → Android
-2. Package name: `com.example.nebula_core` (check your `android/app/build.gradle.kts`)
+2. Package name: `com.example.aurexa_core` (check your `android/app/build.gradle.kts`)
 3. Download `google-services.json`
 4. Place it in: `android/app/google-services.json`
 
@@ -159,7 +159,7 @@ Just ensure permissions are in manifest files.
 #### Default Configuration:
 - **Broker**: `broker.hivemq.com` (public, free)
 - **Port**: `1883`
-- **Client ID**: `nebula_core_app`
+- **Client ID**: `aurexa_core_app`
 
 #### To Use Custom MQTT Broker:
 Edit `lib/core/constants/app_constants.dart`:
@@ -275,13 +275,13 @@ Switch toggled ✅
 ```
 App toggles switch
     ↓
-MQTTService.publish("nebula/switch/1/set", "ON")
+MQTTService.publish("aurexa/switch/1/set", "ON")
     ↓
 ESP32 receives message
     ↓
 ESP32 turns on GPIO pin
     ↓
-ESP32 publishes state: "nebula/switch/1/state", "ON"
+ESP32 publishes state: "aurexa/switch/1/state", "ON"
     ↓
 App receives update
     ↓

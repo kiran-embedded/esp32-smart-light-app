@@ -33,4 +33,4 @@ This release refines the "Neon" aesthetic and standardizes a high-performance, s
 ---
 
 **DEPLOYMENT STATUS: ACTIVE**
-*Nebula Core - Sharp. Solid. Efficient.*
+*Aurexa - Sharp. Solid. Efficient.*

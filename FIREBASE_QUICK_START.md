@@ -2,7 +2,7 @@
 
 ## ⚡ Fast Setup Guide
 
-Your project: **nebula-smartpowergrid**
+Your project: **aurexa-smartpowergrid**
 
 ---
 
@@ -10,7 +10,7 @@ Your project: **nebula-smartpowergrid**
 
 ### Step 1: Enable Google Sign-In (2 min)
 1. Go to: https://console.firebase.google.com/
-2. Select project: **nebula-smartpowergrid**
+2. Select project: **aurexa-smartpowergrid**
 3. Click **Authentication** → **Sign-in method**
 4. Click **Google** → Toggle **Enable** → **Save**
 
