@@ -5,9 +5,9 @@ A clean, responsive mobile app built with Flutter to control your ESP32-based sm
 ## Features & Improvements in v1.0.0
 
 - **Cloud-Based Architecture:** Aurexa is a fully cloud-based app using Firebase Authentication and Realtime Database. Users log in with a common Firebase backend to securely control their devices from anywhere in the world—not just on local WiFi.
-- **Improved ESP32 Flasher:** The built-in firmware flasher tool has been significantly improved for faster and more reliable flashing directly from your phone.
+- **Improved ESP32 Flasher (Beta):** The built-in firmware flasher tool has been significantly improved for faster and more reliable flashing directly from your phone. (Currently in Beta).
 - **Dynamic Haptics:** Custom haptic feedback tailored to your phone's vibration motor for a more tactile experience.
-- **Language Translations (Beta):** We've introduced Hindi and Malayalam language support. (Currently in Beta, bugs are being ironed out).
+- **Language Translations & More Features (Beta):** We've introduced Hindi and Malayalam language support along with several other new features that are currently in Beta (bugs are being ironed out).
 - **Auto-Reconnect Logic:** The app and firmware handle network drops and router restarts gracefully.
 
 ## Upcoming Features (Future Releases)
