@@ -28,8 +28,8 @@ class FirebaseConfigReader {
       // For iOS, we'd read GoogleService-Info.plist
       // This is a placeholder - iOS config would be in plist format
       return {
-        'bundle_id': 'com.example.nebulacontroller', // From google-services.json
-        'project_id': 'nebula-smartpowergrid',
+        'bundle_id': 'com.example.aurexacontroller', // From google-services.json
+        'project_id': 'aurexa-smartpowergrid',
       };
     } catch (e) {
       throw Exception('Failed to read iOS config: $e');

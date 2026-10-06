@@ -8,8 +8,8 @@ plugins {
 }
 
 android {
-    // Package name from google-services.json: com.iot.nebulacontroller
-    namespace = "com.iot.nebulacontroller"
+    // Package name from google-services.json: com.aurexa.app
+    namespace = "com.aurexa.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -25,7 +25,7 @@ android {
 
     defaultConfig {
         // Application ID from google-services.json
-        applicationId = "com.iot.nebulacontroller"
+        applicationId = "com.aurexa.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

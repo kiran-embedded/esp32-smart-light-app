@@ -8,6 +8,7 @@ import '../../services/connectivity_service.dart';
 import '../../providers/animation_provider.dart';
 import '../../providers/live_info_provider.dart';
 import '../../widgets/common/pixel_led_border.dart';
+import '../../providers/switch_provider.dart';
 import '../../core/ui/responsive_layout.dart';
 
 class ConnectionStatusPill extends ConsumerStatefulWidget {
@@ -51,7 +52,9 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     final displaySettings = ref.watch(displaySettingsProvider);
     final liveInfo = ref.watch(liveInfoProvider);
     final animations = ref.watch(animationSettingsProvider);
+    final devices = ref.watch(switchDevicesProvider);
     final animationsEnabled = animations.animationsEnabled;
+    final isESPOnline = devices.any((d) => d.isConnected);
 
     final themeColors = [
       theme.colorScheme.primary,
@@ -70,21 +73,21 @@ class _ConnectionStatusPillState extends ConsumerState<ConnectionStatusPill> {
     bool isConnected = false;
     String voltageText = "${liveInfo.acVoltage.toStringAsFixed(0)}V";
 
-    if (connectivity.isFirebaseConnected) {
+    if (isESPOnline) {
       modeText = "CLOUD MODE";
       statusColor = Colors.greenAccent;
       statusIcon = Icons.cloud_done_rounded;
       isConnected = true;
     } else {
-      modeText = "CONNECTING...";
+      modeText = "HARDWARE OFFLINE";
       statusColor = Colors.orangeAccent;
-      statusIcon = Icons.cloud_sync_rounded;
+      statusIcon = Icons.router_rounded;
       isConnected = false;
     }
 
-    // Override if completely disconnected
+    // Override if phone completely disconnected
     if (connectivity.ssid == null && !connectivity.isFirebaseConnected) {
-      modeText = "DISCONNECTED";
+      modeText = "NO INTERNET";
       statusColor = Colors.redAccent;
       statusIcon = Icons.signal_wifi_off;
       isConnected = false;

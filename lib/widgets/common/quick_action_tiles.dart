@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -53,10 +52,10 @@ class QuickActionTiles extends ConsumerWidget {
           SizedBox(width: 16 * scale),
           Expanded(
             child: _ActionTile(
-              label: 'SECURITY',
-              value: 'ENCRYPT',
-              subValue: 'AES-256 Bit',
-              icon: Icons.security_rounded,
+              label: 'TIMERS',
+              value: 'ACTIVE',
+              subValue: 'Scheduled',
+              icon: Icons.timer_rounded,
               color: const Color(0xFFBB86FC),
               scale: scale,
             ),

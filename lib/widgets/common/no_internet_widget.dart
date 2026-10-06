@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'frosted_glass.dart';
-import '../robo/robo_assistant.dart';
+import '../bot/bot_assistant.dart';
 
 class NoInternetWidget extends ConsumerWidget {
   final VoidCallback onRetry;
@@ -24,7 +24,7 @@ class NoInternetWidget extends ConsumerWidget {
             const SizedBox(
                   height: 120,
                   width: 120,
-                  child: RoboAssistant(eyesOnly: true),
+                  child: BotAssistant(eyesOnly: true),
                 )
                 .animate(
                   onPlay: (controller) => controller.repeat(reverse: true),
@@ -49,7 +49,7 @@ class NoInternetWidget extends ConsumerWidget {
             const SizedBox(height: 8),
 
             Text(
-              "I can't reach the nebula cloud.\nPlease check your connection.",
+              "I can't reach the aurexa cloud.\nPlease check your connection.",
               textAlign: TextAlign.center,
               style: GoogleFonts.roboto(
                 fontSize: 14,

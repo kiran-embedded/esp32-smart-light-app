@@ -36,7 +36,7 @@ class AppConstants {
   // MQTT
   static const String mqttBroker = 'broker.hivemq.com';
   static const int mqttPort = 1883;
-  static const String mqttClientId = 'nebula_core_app';
+  static const String mqttClientId = 'aurexa_core_app';
 
   // ESP32
   static const String defaultDeviceId = '79215788';

@@ -1,383 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/esp32_code_generator.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/file_service.dart';
 import '../../providers/switch_provider.dart';
 
-class HelpSupportScreen extends ConsumerWidget {
+class HelpSupportScreen extends ConsumerStatefulWidget {
   const HelpSupportScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+  ConsumerState<HelpSupportScreen> createState() => _HelpSupportScreenState();
+}
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F), // Deep premium black
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // PREMIUM HERO HEADER
-          SliverAppBar(
-            expandedHeight: 220,
-            floating: false,
-            pinned: true,
-            backgroundColor: const Color(0xFF0F0F0F),
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: true,
-              title: Text(
-                "Help & Support",
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.white,
-                ),
-              ),
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Gradient background
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF1A1A1A), Color(0xFF0F0F0F)],
-                      ),
-                    ),
-                  ),
-                  // Subtle animated pulses
-                  Positioned(
-                    top: -50,
-                    right: -50,
-                    child:
-                        Container(
-                              width: 200,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: theme.colorScheme.primary.withOpacity(
-                                  0.05,
-                                ),
-                              ),
-                            )
-                            .animate(onPlay: (c) => c.repeat())
-                            .scale(
-                              begin: const Offset(1, 1),
-                              end: const Offset(1.5, 1.5),
-                              duration: 4.seconds,
-                              curve: Curves.easeInOut,
-                            )
-                            .fadeOut(duration: 4.seconds),
-                  ),
-                  Center(
-                    child: Icon(
-                      Icons.help_outline_rounded,
-                      size: 80,
-                      color: Colors.white.withOpacity(0.1),
-                    ).animate().scale(duration: 80.ms).fadeIn(),
-                  ),
-                ],
-              ),
-            ),
-          ),
+class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
+  final List<Map<String, String>> _pages = [
+    {
+      "title": "Welcome to Aurexa Home",
+      "content": "Aurexa Home is a highly optimized, zero-latency Smart Light control application.\n\nThis application uses advanced logic to synchronize with ESP32 and ESP8266 controllers natively without delay.\n\nSwipe left to continue learning how to setup and use your devices.",
+    },
+    {
+      "title": "How do I control my devices?",
+      "content": "To control your devices, navigate to the Home tab or Switches tab.\n\nSimply tap any switch card to toggle the relay. The app uses an optimistic UI approach, meaning the visual toggle happens instantly, while the command is sent to the Cloud in the background.\n\nThis ensures a buttery smooth experience with zero wait time.",
+    },
+    {
+      "title": "Firebase Setup (Step 1)",
+      "content": "1. Go to console.firebase.google.com and create a new project.\n\n2. Add an Android app to your project with the package name: com.aurexa.app\n\n3. Download the google-services.json file, but since we are using RTDB directly via REST/Stream on ESP32, you mainly need the Database URL and API Key.",
+    },
+    {
+      "title": "Firebase Setup (Step 2)",
+      "content": "4. Go to Build > Realtime Database and click 'Create Database'.\n\n5. Start in Test Mode, or configure your rules to allow read/write access (e.g., { \".read\": true, \".write\": true }).\n\n6. Copy your Database URL (e.g., https://your-project.firebaseio.com) and your Web API Key from Project Settings.",
+    },
+    {
+      "title": "ESP32 Firmware Flashing",
+      "content": "You can generate the ESP32 C++ firmware directly from this app!\n\n1. Ensure you have the Arduino IDE installed.\n2. Tap the 'Generate Firmware' button on the final page of this guide.\n3. Paste the generated code into Arduino IDE.\n4. Install the 'Firebase ESP Client' library by Mobizt.\n5. Flash to your ESP32.",
+    },
+    {
+      "title": "Advanced Auto Recovery",
+      "content": "Your ESP32 is equipped with advanced WiFi auto-recovery.\n\nIf your WiFi router loses power or restarts, the ESP32 will continuously scan and seamlessly reconnect once the network is available.\n\nYou do NOT need to restart the ESP32. The LED will blink blue when the connection is fully restored and active.",
+    },
+  ];
 
-                  // QUICK RESOURCES GRID
-                  _buildSectionHeader(context, "Quick Resources"),
-                  const SizedBox(height: 12),
-                  _buildResourceGrid(context, ref),
-
-                  const SizedBox(height: 30),
-
-                  // DETAILED GUIDES
-                  _buildSectionHeader(context, "Tutorials & Guides"),
-                  const SizedBox(height: 12),
-                  _buildExpandableTile(
-                    context,
-                    "🔥 v1.2.0+42 Patch Notes",
-                    "• **Zero-Latency UI:** Migrated PageView to advanced IndexedStack opacity trees, delivering uncompromised 120 FPS transitions.\n• **Neural Architectures:** Deployed logic splitting. ESP8266 is now the dedicated 'Neural Brain' handling intelligence, while ESP32 acts strictly as 'Passive Muscles' for physical relay triggering.\n• **Switch Echo Resolution:** Hardened optimistic data locks with a 2000ms latency inhibitor, completely neutralizing Firebase telemetry bounce.\n• **Nebula AI Evolved:** Deep-trained Nebula chat models with advanced Tensor conversational pathways.",
-                    0,
-                  ),
-                  _buildExpandableTile(
-                    context,
-                    "Getting Started",
-                    "1. Power On: Connect your ESP32 and ESP8266 to a power source.\n2. Wi-Fi Sync: Ensure your phone is connected. The App will automatically bridge your hardware.\n3. The UI will instantly sync the hardware state using our optimistic UI pipeline.",
-                    1,
-                  ),
-                  _buildExpandableTile(
-                    context,
-                    "Hardware Pipeline (Neural & Passive)",
-                    "• ESP8266 (Brain): Processes all security algorithms, motion tracking, NTP scheduling, and pushes commands directly into the Cloud bypassing heavy local processing.\n• ESP32 (Muscles): Sits completely idle until it receives a direct physical toggle signal via Firebase.",
-                    2,
-                  ),
-                  _buildExpandableTile(
-                    context,
-                    "Smart Automation Hub",
-                    "Control your environment effortlessly.\n\n• Custom Hub: Accessible via the clock icon in the Smart Switch tab.\n• Multi-Select: Long press any schedule to enter management mode for bulk deletions.\n• Unique Identifiers: Each schedule has a unique color signature for easy visual tracking.",
-                    3,
-                  ),
-                  _buildExpandableTile(
-                    context,
-                    "Using Voice Control",
-                    "Features a built-in smart assistant with neural feedback.\n\n• Tap the mic icon on the bottom bar.\n• Say commands like 'Turn on kitchen lights', 'Switch off relay 1', or 'Toggle fan'.\n• The assistant will speak back to confirm your action using haptic-synced feedback.",
-                    4,
-                  ),
-                  _buildExpandableTile(
-                    context,
-                    "Firebase Setup Guide",
-                    "1. Project Creation: Visit console.firebase.google.com.\n2. Add App: Register an Android app and download google-services.json.\n3. Realtime Database: Enable it and set rules to { \".read\": true, \".write\": true }.\n4. Config Import: Copy the Database URL and API keys into the Nebula Setup screen.",
-                    5,
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  // FOOTER
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          "Nebula Core © 2026",
-                          style: GoogleFonts.outfit(
-                            color: Colors.white.withOpacity(0.2),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "v1.2.0+42 • Industrial Reliability",
-                          style: GoogleFonts.outfit(
-                            color: Colors.white.withOpacity(0.1),
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 120),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Container(
-          width: 3,
-          height: 14,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(2),
-            boxShadow: const [],
-          ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          title.toUpperCase(),
-          style: GoogleFonts.outfit(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2.0,
-            color: Colors.white.withOpacity(0.4),
-          ),
-        ),
-      ],
-    ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0);
-  }
-
-  Widget _buildResourceGrid(BuildContext context, WidgetRef ref) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.1,
-      children: [
-        _buildGridCard(
-          context,
-          "GitHub",
-          "Source Code",
-          Icons.code,
-          Colors.purpleAccent,
-          () => launchUrl(
-            Uri.parse(
-              "https://github.com/kiran-embedded/esp32-smart-light-app",
-            ),
-            mode: LaunchMode.externalApplication,
-          ),
-        ),
-        _buildGridCard(
-          context,
-          "Email",
-          "Get Support",
-          Icons.email_rounded,
-          const Color(0xFF00FFC2),
-          () => launchUrl(
-            Uri.parse(
-              "mailto:kiran.cybergrid@gmail.com?subject=Nebula App Support",
-            ),
-            mode: LaunchMode.externalApplication,
-          ),
-        ),
-        _buildGridCard(
-          context,
-          "Firmware",
-          "C++ Templates",
-          Icons.memory_rounded,
-          Colors.orangeAccent,
-          () => _showEsp32FirmwareDialog(context, ref),
-        ),
-        _buildGridCard(
-          context,
-          "Telegram",
-          "Live Chat",
-          Icons.send_rounded,
-          Colors.blueAccent,
-          () => launchUrl(
-            Uri.parse("https://t.me/+918592910039"),
-            mode: LaunchMode.externalApplication,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGridCard(
-    BuildContext context,
-    String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.white.withOpacity(0.06), width: 1),
-          boxShadow: const [],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withOpacity(0.15), width: 1),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: Colors.white.withOpacity(0.95),
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    color: Colors.white.withOpacity(0.35),
-                    letterSpacing: 0.1,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ).animate().scale(duration: 80.ms, curve: Curves.easeOutBack).fadeIn();
-  }
-
-  Widget _buildExpandableTile(
-    BuildContext context,
-    String title,
-    String content,
-    int index,
-  ) {
-    return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.05),
-                width: 0.5,
-              ),
-            ),
-            child: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                title: Text(
-                  title,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Text(
-                      content,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.6),
-                        height: 1.5,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-                iconColor: Colors.white.withOpacity(0.5),
-                collapsedIconColor: Colors.white.withOpacity(0.2),
-              ),
-            ),
-          ),
-        )
-        .animate()
-        .fadeIn(duration: 80.ms, delay: (index * 80).ms)
-        .slideY(begin: 0.1, end: 0);
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   void _showEsp32FirmwareDialog(BuildContext context, WidgetRef ref) {
@@ -407,7 +77,7 @@ class HelpSupportScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "This code is optimized for Cloud-Only mode. Copy it to your Arduino IDE.",
+                "Copy this code to your Arduino IDE.",
                 style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12),
               ),
               const SizedBox(height: 16),
@@ -437,7 +107,7 @@ class HelpSupportScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              'Close',
               style: GoogleFonts.outfit(color: Colors.white38),
             ),
           ),
@@ -445,9 +115,6 @@ class HelpSupportScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF00FFC2),
               foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
             onPressed: () async {
               final fileService = FileService();
@@ -459,10 +126,112 @@ class HelpSupportScreen extends ConsumerWidget {
                     backgroundColor: Color(0xFF00FFC2),
                   ),
                 );
-                Navigator.of(context).pop();
+                Navigator.pop(context);
               }
             },
             child: const Text('Copy Code'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F0F0F),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0F0F0F),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Help & Support",
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemCount: _pages.length,
+              itemBuilder: (context, index) {
+                final page = _pages[index];
+                return Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        page["title"]!,
+                        style: GoogleFonts.outfit(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        page["content"]!,
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          height: 1.6,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                      if (index == _pages.length - 1) ...[
+                        const SizedBox(height: 40),
+                        Center(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFBB86FC),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            ),
+                            onPressed: () => _showEsp32FirmwareDialog(context, ref),
+                            icon: const Icon(Icons.memory),
+                            label: const Text("Generate ESP32 Firmware"),
+                          ),
+                        ),
+                      ]
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 40.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _pages.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentPage == index ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentPage == index ? const Color(0xFF00FFC2) : Colors.white24,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

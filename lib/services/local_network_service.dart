@@ -41,9 +41,9 @@ class LocalNetworkService {
     try {
       await _mdns.start();
 
-      // Look for _nebula._tcp service
+      // Look for _aurexa._tcp service
       await for (final PtrResourceRecord ptr in _mdns.lookup<PtrResourceRecord>(
-        ResourceRecordQuery.serverPointer('_nebula._tcp.local'),
+        ResourceRecordQuery.serverPointer('_aurexa._tcp.local'),
       )) {
         await for (final SrvResourceRecord srv
             in _mdns.lookup<SrvResourceRecord>(
@@ -57,7 +57,7 @@ class LocalNetworkService {
 
             // Temporary ID mapping if we don't have TXT records yet
             // Ideally we'd parse TXT for deviceId, or just treat IP as the key resource
-            // For now, let's verify it's a nebula device by hitting /status
+            // For now, let's verify it's a aurexa device by hitting /status
             _verifyAndAddDevice(ip.address.address);
           }
         }
@@ -115,7 +115,7 @@ class LocalNetworkService {
         final String deviceId = data['deviceId']; // e.g., "A1B2C3"
 
         _discoveredDevices[deviceId] = ip;
-        print('✅ Verified Nebula Device: $deviceId @ $ip');
+        print('✅ Verified Aurexa Device: $deviceId @ $ip');
       }
     } catch (e) {
       print('Failed to verify device at $ip: $e');

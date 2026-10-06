@@ -90,7 +90,7 @@ class VoiceService {
 
       _isInitialized = true;
     } catch (e) {
-      if (lastError == null) lastError = "Init Error: $e";
+      lastError ??= "Init Error: $e";
       debugPrint("Voice Init Error: $e");
       _isInitialized = false; // Keep it false if it failed
     }
@@ -120,8 +120,9 @@ class VoiceService {
   Future<String> testSpeak() async {
     try {
       await _initialize().timeout(const Duration(seconds: 5));
-      if (lastError != null && lastError!.contains("Init"))
+      if (lastError != null && lastError!.contains("Init")) {
         return "Error: $lastError";
+      }
 
       await _tts
           .speak("Voice system check operational.")

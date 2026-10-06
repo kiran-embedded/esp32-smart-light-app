@@ -77,24 +77,29 @@ class Esp32StatusNotifier extends StateNotifier<Esp32StatusState> {
       },
     );
 
-    // Listen to ESP32 telemetry (non-blocking)
+    // Listen to ESP32 status (non-blocking)
     _telemetrySubscription = _database
-        .child('devices/$deviceId/telemetry')
+        .child('devices/$deviceId/status')
         .onValue
         .listen(
           (event) {
             final data = event.snapshot.value;
             if (data != null && data is Map) {
-              final voltage =
-                  double.tryParse(data['voltage']?.toString() ?? '0') ?? 0.0;
-
-              state = state.copyWith(
-                status: Esp32Status.active,
-                lastSeen: DateTime.now(),
-                lastVoltage: voltage,
-                errorMessage: null,
-              );
-              _resetTimeout();
+              final isOnline = data['online'] == true;
+              
+              if (isOnline) {
+                state = state.copyWith(
+                  status: Esp32Status.active,
+                  lastSeen: DateTime.now(),
+                  errorMessage: null,
+                );
+                _resetTimeout();
+              } else {
+                state = state.copyWith(
+                  status: Esp32Status.offline,
+                  errorMessage: 'Device reported offline',
+                );
+              }
             } else {
               // No data but connection exists - might be connecting
               if (state.status == Esp32Status.offline) {

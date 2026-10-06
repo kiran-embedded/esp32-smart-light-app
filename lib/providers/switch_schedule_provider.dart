@@ -55,11 +55,30 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
     await PersistenceService.saveSchedules(data);
   }
 
+  Future<void> _updateRawSchedules(List<SwitchSchedule> schedules) async {
+    final List<String> rawList = [];
+    for (var s in schedules) {
+      if (!s.isEnabled) continue;
+      String node = s.targetNode.replaceAll('relay', 'r');
+      String days = s.days.join(',');
+      if (days.isEmpty) days = "0"; // 0 means everyday
+      String stateVal = s.targetState ? "1" : "0";
+      // Format: 09:30:r1:1:1,2,3
+      rawList.add('${s.hour.toString().padLeft(2, '0')}:${s.minute.toString().padLeft(2, '0')}:$node:$stateVal:$days');
+    }
+    final rawStr = rawList.join(';');
+    final path = '${AppConstants.firebaseDevicesPath}/${AppConstants.defaultDeviceId}/commands/schedules_raw';
+    await _database.child(path).set(rawStr);
+  }
+
   Future<void> addSchedule(SwitchSchedule schedule) async {
     // Optimistic Update
     state = [...state, schedule];
 
-    // Schedule Background Job
+    // Update raw string for ESP32 NTP Hardware Scheduler
+    await _updateRawSchedules(state);
+
+    // Schedule Background Job (Keep for redundancy/notifications if needed, or remove later)
     await SchedulerService.scheduleEvent(schedule);
 
     final path =
@@ -74,6 +93,9 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
         if (s.id == schedule.id) schedule else s,
     ];
 
+    // Update raw string for ESP32 NTP Hardware Scheduler
+    await _updateRawSchedules(state);
+
     // Update Background Job
     await SchedulerService.scheduleEvent(schedule);
 
@@ -86,6 +108,9 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
     // Optimistic Update
     state = state.where((s) => s.id != id).toList();
 
+    // Update raw string for ESP32 NTP Hardware Scheduler
+    await _updateRawSchedules(state);
+
     // Cancel Background Job
     await SchedulerService.cancelEvent(id);
 
@@ -97,6 +122,9 @@ class SwitchScheduleNotifier extends StateNotifier<List<SwitchSchedule>> {
   Future<void> deleteSchedules(List<String> ids) async {
     // Optimistic Update
     state = state.where((s) => !ids.contains(s.id)).toList();
+
+    // Update raw string for ESP32 NTP Hardware Scheduler
+    await _updateRawSchedules(state);
 
     for (final id in ids) {
       // Cancel Background Job

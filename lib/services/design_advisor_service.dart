@@ -28,13 +28,13 @@ class DesignAdvisorService {
     required SwitchBackgroundType background,
   }) {
     // 1. Cyber-Void (Amoled + Void + Data Pulse)
-    if (theme == AppThemeMode.amoledCyberpunk) {
+    if (theme == AppThemeMode.dark) {
       if (switchStyle != SwitchStyleType.voidAbyss ||
           background != SwitchBackgroundType.cyberGrid) {
         return AdvicePacket(
           text:
               "Let's calibrate for 'Cyber-Void' mode. High-contrast, near-zero lag visuals.",
-          theme: AppThemeMode.amoledCyberpunk,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.voidAbyss,
           background: SwitchBackgroundType.cyberGrid,
           launchAnimation: AppLaunchAnimation.cyberGlitch,
@@ -45,12 +45,12 @@ class DesignAdvisorService {
 
     // 2. Quantum Flux (Space + Quantum + Echo)
     if (background == SwitchBackgroundType.starField ||
-        theme == AppThemeMode.darkSpace) {
+        theme == AppThemeMode.dark) {
       if (switchStyle != SwitchStyleType.quantumDot) {
         return AdvicePacket(
           text:
               "Quantum state detected. Syncing motion to 'Cosmic Echo' physics.",
-          theme: AppThemeMode.darkSpace,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.quantumDot,
           background: SwitchBackgroundType.starField,
           launchAnimation: AppLaunchAnimation.quantumTunnel,
@@ -60,12 +60,12 @@ class DesignAdvisorService {
     }
 
     // 3. Liquid Crystal (Pure Gold + Prism)
-    if (theme == AppThemeMode.pureGold) {
+    if (theme == AppThemeMode.dark) {
       if (switchStyle != SwitchStyleType.crystalPrism) {
         return AdvicePacket(
           text:
               "Refining 'Golden Crystal' aesthetics. Smooth luxury transitions incoming.",
-          theme: AppThemeMode.pureGold,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.crystalPrism,
           background: SwitchBackgroundType.glassPrism,
           launchAnimation: AppLaunchAnimation.glassDrop,
@@ -80,7 +80,7 @@ class DesignAdvisorService {
         return AdvicePacket(
           text:
               "Holographic projection needs a fluid plasma base for stability.",
-          theme: AppThemeMode.cyberNeon,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.holographic,
           background: SwitchBackgroundType.liquidPlasma,
           launchAnimation: AppLaunchAnimation.hologramRise,
@@ -91,11 +91,11 @@ class DesignAdvisorService {
 
     // 5. Matrix / Kali (DevOps Mode)
     if (background == SwitchBackgroundType.dataStream ||
-        theme == AppThemeMode.kaliLinux) {
+        theme == AppThemeMode.dark) {
       if (switchStyle != SwitchStyleType.realistic) {
         return AdvicePacket(
           text: "Enabling 'Root Terminal' mode. Matrix flux activated.",
-          theme: AppThemeMode.kaliLinux,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.realistic,
           background: SwitchBackgroundType.dataStream,
           launchAnimation: AppLaunchAnimation.bladeRunner,
@@ -106,11 +106,11 @@ class DesignAdvisorService {
 
     // 6. Bio-Organic (Nature + Organic)
     if (switchStyle == SwitchStyleType.bioOrganic) {
-      if (theme != AppThemeMode.mindfulNature) {
+      if (theme != AppThemeMode.dark) {
         return AdvicePacket(
           text:
               "Synchronizing with organic rhythms. Soft aura transitions enabled.",
-          theme: AppThemeMode.mindfulNature,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.bioOrganic,
           background: SwitchBackgroundType.auroraBorealis,
           launchAnimation: AppLaunchAnimation.fluidWave,
@@ -120,11 +120,11 @@ class DesignAdvisorService {
     }
 
     // 7. Blood Moon (Vampire + Pulse)
-    if (theme == AppThemeMode.crimsonVampire) {
+    if (theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.fireEmbers) {
         return AdvicePacket(
           text: "The Crimson Moon rises. Activating high-energy pulse physics.",
-          theme: AppThemeMode.crimsonVampire,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.cosmicPulse,
           background: SwitchBackgroundType.fireEmbers,
           launchAnimation: AppLaunchAnimation.cinematicFade,
@@ -134,11 +134,11 @@ class DesignAdvisorService {
     }
 
     // 8. Cyber-Neon (Tokyo + RGB)
-    if (theme == AppThemeMode.neonTokyo || theme == AppThemeMode.cyberNeon) {
+    if (theme == AppThemeMode.dark || theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.neonBorder) {
         return AdvicePacket(
           text: "Tokyo nights require 'Neon Border' architecture.",
-          theme: AppThemeMode.neonTokyo,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.neonGlass,
           background: SwitchBackgroundType.neonBorder,
           launchAnimation: AppLaunchAnimation.neonPulse,
@@ -148,11 +148,11 @@ class DesignAdvisorService {
     }
 
     // 9. Retro Synth (Vaporwave)
-    if (theme == AppThemeMode.synthwave || theme == AppThemeMode.sunsetRetro) {
+    if (theme == AppThemeMode.dark || theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.retroSynth) {
         return AdvicePacket(
           text: "Establishing 'Retro-Synth' uplink. Nostalgia drive online.",
-          theme: AppThemeMode.synthwave,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.retroVapor,
           background: SwitchBackgroundType.retroSynth,
           launchAnimation: AppLaunchAnimation.centerBurst,
@@ -162,12 +162,12 @@ class DesignAdvisorService {
     }
 
     // 10. Minimalist (Pure Dark)
-    if (theme == AppThemeMode.nothingDot) {
+    if (theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.defaultBlack) {
         return AdvicePacket(
           text:
               "Resetting to 'Absolute Zero' minimalism. Maximum latency focus.",
-          theme: AppThemeMode.nothingDot,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.modern,
           background: SwitchBackgroundType.defaultBlack,
           launchAnimation: AppLaunchAnimation.iPhoneBlend,
@@ -178,12 +178,12 @@ class DesignAdvisorService {
 
     // 11. Solar Flare
     if (switchStyle == SwitchStyleType.solarFlare ||
-        theme == AppThemeMode.solarFlare) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.solarFlare ||
-          theme != AppThemeMode.solarFlare) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Solar activity at peak levels. Synchronizing corona pulses.",
-          theme: AppThemeMode.solarFlare,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.solarFlare,
           background: SwitchBackgroundType.solarFlare,
           launchAnimation: AppLaunchAnimation.hologramRise,
@@ -194,13 +194,13 @@ class DesignAdvisorService {
 
     // 12. Electric Tundra
     if (switchStyle == SwitchStyleType.electricTundra ||
-        theme == AppThemeMode.electricTundra) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.electricTundra ||
-          theme != AppThemeMode.electricTundra) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text:
               "Zero-degree conductivity established. Activating arctic surge.",
-          theme: AppThemeMode.electricTundra,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.electricTundra,
           background: SwitchBackgroundType.electricTundra,
           launchAnimation: AppLaunchAnimation.cyberGlitch,
@@ -211,12 +211,12 @@ class DesignAdvisorService {
 
     // 13. Nano Catalyst
     if (switchStyle == SwitchStyleType.nanoCatalyst ||
-        theme == AppThemeMode.nanoCatalyst) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.nanoCatalyst ||
-          theme != AppThemeMode.nanoCatalyst) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Nano-assembly in progress. Optimizing hexagonal grid.",
-          theme: AppThemeMode.nanoCatalyst,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.nanoCatalyst,
           background: SwitchBackgroundType.nanoCatalyst,
           launchAnimation: AppLaunchAnimation.quantumTunnel,
@@ -227,12 +227,12 @@ class DesignAdvisorService {
 
     // 14. Phantom Velvet
     if (switchStyle == SwitchStyleType.phantomVelvet ||
-        theme == AppThemeMode.phantomVelvet) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.phantomVelvet ||
-          theme != AppThemeMode.phantomVelvet) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Ghost in the machine detected. Enabling velvet smoothness.",
-          theme: AppThemeMode.phantomVelvet,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.phantomVelvet,
           background: SwitchBackgroundType.phantomVelvet,
           launchAnimation: AppLaunchAnimation.cinematicFade,
@@ -243,12 +243,12 @@ class DesignAdvisorService {
 
     // 15. Prism Fractal
     if (switchStyle == SwitchStyleType.prismFractal ||
-        theme == AppThemeMode.prismFractal) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.prismFractal ||
-          theme != AppThemeMode.prismFractal) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Refractive index out of bounds. Correcting light-paths.",
-          theme: AppThemeMode.prismFractal,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.prismFractal,
           background: SwitchBackgroundType.prismFractal,
           launchAnimation: AppLaunchAnimation.glassDrop,
@@ -259,12 +259,12 @@ class DesignAdvisorService {
 
     // 16. Magma Core
     if (switchStyle == SwitchStyleType.magmaCore ||
-        theme == AppThemeMode.magmaCore) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.magmaCore ||
-          theme != AppThemeMode.magmaCore) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Tectonic shift imminent. Increasing thermal viscosity.",
-          theme: AppThemeMode.magmaCore,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.magmaCore,
           background: SwitchBackgroundType.magmaCore,
           launchAnimation: AppLaunchAnimation.neonPulse,
@@ -275,12 +275,12 @@ class DesignAdvisorService {
 
     // 17. Cyber Bloom
     if (switchStyle == SwitchStyleType.cyberBloom ||
-        theme == AppThemeMode.cyberBloom) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.cyberBloom ||
-          theme != AppThemeMode.cyberBloom) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Bio-luminesence thriving. Syncing to photosynthetic cycles.",
-          theme: AppThemeMode.cyberBloom,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.cyberBloom,
           background: SwitchBackgroundType.cyberBloom,
           launchAnimation: AppLaunchAnimation.fluidWave,
@@ -292,10 +292,10 @@ class DesignAdvisorService {
     // 18. Void Rift (Legacy support mapped to Amoled)
     if (switchStyle == SwitchStyleType.voidRift) {
       if (background != SwitchBackgroundType.voidRift ||
-          theme != AppThemeMode.amoledCyberpunk) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Singularity event confirmed. Compressing UI gravity.",
-          theme: AppThemeMode.amoledCyberpunk,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.voidRift,
           background: SwitchBackgroundType.voidRift,
           launchAnimation: AppLaunchAnimation.quantumTunnel,
@@ -306,12 +306,12 @@ class DesignAdvisorService {
 
     // 19. Starlight Echo
     if (switchStyle == SwitchStyleType.starlightEcho ||
-        theme == AppThemeMode.starlightEcho) {
+        theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.starlightEcho ||
-          theme != AppThemeMode.starlightEcho) {
+          theme != AppThemeMode.dark) {
         return AdvicePacket(
           text: "Galactic signal locked. Transmitting through the void.",
-          theme: AppThemeMode.starlightEcho,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.starlightEcho,
           background: SwitchBackgroundType.starlightEcho,
           launchAnimation: AppLaunchAnimation.centerBurst,
@@ -321,11 +321,11 @@ class DesignAdvisorService {
     }
 
     // 20. Platinum Blue
-    if (theme == AppThemeMode.platinumBlue) {
+    if (theme == AppThemeMode.dark) {
       if (background != SwitchBackgroundType.aeroStream) {
         return AdvicePacket(
           text: "Laminar flow achieved. Streamlining aerodynamic curves.",
-          theme: AppThemeMode.platinumBlue,
+          theme: AppThemeMode.dark,
           style: SwitchStyleType.aeroStream,
           background: SwitchBackgroundType.aeroStream,
           launchAnimation: AppLaunchAnimation.iPhoneBlend,
@@ -338,7 +338,7 @@ class DesignAdvisorService {
     final randomTips = [
       AdvicePacket(
         text: "Try switching to 'Kali' theme for a dev-heavy aesthetic.",
-        theme: AppThemeMode.kaliLinux,
+        theme: AppThemeMode.dark,
         style: SwitchStyleType.realistic,
         background: SwitchBackgroundType.dataStream,
         launchAnimation: AppLaunchAnimation.bladeRunner,
@@ -346,13 +346,13 @@ class DesignAdvisorService {
       ),
       AdvicePacket(
         text: "Feeling nostalgic? 'Retro Synth' is a radical choice.",
-        theme: AppThemeMode.sunsetRetro,
+        theme: AppThemeMode.dark,
         style: SwitchStyleType.retroVapor,
         background: SwitchBackgroundType.retroSynth,
       ),
       AdvicePacket(
         text: "Neural nodes link up best with 'Neon Tokyo' themes.",
-        theme: AppThemeMode.neonTokyo,
+        theme: AppThemeMode.dark,
         background: SwitchBackgroundType.neuralNodes,
       ),
       AdvicePacket(text: "Double-tap the Robo for a fresh UI analysis scan."),

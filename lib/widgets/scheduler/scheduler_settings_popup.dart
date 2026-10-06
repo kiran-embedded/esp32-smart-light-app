@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,8 +12,8 @@ import '../../services/haptic_service.dart';
 import '../../services/scheduler_service.dart';
 import '../../core/ui/responsive_layout.dart';
 import '../../providers/animation_provider.dart';
-// import '../common/frosted_glass.dart'; // Removed
 import '../common/pixel_led_border.dart';
+import '../scheduling/new_schedule_sheet.dart';
 
 class SchedulerSettingsPopup extends ConsumerStatefulWidget {
   final String? initialDeviceId;
@@ -60,7 +59,7 @@ class _SchedulerSettingsPopupState
 
   @override
   Widget build(BuildContext context) {
-    const amoledBlack = Color(0xFF0A0A0A);
+    const amoledBlack = Color(0xFF000000);
 
     return Material(
       color: Colors.transparent,
@@ -120,10 +119,10 @@ class _SchedulerSettingsPopupState
                         end: Alignment.bottomCenter,
                         colors: [
                           _isMultiSelectMode
-                              ? const Color(0xFFFF4D4D) // Neon Red
+                              ? Theme.of(context).primaryColor // Neon Red
                               : Theme.of(context).primaryColor, // Dynamic Theme
                           (_isMultiSelectMode
-                                  ? const Color(0xFFFF4D4D)
+                                  ? Theme.of(context).primaryColor
                                   : Theme.of(context).primaryColor)
                               .withOpacity(0.1),
                         ],
@@ -252,9 +251,9 @@ class _SchedulerSettingsPopupState
                   ),
               if (_isMultiSelectMode)
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.delete_sweep_rounded,
-                    color: const Color(0xFFFF4D4D), // Neon Red
+                    color: Theme.of(context).primaryColor, // Neon Red
                     size: 26,
                   ),
                   onPressed: _deleteSelected,
@@ -646,7 +645,7 @@ class _SchedulerSettingsPopupState
           decoration: BoxDecoration(
             color: isSelected
                 ? primaryColor.withOpacity(0.05)
-                : const Color(0xFF111418), // Clean Titanium Surface
+                : const Color(0xFF111111), // Clean Titanium Surface
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isSelected
@@ -795,10 +794,10 @@ class _SchedulerSettingsPopupState
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: isSelected
-            ? const Color(0xFFFF4D4D)
+            ? Theme.of(context).primaryColor
             : Colors.transparent, // Neon Red
         border: Border.all(
-          color: isSelected ? const Color(0xFFFF4D4D) : Colors.white24,
+          color: isSelected ? Theme.of(context).primaryColor : Colors.white24,
           width: 2,
         ),
       ),
@@ -903,10 +902,7 @@ class _SchedulerSettingsPopupState
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (context) => _AddScheduleSheet(
-          schedule: existingSchedule,
-          initialDeviceId: widget.initialDeviceId,
-        ),
+        builder: (context) => const NewScheduleSheet(),
       );
     }
   }
@@ -1000,15 +996,15 @@ class _SchedulerSettingsPopupState
 }
 
 // Custom Sheet for Adding Schedule (Modified from original to fit new design)
-class _AddScheduleSheet extends ConsumerStatefulWidget {
+class AddScheduleSheet extends ConsumerStatefulWidget {
   final SwitchSchedule? schedule;
   final String? initialDeviceId;
-  const _AddScheduleSheet({this.schedule, this.initialDeviceId});
+  const AddScheduleSheet({super.key, this.schedule, this.initialDeviceId});
   @override
-  ConsumerState<_AddScheduleSheet> createState() => _AddScheduleSheetState();
+  ConsumerState<AddScheduleSheet> createState() => _AddScheduleSheetState();
 }
 
-class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
+class _AddScheduleSheetState extends ConsumerState<AddScheduleSheet> {
   late TimeOfDay _selectedTime;
   late String _selectedNode;
   late bool _targetState;
@@ -1100,7 +1096,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
       height: 180,
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF111418),
+        color: const Color(0xFF111111),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
       ),
@@ -1226,7 +1222,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1F26),
+        color: const Color(0xFF111111),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
       ),
@@ -1303,7 +1299,7 @@ class _AddScheduleSheetState extends ConsumerState<_AddScheduleSheet> {
                     color: active
                         ? Theme.of(context)
                               .primaryColor // Dynamic Theme
-                        : const Color(0xFF1A1F26),
+                        : const Color(0xFF111111),
                     border: Border.all(
                       color: active
                           ? Theme.of(context).primaryColor
@@ -1359,7 +1355,7 @@ class _BaseSheet extends StatelessWidget {
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height * 0.88,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0B0F14), // Deep Black
+                    color: const Color(0xFF000000), // Deep Black
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(36),
                     ),
@@ -1592,7 +1588,7 @@ class _ActionPill extends StatelessWidget {
     final activeColor = state == true
         ? Theme.of(context)
               .primaryColor // Dynamic Theme
-        : const Color(0xFFFF4D4D); // Neon Red
+        : Theme.of(context).primaryColor; // Neon Red
 
     return GestureDetector(
       onTap: () {
@@ -1605,7 +1601,7 @@ class _ActionPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? activeColor.withOpacity(0.1)
-              : const Color(0xFF111418),
+              : const Color(0xFF111111),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
@@ -1807,7 +1803,7 @@ class _StaggeredHelpDialog extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E22), // Unify background
+          color: const Color(0xFF111111), // Unify background
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: Colors.white.withOpacity(0.08)),
           boxShadow: const [],

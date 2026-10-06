@@ -1,7 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../providers/sound_settings_provider.dart';
@@ -106,24 +105,10 @@ class SoundService {
     }
   }
 
-  Future<void> playSwitchOn() async => _play('on');
-  Future<void> playSwitchOff() async => _play('off');
-  Future<void> playTabSwitch() async => _play('tab');
-
-  Future<void> playStartup() async {
-    try {
-      final settings = _ref.read(soundSettingsProvider);
-      if (!settings.masterSound || !settings.appOpeningSound) return;
-
-      await _startupPlayer.stop();
-      await _startupPlayer.setReleaseMode(ReleaseMode.stop);
-      final volume = settings.masterVolume * settings.appOpeningVolume;
-      await _startupPlayer.setVolume(volume);
-      await _startupPlayer.play(AssetSource('audio/startup.mp3'));
-    } catch (e) {
-      debugPrint('Startup sound error: $e');
-    }
-  }
+  Future<void> playSwitchOn() async {}
+  Future<void> playSwitchOff() async {}
+  Future<void> playTabSwitch() async {}
+  Future<void> playStartup() async {}
 
   SoundHandle? _alarmHandle;
 

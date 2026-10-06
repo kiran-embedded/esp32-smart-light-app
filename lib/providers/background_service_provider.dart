@@ -10,7 +10,7 @@ final backgroundServiceProvider =
 class BackgroundServiceNotifier extends StateNotifier<bool> {
   static const String _key = 'backgroundRunningEnabled';
   static final MethodChannel _channel = MethodChannel(
-    'com.iot.nebulacontroller/native_scheduler',
+    'com.iot.aurexacontroller/native_scheduler',
   );
 
   BackgroundServiceNotifier() : super(true) {

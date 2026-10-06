@@ -43,7 +43,7 @@ class JsonImportService {
       final client = clients.firstWhere(
         (c) =>
             (c['client_info']['android_client_info']['package_name'] ==
-            'com.iot.nebulacontroller'),
+            'com.iot.aurexacontroller'),
         orElse: () => clients.first,
       );
 

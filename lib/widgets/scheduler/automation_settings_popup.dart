@@ -150,7 +150,7 @@ class _AutomationSettingsPopupState
             ),
             Switch(
               value: _isActive,
-              activeColor: Colors.cyanAccent,
+              activeThumbColor: Colors.cyanAccent,
               onChanged: (val) {
                 HapticService.toggle(val);
                 setState(() => _isActive = val);
@@ -257,7 +257,7 @@ class _AutomationSettingsPopupState
               style: GoogleFonts.outfit(color: Colors.white70),
             ),
             Text(
-              '${_ldrThreshold}',
+              '$_ldrThreshold',
               style: GoogleFonts.outfit(
                 color: Colors.cyanAccent,
                 fontWeight: FontWeight.bold,
@@ -383,7 +383,7 @@ class _AutomationSettingsPopupState
                 });
                 _saveCurrentState();
               },
-              activeColor: Colors.cyanAccent,
+              activeTrackColor: Colors.cyanAccent,
             ),
           ],
         ),

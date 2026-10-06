@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:883218584898:android:b294e7b3221ef873d5a4db",
         "android_client_info": {
-          "package_name": "com.iot.nebulacontroller"
+          "package_name": "com.aurexa.app"
         }
       },
       "oauth_client": [
@@ -18,7 +18,7 @@
           "client_id": "883218584898-gcatugiggntcs12nqnokm7ntbh7elabm.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.iot.nebulacontroller",
+            "package_name": "com.aurexa.app",
             "certificate_hash": "85c01251a741f84da31a1850eb7549e9dba77523"
           }
         },

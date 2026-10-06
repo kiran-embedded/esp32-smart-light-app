@@ -8,7 +8,7 @@ import '../../providers/live_info_provider.dart';
 import '../../providers/connection_settings_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../services/user_activity_service.dart';
-
+import '../../providers/esp32_status_provider.dart';
 class DynamicIslandPill extends ConsumerStatefulWidget {
   const DynamicIslandPill({super.key});
 
@@ -130,7 +130,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
   }
 
   Widget _buildCollapsedContent(int activeCount) {
-    return Container(
+    return SizedBox(
       width: 120,
       height: 36,
       child: Row(
@@ -154,31 +154,27 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
   }
 
   Widget _buildConnectivityIcon() {
-    return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseDatabase.instance.ref('.info/connected').onValue,
-      builder: (context, snapshot) {
-        final isConnected = (snapshot.data?.snapshot.value as bool?) ?? true;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: (isConnected ? Colors.green : Colors.red).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: (isConnected ? Colors.green : Colors.red).withOpacity(0.5),
-              width: 1,
-            ),
-          ),
-          child: Text(
-            isConnected ? "CONNECTED" : "DISCONNECTED",
-            style: GoogleFonts.outfit(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: isConnected ? Colors.greenAccent : Colors.redAccent,
-              letterSpacing: 0.5,
-            ),
-          ),
-        );
-      },
+    final esp32State = ref.watch(esp32StatusProvider);
+    final isConnected = esp32State.status == Esp32Status.active;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: (isConnected ? Colors.green : Colors.red).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: (isConnected ? Colors.green : Colors.red).withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        isConnected ? "CONNECTED" : "DISCONNECTED",
+        style: GoogleFonts.outfit(
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: isConnected ? Colors.greenAccent : Colors.redAccent,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 
@@ -206,7 +202,7 @@ class _DynamicIslandPillState extends ConsumerState<DynamicIslandPill> {
         color = temp > 35 ? Colors.orangeAccent : Colors.lightBlueAccent;
         break;
       case 3:
-        label = mode.name.toUpperCase() + ' MODE';
+        label = '${mode.name.toUpperCase()} MODE';
         icon = mode == ConnectionMode.cloud
             ? Icons.cloud_done_rounded
             : Icons.wifi_rounded;

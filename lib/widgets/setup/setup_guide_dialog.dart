@@ -56,7 +56,7 @@ class SetupGuideDialog extends StatelessWidget {
                     _buildStep(
                       '1',
                       'Create Firebase Project',
-                      'Go to Firebase Console and create a new project. Name it "Nebula Home" or whatever you like.',
+                      'Go to Firebase Console and create a new project. Name it "Aurexa Home" or whatever you like.',
                     ),
                     _buildStep(
                       '2',
@@ -81,7 +81,7 @@ class SetupGuideDialog extends StatelessWidget {
                     _buildStep(
                       '6',
                       'Restart',
-                      'Click "INITIALIZE NEBULA" and restart the app. You are now connected!',
+                      'Click "INITIALIZE AUREXA" and restart the app. You are now connected!',
                     ),
                     const SizedBox(height: 10),
                     FrostedGlass(

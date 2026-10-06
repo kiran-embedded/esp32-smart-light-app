@@ -5,7 +5,7 @@ enum SwitchBackgroundType {
   defaultBlack,
   neonBorder,
   danceFloor,
-  cosmicNebula,
+  cosmicAurexa,
   cyberGrid,
   liquidPlasma, // Fluid
   digitalRain, // Matrix
@@ -31,7 +31,7 @@ enum SwitchBackgroundType {
   voidRift,
   starlightEcho,
   aeroStream,
-  nebulaDynamic,
+  aurexaDynamic,
 }
 
 final switchBackgroundProvider =
@@ -42,7 +42,7 @@ final switchBackgroundProvider =
     });
 
 class SwitchBackgroundNotifier extends StateNotifier<SwitchBackgroundType> {
-  SwitchBackgroundNotifier() : super(SwitchBackgroundType.nebulaDynamic) {
+  SwitchBackgroundNotifier() : super(SwitchBackgroundType.aurexaDynamic) {
     _loadStyle();
   }
 

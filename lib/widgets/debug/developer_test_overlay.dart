@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../providers/security_provider.dart';
 import '../../services/performance_monitor_service.dart';
 import '../../services/haptic_service.dart';
 
@@ -32,9 +31,7 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(performanceStatsProvider);
-    final securityState = ref.watch(securityProvider);
     debugPrint("OVERLAY_LOG: Starting build. Visible: ${stats.consoleVisible}");
-    debugPrint("OVERLAY_LOG: State Watched. HubMAC: ${securityState.hubMac}");
 
     return Positioned.fill(
       child: Stack(
@@ -68,7 +65,7 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        "NEBULA DEV CONSOLE",
+                        "AUREXA DEV CONSOLE",
                         style: TextStyle(
                           color: Colors.cyanAccent,
                           fontWeight: FontWeight.bold,
@@ -93,16 +90,14 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
                   const SizedBox(height: 10),
                   const Divider(color: Colors.white10),
                   const SizedBox(height: 10),
-                  _smallRow("HUB MAC:", securityState.hubMac),
-                  _smallRow("SAT MAC:", securityState.satMac),
+                  _smallRow("HUB MAC:", "N/A"),
+                  _smallRow("SAT MAC:", "N/A"),
                   _smallRow(
                     "ESP-NOW:",
-                    securityState.satLastSeen < 30 ? "SYNCED" : "LOST",
-                    securityState.satLastSeen < 30
-                        ? Colors.greenAccent
-                        : Colors.redAccent,
+                    "N/A",
+                    Colors.grey,
                   ),
-                  _smallRow("LAST BEAT:", "${securityState.satLastSeen}s ago"),
+                  _smallRow("LAST BEAT:", "N/A"),
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -113,7 +108,7 @@ class _DeveloperTestOverlayState extends ConsumerState<DeveloperTestOverlay> {
                       ),
                       Switch(
                         value: stats.globalFpsEnabled,
-                        activeColor: Colors.cyanAccent,
+                        activeThumbColor: Colors.cyanAccent,
                         onChanged: (val) {
                           HapticService.selection();
                           ref

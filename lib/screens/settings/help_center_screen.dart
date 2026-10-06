@@ -1,111 +1,111 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../widgets/common/premium_app_bar.dart';
+import '../../widgets/common/core_app_bar.dart';
 
 class HelpCenterScreen extends StatelessWidget {
   const HelpCenterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            // Background Elements (Subtle Booklet Aesthetic)
-            Positioned(
-              top: -80,
-              left: -80,
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.cyanAccent.withOpacity(0.04),
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: Colors.black, // True AMOLED
+      body: Stack(
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              const SliverToBoxAdapter(child: SizedBox(height: 110)),
+
+              _buildBookletLabel(context, "QUICK-START BOOKLET"),
+
+              _buildBriefCard(
+                context,
+                "CONTROLS",
+                "Tap nodes to toggle. Long-press to rename. Manual overrides expire in 15 mins.",
+                Icons.bolt_rounded,
+                theme.colorScheme.primary, // Theme primary
+                delayMs: 100,
+              ),
+
+              _buildBriefCard(
+                context,
+                "SECURITY",
+                "LDR: Dark-only. SCHEDULE: Time-only. HYBRID: Dark + Time-active.",
+                Icons.shield_rounded,
+                Colors.orangeAccent,
+                delayMs: 200,
+              ),
+
+              _buildBriefCard(
+                context,
+                "TUNING",
+                "FAST (1-hit). BALANCED (2-hits/15s). STRICT (3-hits/10s). Avoid ghost triggers.",
+                Icons.psychology_rounded,
+                Colors.lightGreenAccent,
+                delayMs: 300,
+              ),
+
+              _buildBriefCard(
+                context,
+                "AUDITS",
+                "Tap the siren icon for chronological breach mapping and forensic timestamps.",
+                Icons.fingerprint_rounded,
+                Colors.redAccent,
+                delayMs: 400,
+              ),
+
+              _buildBriefCard(
+                context,
+                "RELIABILITY",
+                "Boot-Guard (15s stabilization). Hardware Clock (Offline persistence). Batched data.",
+                Icons.auto_awesome_mosaic_rounded,
+                theme.colorScheme.secondary,
+                delayMs: 500,
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
+          ),
+
+          // Top Bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CoreAppBar(
+              title: Text(
+                "HELP CENTER",
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 4,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-            ),
-
-            CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
-
-                _buildBookletLabel("QUICK-START BOOKLET"),
-
-                _buildBriefCard(
-                  "⚡ CONTROLS",
-                  "Tap nodes to toggle. Long-press to rename. Manual overrides expire in 15 mins.",
-                  Icons.bolt_rounded,
-                  Colors.cyanAccent,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: theme.colorScheme.onSurface,
+                  size: 18,
                 ),
-
-                _buildBriefCard(
-                  "🛡️ SECURITY",
-                  "LDR: Dark-only. SCHEDULE: Time-only. HYBRID: Dark + Time-active.",
-                  Icons.shield_rounded,
-                  Colors.orangeAccent,
-                ),
-
-                _buildBriefCard(
-                  "🧠 TUNING",
-                  "FAST (1-hit). BALANCED (2-hits/15s). STRICT (3-hits/10s). Avoid ghost triggers.",
-                  Icons.psychology_rounded,
-                  Colors.lightGreenAccent,
-                ),
-
-                _buildBriefCard(
-                  "🚨 AUDITS",
-                  "Tap the siren icon for chronological breach mapping and forensic timestamps.",
-                  Icons.fingerprint_rounded,
-                  Colors.redAccent,
-                ),
-
-                _buildBriefCard(
-                  "🔋 RELIABILITY",
-                  "Boot-Guard (15s stabilization). Hardware Clock (Offline persistence). Batched data.",
-                  Icons.auto_awesome_mosaic_rounded,
-                  Colors.white38,
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
-              ],
-            ),
-
-            // Top Bar
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: PremiumAppBar(
-                title: Text(
-                  "USE BOOKLET",
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
-                    color: Colors.white,
-                  ),
-                ),
-                leading: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                },
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildBookletLabel(String text) {
+  Widget _buildBookletLabel(BuildContext context, String text) {
+    final theme = Theme.of(context);
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
@@ -115,9 +115,9 @@ class HelpCenterScreen extends StatelessWidget {
             Text(
               text,
               style: GoogleFonts.outfit(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: Colors.white24,
+                color: theme.colorScheme.primary,
                 letterSpacing: 2,
               ),
             ),
@@ -125,40 +125,45 @@ class HelpCenterScreen extends StatelessWidget {
             Container(
               width: 30,
               height: 2,
-              color: Colors.cyanAccent.withOpacity(0.4),
+              color: theme.colorScheme.primary.withValues(alpha: 0.5),
             ),
+            const SizedBox(height: 8),
           ],
         ),
-      ),
+      ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
     );
   }
 
   Widget _buildBriefCard(
+    BuildContext context,
     String title,
     String content,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    int delayMs = 0,
+  }) {
+    final theme = Theme.of(context);
+    
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 20, 20, 20),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F0F0F),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.04)),
+            color: const Color(0xFF111111), // Clean dark grey for amoled contrast
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF222222), width: 1.0),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.05),
+                  color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: color, size: 16),
+                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -168,9 +173,9 @@ class HelpCenterScreen extends StatelessWidget {
                     Text(
                       title,
                       style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white70,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -178,9 +183,9 @@ class HelpCenterScreen extends StatelessWidget {
                     Text(
                       content,
                       style: GoogleFonts.outfit(
-                        fontSize: 11.5,
-                        color: Colors.white24,
-                        height: 1.4,
+                        fontSize: 13,
+                        color: Colors.white60,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -189,7 +194,7 @@ class HelpCenterScreen extends StatelessWidget {
             ],
           ),
         ),
-      ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
+      ).animate(delay: delayMs.ms).fadeIn(duration: 500.ms, curve: Curves.easeOut).slideY(begin: 0.1, curve: Curves.easeOutCubic),
     );
   }
 }

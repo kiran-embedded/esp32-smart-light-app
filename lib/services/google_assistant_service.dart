@@ -26,8 +26,8 @@ class GoogleAssistantService {
       if (status != PermissionStatus.granted) return;
 
       final available = await _speech.initialize(
-        onError: (error) => print('NEBULA_VOICE: Error -> $error'),
-        onStatus: (status) => print('NEBULA_VOICE: Status -> $status'),
+        onError: (error) => print('AUREXA_VOICE: Error -> $error'),
+        onStatus: (status) => print('AUREXA_VOICE: Status -> $status'),
         finalTimeout: const Duration(seconds: 10),
       );
       _isInitialized = available;
@@ -78,7 +78,7 @@ class GoogleAssistantService {
     final devices = _ref.read(switchDevicesProvider);
     final voiceService = _ref.read(voiceServiceProvider);
 
-    print("NEBULA_VOICE: Processing -> $lowerCommand");
+    print("AUREXA_VOICE: Processing -> $lowerCommand");
 
     final Map<String, String> candidates = {};
     for (var device in devices) {

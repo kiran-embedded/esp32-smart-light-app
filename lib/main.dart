@@ -11,14 +11,13 @@ import 'core/theme/app_theme.dart';
 import 'providers/switch_schedule_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login/login_screen.dart';
-import 'screens/intro/cinematic_splash_screen.dart';
+import 'screens/intro/aurexa_splash_screen.dart';
 import 'widgets/navigation/custom_transitions.dart';
 import 'screens/setup/firebase_setup_screen.dart';
-import 'screens/security/alarm_screen.dart';
-import 'providers/security_provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'screens/main/main_screen.dart';
+import 'screens/intro/intro_screen.dart';
 
 import 'services/persistence_service.dart';
 import 'services/scheduler_service.dart';
@@ -38,9 +37,8 @@ import 'core/ui/responsive_layout.dart';
 import 'widgets/debug/global_fps_meter.dart';
 import 'widgets/debug/developer_test_overlay.dart';
 import 'services/performance_monitor_service.dart';
-import 'core/system/display_engine.dart';
+import 'core/system/display_config.dart';
 
-import 'package:flutter/foundation.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -56,16 +54,10 @@ void main() async {
   ErrorWidget.builder = (FlutterErrorDetails details) {
     debugPrint("FATAL_RENDER_ERROR: ${details.exceptionAsString()}");
     return Material(
-      color: Colors.redAccent,
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              "UI Crash:\n${details.exceptionAsString()}\n\nStack:\n${details.stack.toString()}",
-              style: const TextStyle(color: Colors.white, fontSize: 10),
-            ),
-          ),
+      child: Center(
+        child: Text(
+          details.exceptionAsString(),
+          style: const TextStyle(color: Colors.red),
         ),
       ),
     );
@@ -76,13 +68,30 @@ void main() async {
   // Extract initial values for Provider overrides to prevent flash of default state
   final voiceEnabled = prefs.getBool('voice_enabled') ?? true;
   final masterSound = prefs.getBool('master_sound') ?? true;
-  final appOpeningSound = prefs.getBool('app_opening_sound') ?? true;
+  final appOpeningSound = prefs.getBool('app_opening_sound') ?? false;
   final switchSound = prefs.getBool('switch_sound') ?? true;
 
   // Load Animation Settings
   final animLaunchIdx = prefs.getInt('anim_launch_type') ?? 0;
   final animUiIdx = prefs.getInt('anim_ui_type') ?? 0;
   final animEnabled = prefs.getBool('animations_enabled') ?? true;
+
+  // Preload Theme
+  AppThemeMode initialTheme = AppThemeMode.light;
+  final themeName = prefs.getString('theme_mode_str');
+  if (themeName != null) {
+    try {
+      initialTheme = AppThemeMode.values.firstWhere(
+        (e) => e.toString().split('.').last == themeName,
+        orElse: () => AppThemeMode.light,
+      );
+    } catch (_) {}
+  } else {
+    final themeIndex = prefs.getInt('theme_mode');
+    if (themeIndex != null && themeIndex < AppThemeMode.values.length) {
+      initialTheme = AppThemeMode.values[themeIndex];
+    }
+  }
 
   final soundSettings = SoundSettings(
     masterSound: masterSound,
@@ -98,6 +107,7 @@ void main() async {
       child: ProviderScope(
         overrides: [
           // Pre-inject essential settings to ensure zero-jank first frame
+          themeProvider.overrideWith((ref) => ThemeNotifier(initialTheme)),
           voiceEnabledProvider.overrideWith(
             (ref) => VoiceNotifier(voiceEnabled),
           ),
@@ -114,7 +124,7 @@ void main() async {
             );
           }),
         ],
-        child: const NebulaCoreApp(),
+        child: const AurexaCoreApp(),
       ),
     ),
   );
@@ -205,16 +215,16 @@ Future<void> _initBackgroundSystems(SharedPreferences prefs) async {
   PersistenceService.getNicknames();
 }
 
-class NebulaCoreApp extends ConsumerStatefulWidget {
-  const NebulaCoreApp({super.key});
+class AurexaCoreApp extends ConsumerStatefulWidget {
+  const AurexaCoreApp({super.key});
 
   @override
-  ConsumerState<NebulaCoreApp> createState() => _NebulaCoreAppState();
+  ConsumerState<AurexaCoreApp> createState() => _AurexaCoreAppState();
 }
 
-class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
+class _AurexaCoreAppState extends ConsumerState<AurexaCoreApp>
     with WidgetsBindingObserver {
-  bool _showSplash = true;
+  bool _showSplash = true; // Splash screen re-enabled to fix fast-flashing issue
 
   @override
   void initState() {
@@ -222,7 +232,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
     WidgetsBinding.instance.addObserver(this);
 
     // Initialize Alarm Channel
-    const alarmChannel = MethodChannel('com.iot.nebulacontroller/alarm');
+    const alarmChannel = MethodChannel('com.iot.aurexacontroller/alarm');
     alarmChannel.setMethodCallHandler((call) async {
       if (call.method == "getZone") {
         // This is called when AlarmActivity starts
@@ -230,22 +240,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
       }
     });
 
-    // Check if we launched for an alarm immediately
-    _checkForAlarm();
-
-    // Global Alarm Listener: Navigate to AlarmScreen when security state is active
-    ref.listenManual<SecurityState>(securityProvider, (previous, next) {
-      if (next.isAlarmActive && (previous == null || !previous.isAlarmActive)) {
-        if (mounted && next.isNativeAlarmEnabled) {
-          final String zone = next.activeBreaches.isNotEmpty
-              ? next.activeBreaches.first['sensor'].toString()
-              : "Unknown Zone";
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => AlarmScreen(zone: zone)),
-          );
-        }
-      }
-    });
+    // Global Alarm Listener removed
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
@@ -264,29 +259,17 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      ref.read(firebaseSwitchServiceProvider).preWarmConnection();
-      ref.read(switchDevicesProvider.notifier).resume();
-      ref.read(switchScheduleProvider.notifier).resume();
-      _checkForAlarm();
+      if (Firebase.apps.isNotEmpty) {
+        ref.read(firebaseSwitchServiceProvider).preWarmConnection();
+        ref.read(switchDevicesProvider.notifier).resume();
+        ref.read(switchScheduleProvider.notifier).resume();
+      }
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      ref.read(switchDevicesProvider.notifier).suspend();
-      ref.read(switchScheduleProvider.notifier).suspend();
-    }
-  }
-
-  Future<void> _checkForAlarm() async {
-    const alarmChannel = MethodChannel('com.iot.nebulacontroller/alarm');
-    try {
-      final String? zone = await alarmChannel.invokeMethod('getZone');
-      if (zone != null && zone.isNotEmpty && zone != "null" && mounted) {
-        // Navigate to AlarmScreen
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => AlarmScreen(zone: zone)),
-        );
+      if (Firebase.apps.isNotEmpty) {
+        ref.read(switchDevicesProvider.notifier).suspend();
+        ref.read(switchScheduleProvider.notifier).suspend();
       }
-    } catch (e) {
-      // Ignored if not in AlarmActivity
     }
   }
 
@@ -298,12 +281,13 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
 
     Widget destination;
     switch (authState) {
+      case AuthState.initial:
+        destination = const IntroScreen();
+        break;
       case AuthState.authenticated:
         destination = const MainScreen();
         break;
       case AuthState.unconfigured:
-        destination = const FirebaseSetupScreen();
-        break;
       default:
         destination = const LoginScreen();
     }
@@ -313,8 +297,9 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
     final displaySettings = ref.watch(displaySettingsProvider);
 
     return MaterialApp(
-      title: 'NEBULA CORE',
+      title: 'AUREXA',
       debugShowCheckedModeBanner: false,
+      themeAnimationDuration: Duration.zero,
       theme: AppTheme.getTheme(themeMode).copyWith(
         pageTransitionsTheme: _buildPageTransitions(animSettings.uiType),
       ),
@@ -324,7 +309,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
           scaleMultiplier: displaySettings.displayScale,
           fontMultiplier: displaySettings.fontSizeMultiplier,
         );
-        DisplayEngine.init(context);
+        DisplayConfig.init(context);
         return Consumer(
           builder: (context, ref, _) {
             final stats = ref.watch(performanceStatsProvider);
@@ -332,7 +317,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
             return MediaQuery(
               data: MediaQuery.of(
                 context,
-              ).copyWith(textScaleFactor: displaySettings.fontSizeMultiplier),
+              ).copyWith(textScaler: TextScaler.linear(displaySettings.fontSizeMultiplier)),
               child: Stack(
                 children: [
                   if (child != null) child,
@@ -352,7 +337,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
           _showSplash,
           child: _showSplash
               ? RepaintBoundary(
-                  child: CinematicSplashScreen(
+                  child: AurexaSplashScreen(
                     key: const ValueKey('splash'),
                     onFinished: () {
                       if (mounted) {
@@ -400,15 +385,15 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
       case UiTransitionAnimation.butterZoom:
         return PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: const NebulaZoomTransitionBuilder(),
-            TargetPlatform.iOS: const NebulaZoomTransitionBuilder(),
+            TargetPlatform.android: const AurexaZoomTransitionBuilder(),
+            TargetPlatform.iOS: const AurexaZoomTransitionBuilder(),
           },
         );
       case UiTransitionAnimation.fluidFade:
         return PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: const NebulaFadeUpwardsTransitionBuilder(),
-            TargetPlatform.iOS: const NebulaFadeUpwardsTransitionBuilder(),
+            TargetPlatform.android: const AurexaFadeUpwardsTransitionBuilder(),
+            TargetPlatform.iOS: const AurexaFadeUpwardsTransitionBuilder(),
           },
         );
       case UiTransitionAnimation.zeroLatency:
@@ -458,17 +443,7 @@ class _NebulaCoreAppState extends ConsumerState<NebulaCoreApp>
         if (isSplash) {
           return FadeTransition(
             opacity: animation,
-            child: ScaleTransition(
-              // Fix: Subtle scale from 1.05 down to 1.0 as it fades out (1->0)
-              // Tween(begin: 1.05, end: 1.0).animate(animation)
-              // At 1.0 (start of exit): 1.05
-              // At 0.0 (end of exit): 1.0
-              // This gives a settling effect "Zoom Out"
-              scale: Tween<double>(begin: 1.05, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeIn),
-              ),
-              child: child,
-            ),
+            child: child,
           );
         }
 

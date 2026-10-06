@@ -11,6 +11,9 @@ class SwitchDevice {
   final int gpioPin;
   final String mqttTopic;
   final List<Schedule> schedules;
+  final bool isFavorite;
+  final String? room;
+  final String? iconKey;
 
   SwitchDevice({
     required this.id,
@@ -25,6 +28,9 @@ class SwitchDevice {
     required this.gpioPin,
     required this.mqttTopic,
     this.schedules = const [],
+    this.isFavorite = false,
+    this.room,
+    this.iconKey,
   });
 
   SwitchDevice copyWith({
@@ -40,6 +46,9 @@ class SwitchDevice {
     int? gpioPin,
     String? mqttTopic,
     List<Schedule>? schedules,
+    bool? isFavorite,
+    String? room,
+    String? iconKey,
   }) {
     return SwitchDevice(
       id: id ?? this.id,
@@ -54,6 +63,9 @@ class SwitchDevice {
       gpioPin: gpioPin ?? this.gpioPin,
       mqttTopic: mqttTopic ?? this.mqttTopic,
       schedules: schedules ?? this.schedules,
+      isFavorite: isFavorite ?? this.isFavorite,
+      room: room ?? this.room,
+      iconKey: iconKey ?? this.iconKey,
     );
   }
 
@@ -70,6 +82,9 @@ class SwitchDevice {
       'gpioPin': gpioPin,
       'mqttTopic': mqttTopic,
       'schedules': schedules.map((s) => s.toJson()).toList(),
+      'isFavorite': isFavorite,
+      'room': room,
+      'iconKey': iconKey,
     };
   }
 
@@ -85,11 +100,13 @@ class SwitchDevice {
       icon: json['icon'] as String,
       gpioPin: json['gpioPin'] as int? ?? 2,
       mqttTopic: json['mqttTopic'] as String,
-      schedules:
-          (json['schedules'] as List<dynamic>?)
+      schedules: (json['schedules'] as List<dynamic>?)
               ?.map((s) => Schedule.fromJson(s as Map<String, dynamic>))
               .toList() ??
           [],
+      isFavorite: json['isFavorite'] as bool? ?? false,
+      room: json['room'] as String?,
+      iconKey: json['iconKey'] as String?,
     );
   }
 }

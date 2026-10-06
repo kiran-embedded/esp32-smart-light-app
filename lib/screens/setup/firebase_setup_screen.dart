@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/services.dart';
 import '../../services/persistence_service.dart';
 import '../../services/json_import_service.dart';
-import '../../widgets/setup/setup_guide_dialog.dart';
-import '../../widgets/common/frosted_glass.dart';
-import '../../widgets/common/nebula_space_background.dart';
+import '../../widgets/common/aurexa_space_background.dart';
 
 class FirebaseSetupScreen extends ConsumerStatefulWidget {
   const FirebaseSetupScreen({super.key});
@@ -17,7 +16,7 @@ class FirebaseSetupScreen extends ConsumerStatefulWidget {
 }
 
 class _FirebaseSetupScreenState extends ConsumerState<FirebaseSetupScreen> {
-  static const _channel = MethodChannel('com.nebula.core/fingerprints');
+  static const _channel = MethodChannel('com.aurexa.core/fingerprints');
 
   final _formKey = GlobalKey<FormState>();
   final _apiKeyController = TextEditingController();
@@ -170,274 +169,379 @@ class _FirebaseSetupScreenState extends ConsumerState<FirebaseSetupScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: NebulaSpaceBackground(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: RepaintBoundary(
+    return Theme(
+      data: AppTheme.getTheme(AppThemeMode.dark),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: AurexaSpaceBackground(
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: RepaintBoundary(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // TOP BAR
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.help_outline, color: Colors.white70, size: 20),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // HEADER
+                    Row(
+                      children: [
+                        Text(
+                          'AUREXA ',
+                          style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 2),
+                        ),
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Colors.cyanAccent, Colors.purpleAccent],
+                          ).createShader(bounds),
+                          child: Text(
+                            'CORE',
+                            style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 2),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'PRODUCTION SETUP',
+                      style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 3),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Configure your Firebase project to connect Aurexa Home with your devices.',
+                      style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // FIREBASE CONSOLE INFO
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D1117),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.orangeAccent.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.local_fire_department_rounded, color: Colors.orangeAccent, size: 24),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Firebase Console Info', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                    const SizedBox(height: 2),
+                                    const Text('App verification details', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.greenAccent.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle)),
+                                    const SizedBox(width: 6),
+                                    const Text('Ready', style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          _buildFingerprintRow('Package Name', _packageName),
+                          const SizedBox(height: 16),
+                          _buildFingerprintRow('SHA-1', _sha1),
+                          const SizedBox(height: 16),
+                          _buildFingerprintRow('SHA-256', _sha256),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // IMPORT JSON
+                    GestureDetector(
+                      onTap: _importJson,
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D1117),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.purpleAccent.withOpacity(0.5), width: 1.5),
+                          gradient: LinearGradient(
+                            colors: [Colors.purpleAccent.withOpacity(0.05), Colors.transparent],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.purpleAccent.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.cloud_upload_rounded, color: Colors.purpleAccent, size: 24),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Import Google-Services.json', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const SizedBox(height: 2),
+                                  const Text('Upload your Firebase config file', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // API KEY
+                    _buildConfigTile(
+                      icon: Icons.key_rounded,
+                      iconColor: Colors.blueAccent,
+                      title: 'API Key',
+                      subtitle: _apiKeyController.text.isEmpty ? 'Add your Web API Key' : 'Configured',
+                      onTap: () => _showEditDialog('API Key', _apiKeyController),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // PROJECT ID
+                    _buildConfigTile(
+                      icon: Icons.folder_rounded,
+                      iconColor: Colors.amberAccent,
+                      title: 'Project ID',
+                      subtitle: _projectIdController.text.isEmpty ? 'Enter your Firebase Project ID' : 'Configured',
+                      onTap: () => _showEditDialog('Project ID', _projectIdController),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // DATABASE URL
+                    _buildConfigTile(
+                      icon: Icons.storage_rounded,
+                      iconColor: Colors.cyanAccent,
+                      title: 'Database URL',
+                      subtitle: _dbUrlController.text.isEmpty ? 'Enter your Realtime Database URL' : 'Configured',
+                      onTap: () => _showEditDialog('Database URL', _dbUrlController),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // APP ID & OTHER
+                    _buildConfigTile(
+                      icon: Icons.app_registration_rounded,
+                      iconColor: Colors.pinkAccent,
+                      title: 'App ID',
+                      subtitle: _appIdController.text.isEmpty ? 'Enter your Firebase App ID' : 'Configured',
+                      onTap: () => _showEditDialog('App ID', _appIdController),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // SECURE STORED
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D1117),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.shield_rounded, color: Colors.greenAccent, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Your credentials are stored securely', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                SizedBox(height: 2),
+                                Text('Only on this device', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.check_circle_outline_rounded, color: Colors.white38, size: 20),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 30),
+                    // SAVE BUTTON
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isSaving ? null : _saveConfig,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.cyanAccent,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: _isSaving
+                            ? const CircularProgressIndicator(color: Colors.black)
+                            : const Text('INITIALIZE AUREXA', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditDialog(String title, TextEditingController controller) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: Text('Edit $title', style: const TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Enter $title',
+              hintStyle: const TextStyle(color: Colors.white38),
+              enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.cyanAccent)),
+              focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.cyanAccent)),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {});
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('SAVE', style: TextStyle(color: Colors.cyanAccent)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildConfigTile({required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0D1117),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
-                  const Text(
-                    'NEBULA CORE',
-                    style: TextStyle(
-                      color: Colors.cyanAccent,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Production Setup',
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => const SetupGuideDialog(),
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.help_outline,
-                          color: Colors.cyanAccent,
-                        ),
-                        tooltip: 'How to setup?',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                  _buildImportButton(),
-                  const SizedBox(height: 20),
-                  _buildRegistrationForm(),
-                  const SizedBox(height: 40),
-                  _buildSaveButton(),
-                  const SizedBox(height: 20),
+                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12)),
                 ],
               ),
             ),
-          ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFingerprintCard() {
-    return FrostedGlass(
-      padding: const EdgeInsets.all(20),
-      radius: BorderRadius.circular(28),
-      border: Border.all(color: Colors.cyanAccent.withOpacity(0.3), width: 1.5),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'FOR FIREBASE CONSOLE:',
-            style: TextStyle(
-              color: Colors.cyanAccent,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _buildInfoRow('Package Name', _packageName),
-          const SizedBox(height: 8),
-          _buildInfoRow('SHA-1', _sha1),
-          const SizedBox(height: 8),
-          _buildInfoRow('SHA-256', _sha256),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImportButton() {
-    return Column(
-      children: [
-        _buildFingerprintCard(),
-        const SizedBox(height: 30),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _importJson,
-            icon: const Icon(Icons.file_upload, color: Colors.cyanAccent),
-            label: const Text(
-              'IMPORT GOOGLE-SERVICES.JSON',
-              style: TextStyle(
-                color: Colors.cyanAccent,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              side: const BorderSide(color: Colors.cyanAccent, width: 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'Fast setup: Upload your Firebase config file',
-          style: TextStyle(color: Colors.white38, fontSize: 11),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildFingerprintRow(String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        SizedBox(
+          width: 90,
+          child: Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
         ),
-        const SizedBox(width: 10),
         Expanded(
-          child: SelectableText(
-            value,
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
-            ),
-          ),
+          child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
         ),
-        const SizedBox(width: 5),
         GestureDetector(
           onTap: () {
             Clipboard.setData(ClipboardData(text: value));
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('$label copied!'),
-                duration: const Duration(seconds: 1),
-              ),
-            );
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label copied!'), backgroundColor: Colors.cyanAccent));
           },
-          child: const Icon(Icons.copy, size: 16, color: Colors.cyanAccent),
+          child: const Icon(Icons.copy, color: Colors.cyanAccent, size: 18),
         ),
       ],
-    );
-  }
-
-  Widget _buildRegistrationForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          _buildTextField(
-            controller: _apiKeyController,
-            label: 'API Key',
-            hint: 'AIzaSy...',
-            icon: Icons.api,
-          ),
-          const SizedBox(height: 20),
-          _buildTextField(
-            controller: _projectIdController,
-            label: 'Project ID',
-            hint: 'my-nebula-project',
-            icon: Icons.folder,
-          ),
-          const SizedBox(height: 20),
-          _buildTextField(
-            controller: _dbUrlController,
-            label: 'Database URL',
-            hint: 'https://....firebasedatabase.app',
-            icon: Icons.storage,
-          ),
-          const SizedBox(height: 20),
-          _buildTextField(
-            controller: _appIdController,
-            label: 'App ID',
-            hint: '1:123456:android:...',
-            icon: Icons.app_registration,
-          ),
-          const SizedBox(height: 20),
-          _buildTextField(
-            controller: _senderIdController,
-            label: 'Messaging Sender ID',
-            hint: '123456789',
-            icon: Icons.message,
-          ),
-          const SizedBox(height: 20),
-          _buildTextField(
-            controller: _webClientIdController,
-            label: 'Google Web Client ID (for Auth)',
-            hint: '123456789-abc.apps.googleusercontent.com',
-            icon: Icons.web,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-  }) {
-    return FrostedGlass(
-      padding: EdgeInsets.zero,
-      radius: BorderRadius.circular(15),
-      border: Border.all(color: Colors.white.withOpacity(0.1)),
-      child: TextFormField(
-        controller: controller,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.cyanAccent),
-          hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white24),
-          prefixIcon: Icon(icon, color: Colors.cyanAccent),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 15,
-          ),
-        ),
-        validator: (value) =>
-            (value == null || value.isEmpty) ? 'Required' : null,
-      ),
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 60,
-      child: ElevatedButton(
-        onPressed: _isSaving ? null : _saveConfig,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.cyanAccent,
-          foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          elevation: 10,
-          shadowColor: Colors.cyanAccent.withOpacity(0.5),
-        ),
-        child: _isSaving
-            ? const CircularProgressIndicator(color: Colors.black)
-            : const Text(
-                'INITIALIZE NEBULA',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-      ),
     );
   }
 }

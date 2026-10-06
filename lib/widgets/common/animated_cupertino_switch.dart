@@ -36,7 +36,7 @@ class _AnimatedCupertinoSwitchState
       ),
       child: CupertinoSwitch(
         value: widget.value,
-        activeColor: widget.activeColor ?? theme.colorScheme.primary,
+        activeTrackColor: widget.activeColor ?? theme.colorScheme.primary,
         onChanged: (val) {
           if (widget.onChanged != null) {
             HapticService.toggle(val);

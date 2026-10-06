@@ -4,7 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 
 import '../../providers/device_id_provider.dart';
-import '../../providers/security_provider.dart';
+import '../../providers/switch_provider.dart';
 
 class DeveloperMonitorScreen extends ConsumerStatefulWidget {
   const DeveloperMonitorScreen({super.key});
@@ -235,9 +235,9 @@ class _DeveloperMonitorScreenState
 
   @override
   Widget build(BuildContext context) {
-    final securityState = ref.watch(securityProvider);
-    final bool isHubOnline = securityState.isHubOnline;
-    final bool isSatOnline = securityState.isSatOnline;
+    final devices = ref.watch(switchDevicesProvider);
+    final bool isHubOnline = devices.isNotEmpty && devices.first.isConnected;
+    final bool isSatOnline = false; // Satellite removed
 
     final num hubHeap = (_telemetryData['heap'] as num?) ?? 0;
     final num hubLatency = (_telemetryData['latency'] as num?) ?? 0;
@@ -292,7 +292,7 @@ class _DeveloperMonitorScreenState
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            _buildSectionHeader('NEBULA_HUB_01', isOnline: isHubOnline),
+            _buildSectionHeader('AUREXA_HUB_01', isOnline: isHubOnline),
             _buildIndustrialCard([
               Row(
                 children: [

@@ -94,8 +94,8 @@ class GravityDropTransitionBuilder extends PageTransitionsBuilder {
 
 /// 4. BUTTER ZOOM (Ultra Smooth - "Liquid" feel)
 /// 4. BUTTER ZOOM (Ultra Smooth - "Liquid" feel)
-class NebulaZoomTransitionBuilder extends PageTransitionsBuilder {
-  const NebulaZoomTransitionBuilder();
+class AurexaZoomTransitionBuilder extends PageTransitionsBuilder {
+  const AurexaZoomTransitionBuilder();
 
   @override
   Widget buildTransitions<T>(
@@ -121,8 +121,8 @@ class NebulaZoomTransitionBuilder extends PageTransitionsBuilder {
 }
 
 /// 5. FLUID FADE (Ghost / Drift)
-class NebulaFadeUpwardsTransitionBuilder extends PageTransitionsBuilder {
-  const NebulaFadeUpwardsTransitionBuilder();
+class AurexaFadeUpwardsTransitionBuilder extends PageTransitionsBuilder {
+  const AurexaFadeUpwardsTransitionBuilder();
 
   @override
   Widget buildTransitions<T>(

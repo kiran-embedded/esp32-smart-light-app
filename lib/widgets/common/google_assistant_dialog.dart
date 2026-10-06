@@ -3,7 +3,7 @@ import 'frosted_glass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../services/google_assistant_service.dart';
-import '../../widgets/robo/robo_assistant.dart' as robo;
+import '../../widgets/bot/bot_assistant.dart' as robo;
 
 class GoogleAssistantDialog extends ConsumerStatefulWidget {
   const GoogleAssistantDialog({super.key});
@@ -24,7 +24,7 @@ class _GoogleAssistantDialogState extends ConsumerState<GoogleAssistantDialog> {
     });
 
     // Trigger robo speak reaction
-    robo.triggerRoboReaction(ref, robo.RoboReaction.speak);
+    robo.triggerBotReaction(ref, robo.BotReaction.speak);
 
     try {
       final assistantService = ref.read(googleAssistantServiceProvider);

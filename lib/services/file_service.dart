@@ -22,7 +22,7 @@ class FileService {
     try {
       final directory = await getDownloadsDirectory() ?? 
                        await getApplicationDocumentsDirectory();
-      return directory?.path;
+      return directory.path;
     } catch (e) {
       return null;
     }

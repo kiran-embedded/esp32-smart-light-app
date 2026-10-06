@@ -9,10 +9,12 @@ import 'package:permission_handler/permission_handler.dart';
 import '../core/constants/app_constants.dart';
 import '../models/switch_schedule.dart';
 import 'persistence_service.dart';
+import 'notification_service.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class SchedulerService {
   static const _platform = MethodChannel(
-    'com.iot.nebulacontroller/native_scheduler',
+    'com.iot.aurexacontroller/native_scheduler',
   );
 
   /// Initialize the Scheduler service
@@ -35,7 +37,7 @@ class SchedulerService {
           // ACTION_REQUEST_SCHEDULE_EXACT_ALARM
           const intent = AndroidIntent(
             action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
-            data: 'package:com.iot.nebulacontroller',
+            data: 'package:com.aurexa.app',
             flags: [Flag.FLAG_ACTIVITY_NEW_TASK],
           );
           await intent.launch();
@@ -67,7 +69,7 @@ class SchedulerService {
     try {
       const intent = AndroidIntent(
         action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
-        data: 'package:com.iot.nebulacontroller',
+        data: 'package:com.aurexa.app',
         flags: [Flag.FLAG_ACTIVITY_NEW_TASK],
       );
       await intent.launch();
@@ -118,6 +120,17 @@ class SchedulerService {
         'deviceId': deviceId ?? AppConstants.defaultDeviceId,
       });
       log('SCHEDULER: Native Alarm Set Success');
+      
+      // Schedule local notification
+      final tzDateTime = tz.TZDateTime.from(nextTime, tz.local);
+      final switchName = schedule.targetNode.replaceAll('relay', 'Switch ');
+      final stateName = schedule.targetState ? 'ON' : 'OFF';
+      await NotificationService.scheduleNotification(
+        id: alarmId,
+        title: 'Schedule Executed',
+        body: '$switchName turned $stateName automatically',
+        scheduledDate: tzDateTime,
+      );
     } catch (e) {
       log('SCHEDULER: Native Scheduling Failed: $e');
     }
@@ -127,6 +140,7 @@ class SchedulerService {
     final alarmId = scheduleId.hashCode;
     try {
       await _platform.invokeMethod('cancel', {'id': alarmId});
+      await NotificationService.cancelNotification(alarmId);
     } catch (e) {
       log('SCHEDULER: Failed to cancel native alarm: $e');
     }

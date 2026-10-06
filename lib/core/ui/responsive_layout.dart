@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-/// NEBULA RESPONSIVE ENGINE
+/// AUREXA RESPONSIVE ENGINE
 /// Dynamically scales UI components based on screen dimensions and pixel density.
 /// Uses a base reference of 375x812 (standard iPhone/Android flagship).
 class Responsive {
@@ -42,7 +42,7 @@ class Responsive {
     }
 
     debugPrint(
-      'NEBULA_RESPONSIVE: Sync Active with Screen Size: ${screenWidth.toInt()}x${screenHeight.toInt()}',
+      'AUREXA_RESPONSIVE: Sync Active with Screen Size: ${screenWidth.toInt()}x${screenHeight.toInt()}',
     );
   }
 
@@ -88,9 +88,9 @@ class Responsive {
 
 /// Extension for easy access: 16.w, 10.sp, 20.r
 extension ResponsiveExtension on num {
-  double get w => Responsive.w(this.toDouble());
-  double get h => Responsive.h(this.toDouble());
-  double get sp => Responsive.sp(this.toDouble());
-  double get r => Responsive.r(this.toDouble());
-  double get p => Responsive.p(this.toDouble());
+  double get w => Responsive.w(toDouble());
+  double get h => Responsive.h(toDouble());
+  double get sp => Responsive.sp(toDouble());
+  double get r => Responsive.r(toDouble());
+  double get p => Responsive.p(toDouble());
 }

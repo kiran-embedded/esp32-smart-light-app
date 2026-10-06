@@ -48,7 +48,7 @@ class FirebaseStatusDialog extends StatelessWidget {
 
     // Get App Fingerprints
     try {
-      const channel = MethodChannel('com.nebula.core/fingerprints');
+      const channel = MethodChannel('com.aurexa.core/fingerprints');
       final Map<dynamic, dynamic> fingerprints = await channel.invokeMethod(
         'getFingerprints',
       );

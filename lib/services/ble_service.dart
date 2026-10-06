@@ -8,7 +8,7 @@ class BleService {
   BluetoothCharacteristic? _rxCharacteristic; // Relay Control (Write)
   BluetoothCharacteristic? _txCharacteristic; // Status (Notify)
 
-  final String _targetDeviceName = "NEBULA";
+  final String _targetDeviceName = "AUREXA";
   final String _serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
   final String _rxUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
   final String _txUuid = "cba1d466-344c-4be3-ab31-107001af753d";
@@ -175,7 +175,7 @@ class BleService {
           }
         }
       }
-      print("✅ Connected to NEBULA via BLE");
+      print("✅ Connected to AUREXA via BLE");
     } catch (e) {
       print("❌ BLE Connection Error: $e");
       _isConnecting = false;

@@ -29,6 +29,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   StreamSubscription<Map<String, dynamic>>? _telemetrySubscription;
   StreamSubscription<Map<String, dynamic>>? _commandsSubscription;
   StreamSubscription<Map<String, String>>? _namesSubscription;
+  StreamSubscription<Map<String, dynamic>>? _onlineSubscription;
   final Map<String, DateTime> _pendingSwitches = {};
   String _deviceId = AppConstants.defaultDeviceId;
   Map<String, dynamic> _lastTelemetry = {};
@@ -63,8 +64,65 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       _applyInitialNicknames(initialNicknames);
     }
     _loadDeviceId();
+    _loadFavorites();
+    _loadRooms();
+    _loadIconKeys();
     _initTelemetryListener();
     forceRefreshHardwareNames();
+  }
+
+  Future<void> _loadFavorites() async {
+    final favorites = await PersistenceService.getFavorites();
+    state = [
+      for (final device in state)
+        device.copyWith(isFavorite: favorites.contains(device.id))
+    ];
+  }
+
+  Future<bool> toggleFavorite(String id) async {
+    final favorites = await PersistenceService.getFavorites();
+    if (favorites.contains(id)) {
+      favorites.remove(id);
+    } else {
+      if (favorites.length >= 4) {
+        return false;
+      }
+      favorites.add(id);
+    }
+    await PersistenceService.saveFavorites(favorites);
+    state = [
+      for (final device in state)
+        if (device.id == id)
+          device.copyWith(isFavorite: favorites.contains(id))
+        else
+          device
+    ];
+    return true;
+  }
+
+  Future<void> _loadRooms() async {
+    final rooms = await PersistenceService.getRooms();
+    state = [
+      for (final device in state)
+        device.copyWith(room: rooms[device.id] ?? device.room)
+    ];
+  }
+
+  Future<void> updateRoom(String id, String roomName) async {
+    final rooms = await PersistenceService.getRooms();
+    if (roomName.trim().isEmpty) {
+      rooms.remove(id);
+    } else {
+      rooms[id] = roomName.trim();
+    }
+    await PersistenceService.saveRooms(rooms);
+    state = [
+      for (final device in state)
+        if (device.id == id)
+          device.copyWith(room: roomName.trim().isEmpty ? null : roomName.trim())
+        else
+          device
+    ];
   }
 
   Future<void> _loadDeviceId() async {
@@ -165,6 +223,9 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     );
   }
 
+  Map<String, dynamic> _lastStatus = {};
+  Timer? _connectionTimer;
+
   void _initTelemetryListener() {
     try {
       final firebaseService = _ref.read(firebaseSwitchServiceProvider);
@@ -172,6 +233,8 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       _telemetrySubscription?.cancel();
       _commandsSubscription?.cancel();
       _namesSubscription?.cancel();
+      _onlineSubscription?.cancel();
+      _connectionTimer?.cancel();
 
       _telemetrySubscription = firebaseService
           .listenToTelemetry(deviceId: _deviceId)
@@ -192,9 +255,33 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           .listen((names) {
             _updateHardwareNamesFromStream(names);
           });
+
+      _onlineSubscription = firebaseService
+          .listenToStatus(deviceId: _deviceId)
+          .listen((status) {
+        _lastStatus = status;
+        _updateConnectionState();
+      });
+
+      _connectionTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+        _updateConnectionState();
+      });
     } catch (e) {
       print('Error initializing telemetry sync: $e');
     }
+  }
+
+  void _updateConnectionState() {
+    final isOnline = _isDeviceConnected(_lastTelemetry['lastSeen']);
+    bool changed = false;
+    final newState = state.map((d) {
+      if (d.isConnected != isOnline) {
+        changed = true;
+        return d.copyWith(isConnected: isOnline);
+      }
+      return d;
+    }).toList();
+    if (changed) state = newState;
   }
 
   void _updateHardwareNamesFromStream(Map<String, String> names) {
@@ -276,9 +363,9 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       if (telemetry.containsKey(id)) {
         final rawVal = telemetry[id];
         if (rawVal != null) {
-          if (rawVal is int)
+          if (rawVal is int) {
             newIsActive = (rawVal == 1);
-          else if (rawVal is bool)
+          } else if (rawVal is bool)
             newIsActive = rawVal;
           else
             newIsActive =
@@ -287,9 +374,9 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       } else if (_lastCommands.containsKey(id)) {
         final rawVal = _lastCommands[id];
         if (rawVal != null) {
-          if (rawVal is int)
+          if (rawVal is int) {
             newIsActive = (rawVal == 1);
-          else if (rawVal is bool)
+          } else if (rawVal is bool)
             newIsActive = rawVal;
           else
             newIsActive =
@@ -299,14 +386,19 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
         newIsActive = currentDeviceMap[id]!.isActive;
       }
 
+      bool isFavorite = false;
+      if (currentDeviceMap.containsKey(id)) {
+        isFavorite = currentDeviceMap[id]!.isFavorite;
+      }
+
       bool isPending = false;
       bool isConnected = _isDeviceConnected(telemetry['lastSeen']);
 
       if (_pendingSwitches.containsKey(id)) {
         final pendingTime = _pendingSwitches[id]!;
-        // OPTIMISTIC LOCK: Lock state fully for 2000ms to allow network round-trip.
-        // During this period, the optimistic UI takes precedence preventing echo animation glitches.
-        if (DateTime.now().difference(pendingTime).inMilliseconds < 2000) {
+        // STRICT OPTIMISTIC LOCK: Lock state fully for 3 seconds (3000ms) to ignore Firebase bounce echo.
+        // During this period, the optimistic UI takes absolute precedence over any stale telemetry packets.
+        if (DateTime.now().difference(pendingTime).inMilliseconds < 3000) {
           final existing = currentDeviceMap[id];
           if (existing != null && existing.isPending) {
             // PIN THE STATE: Force the optimistic state during the transition
@@ -325,6 +417,7 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
           isPending: isPending,
           isConnected: isConnected,
           voltage: voltage,
+          isFavorite: isFavorite,
         );
 
         // OPTIMIZED CLOUD SYNC: Only sync if state changed AND 2s passed since last sync for this device
@@ -358,9 +451,10 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
       final timestamp = lastSeen is int
           ? lastSeen
           : int.parse(lastSeen.toString());
-      // lastSeen is epoch SECONDS from ESP32, not milliseconds
-      final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      return (nowEpoch - timestamp).abs() < 30;
+      // lastSeen is epoch milliseconds from Firebase ServerValue
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      // ESP32 reports every ~3 to 8 seconds depending on mode
+      return (nowMs - timestamp).abs() < 15000;
     } catch (e) {
       return false;
     }
@@ -386,6 +480,12 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
   Future<void> setSwitchState(String id, bool newState) async {
     final deviceIndex = state.indexWhere((d) => d.id == id);
     if (deviceIndex == -1) return;
+
+    // PREVENT OFFLINE AUTO-TRIGGER GLITCH
+    if (!state[deviceIndex].isConnected) {
+      print('ESP32 Offline - Blocking toggle for $id');
+      return; 
+    }
 
     _pendingSwitches[id] = DateTime.now();
 
@@ -416,6 +516,41 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     });
 
     _syncToCloud(state[deviceIndex].copyWith(isActive: newState));
+  }
+
+  Future<void> setAllSwitchesState(bool newState) async {
+    final previousState = state;
+    
+    // Check if any devices are offline to prevent glitchy behavior
+    if (state.any((d) => !d.isConnected)) {
+      print('Some ESP32 devices Offline - Blocking bulk toggle');
+      // If we strictly want to block, we can uncomment below. Or just proceed for online ones.
+      // return; 
+    }
+
+    final now = DateTime.now();
+    for (final d in state) {
+      _pendingSwitches[d.id] = now; _lastCommands[d.id] = newState ? 1 : 0;
+    }
+
+    state = [
+      for (final d in state)
+        d.copyWith(isActive: newState, isPending: true)
+    ];
+
+    final map = <String, int>{};
+    for (final d in state) {
+      map[d.id] = newState ? 1 : 0;
+    }
+
+    try {
+      await _ref.read(firebaseSwitchServiceProvider).sendCommands(map);
+      for (final d in state) {
+        _syncToCloud(d.copyWith(isActive: newState));
+      }
+    } catch (e) {
+      state = previousState;
+    }
   }
 
   // --- PRIVATE COMMAND ENGINE HELPERS ---
@@ -488,9 +623,13 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     _telemetrySubscription?.cancel();
     _commandsSubscription?.cancel();
     _namesSubscription?.cancel();
+    _onlineSubscription?.cancel();
+    _connectionTimer?.cancel();
     _telemetrySubscription = null;
     _commandsSubscription = null;
     _namesSubscription = null;
+    _onlineSubscription = null;
+    _connectionTimer = null;
   }
 
   void resume() {
@@ -498,6 +637,29 @@ class SwitchDevicesNotifier extends StateNotifier<List<SwitchDevice>> {
     _initTelemetryListener();
     forceRefreshHardwareNames();
   }
+
+  Future<void> _loadIconKeys() async {
+    final iconKeys = await PersistenceService.getIconKeys();
+    state = [
+      for (final device in state)
+        device.copyWith(iconKey: iconKeys[device.id] ?? device.iconKey)
+    ];
+  }
+
+  Future<void> updateIconKey(String id, String iconKey) async {
+    final iconKeys = await PersistenceService.getIconKeys();
+    iconKeys[id] = iconKey;
+    await PersistenceService.saveIconKeys(iconKeys);
+    state = [
+      for (final device in state)
+        if (device.id == id)
+          device.copyWith(iconKey: iconKey)
+        else
+          device
+    ];
+  }
+
+
 
   @override
   void dispose() {

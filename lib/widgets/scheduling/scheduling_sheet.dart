@@ -6,6 +6,7 @@ import '../../models/switch_schedule.dart';
 import '../../providers/switch_schedule_provider.dart';
 import '../../providers/switch_provider.dart';
 import '../../services/haptic_service.dart';
+import 'new_schedule_sheet.dart';
 
 class SchedulingSheet extends ConsumerStatefulWidget {
   const SchedulingSheet({super.key});
@@ -236,7 +237,7 @@ class _SchedulingSheetState extends ConsumerState<SchedulingSheet> {
             children: [
               Switch(
                 value: schedule.isEnabled,
-                activeColor: theme.colorScheme.primary,
+                activeThumbColor: theme.colorScheme.primary,
                 onChanged: (val) {
                   ref
                       .read(switchScheduleProvider.notifier)
@@ -264,191 +265,13 @@ class _SchedulingSheetState extends ConsumerState<SchedulingSheet> {
     ).animate().fadeIn().slideX(begin: 0.1, end: 0);
   }
 
-  void _showAddScheduleDialog(BuildContext context) async {
-    final switches = ref.read(switchDevicesProvider);
-
-    String selectedRelay = switches.first.id;
-    bool targetState = true;
-    TimeOfDay selectedTime = TimeOfDay.now();
-    List<int> selectedDays = [1, 2, 3, 4, 5, 6, 7];
-
-    showDialog(
+  void _showAddScheduleDialog(BuildContext context) {
+    HapticService.selection();
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF121212),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: Colors.white12),
-          ),
-          title: Text(
-            'New Schedule',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Switch Selector
-                Text(
-                  'Select Switch',
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: Colors.white54,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: selectedRelay,
-                      dropdownColor: const Color(0xFF1E1E1E),
-                      items: switches
-                          .map(
-                            (s) => DropdownMenuItem(
-                              value: s.id,
-                              child: Text(s.nickname ?? s.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) => setState(() => selectedRelay = val!),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Time Selector
-                Text(
-                  'Time',
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: Colors.white54,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: selectedTime,
-                    );
-                    if (time != null) setState(() => selectedTime = time);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          selectedTime.format(context),
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Icon(Icons.access_time_rounded),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Target State
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Action', style: GoogleFonts.outfit(fontSize: 14)),
-                    Row(
-                      children: [
-                        ChoiceChip(
-                          label: const Text('ON'),
-                          selected: targetState,
-                          onSelected: (val) =>
-                              setState(() => targetState = true),
-                        ),
-                        const SizedBox(width: 8),
-                        ChoiceChip(
-                          label: const Text('OFF'),
-                          selected: !targetState,
-                          onSelected: (val) =>
-                              setState(() => targetState = false),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Days selector
-                Text(
-                  'Repeat Days',
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: Colors.white54,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(7, (index) {
-                    final day = index + 1;
-                    final isSelected = selectedDays.contains(day);
-                    return ChoiceChip(
-                      label: Text(['M', 'T', 'W', 'T', 'F', 'S', 'S'][index]),
-                      selected: isSelected,
-                      onSelected: (val) {
-                        setState(() {
-                          if (val)
-                            selectedDays.add(day);
-                          else if (selectedDays.length > 1)
-                            selectedDays.remove(day);
-                        });
-                      },
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final schedule = SwitchSchedule(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  relayId: selectedRelay,
-                  targetNode:
-                      selectedRelay, // Sync targetNode with selectedRelay
-                  hour: selectedTime.hour,
-                  minute: selectedTime.minute,
-                  days: selectedDays..sort(),
-                  targetState: targetState,
-                );
-                ref.read(switchScheduleProvider.notifier).addSchedule(schedule);
-                Navigator.pop(ctx);
-                HapticService.heavy();
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const NewScheduleSheet(),
     );
   }
 }

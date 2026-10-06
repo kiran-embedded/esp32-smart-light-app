@@ -323,4 +323,18 @@ class FirebaseSwitchService {
       }
     } catch (_) {}
   }
+
+  /// Listen to ESP32 online status at /devices/{id}/status
+  Stream<Map<String, dynamic>> listenToStatus({String? deviceId}) {
+    final id = deviceId ?? AppConstants.defaultDeviceId;
+    final path = '${AppConstants.firebaseDevicesPath}/$id/status';
+    try {
+      _database.child(path).keepSynced(true);
+    } catch (_) {}
+    return _database.child(path).onValue.map((event) {
+      final val = event.snapshot.value;
+      if (val == null || val is! Map) return {};
+      return Map<String, dynamic>.from(val);
+    });
+  }
 }

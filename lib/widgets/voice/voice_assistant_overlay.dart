@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/google_assistant_service.dart';
-import '../../widgets/robo/robo_assistant.dart' as robo;
+import '../../widgets/bot/bot_assistant.dart' as robo;
 import '../../core/ui/responsive_layout.dart';
-import 'quantum_voice_orb.dart';
+import 'animated_voice_indicator.dart';
 import 'text_decoder.dart';
 
 class VoiceAssistantOverlay extends ConsumerStatefulWidget {
@@ -50,7 +50,7 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay>
       _isSuccess = false;
     });
 
-    robo.triggerRoboReaction(ref, robo.RoboReaction.speak);
+    robo.triggerBotReaction(ref, robo.BotReaction.speak);
 
     try {
       final assistantService = ref.read(googleAssistantServiceProvider);
@@ -180,7 +180,7 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay>
 
                           SizedBox(
                             height: 120.h,
-                            child: QuantumVoiceOrb(
+                            child: AnimatedVoiceIndicator(
                               isListening: _isListening,
                               isProcessing:
                                   !_isListening &&
@@ -194,7 +194,7 @@ class _VoiceAssistantOverlayState extends ConsumerState<VoiceAssistantOverlay>
 
                           TextDecoder(
                             _commandText.isEmpty
-                                ? 'NEBULA READY...'
+                                ? 'AUREXA READY...'
                                 : _commandText,
                             style: GoogleFonts.outfit(
                               fontSize: 22.sp,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter/services.dart';
 import '../../providers/live_info_provider.dart';
 import '../../providers/switch_provider.dart';
 import '../../providers/connection_settings_provider.dart';
@@ -11,7 +10,7 @@ import '../../services/haptic_service.dart';
 import '../../widgets/common/pixel_led_border.dart';
 import '../../providers/performance_provider.dart';
 import '../../core/ui/responsive_layout.dart';
-import '../../core/ui/pill_layout_engine.dart';
+import '../../core/ui/pill_layout_calculator.dart';
 
 class StatusCard extends ConsumerStatefulWidget {
   final double voltage;
@@ -114,7 +113,7 @@ class _StatusCardState extends ConsumerState<StatusCard>
     final activeCount = activeSwitches.length;
 
     // Use Advanced Layout Engine
-    final pill = PillLayoutEngine.calculate(
+    final pill = PillLayoutCalculator.calculate(
       _animationController.value,
       Responsive.screenWidth,
     );

@@ -6,6 +6,8 @@ class PersistenceService {
   static const String _configKey = 'firebase_config';
   static const String _webClientIdKey = 'google_web_client_id';
   static const String _immersiveModeKey = 'immersive_mode';
+  static const String _favoritesKey = 'switch_favorites';
+  static const String _roomsKey = 'switch_rooms';
 
   static Future<void> saveFirebaseConfig(Map<String, String> config) async {
     final prefs = await SharedPreferences.getInstance();
@@ -34,6 +36,28 @@ class PersistenceService {
     return Map<String, String>.from(jsonDecode(data));
   }
 
+  static Future<void> saveRooms(Map<String, String> rooms) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roomsKey, jsonEncode(rooms));
+  }
+
+  static Future<Map<String, String>> getRooms() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_roomsKey);
+    if (data == null) return {};
+    return Map<String, String>.from(jsonDecode(data));
+  }
+
+  static Future<void> saveFavorites(List<String> favorites) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_favoritesKey, favorites);
+  }
+
+  static Future<List<String>> getFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_favoritesKey) ?? [];
+  }
+
   static Future<String?> getGoogleWebClientId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_webClientIdKey);
@@ -43,6 +67,7 @@ class PersistenceService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_configKey);
     await prefs.remove(_nicknamesKey);
+    await prefs.remove(_roomsKey);
   }
 
   static Future<void> saveImmersiveMode(bool isEnabled) async {
@@ -177,5 +202,19 @@ class PersistenceService {
   static Future<bool?> getGeofenceMasterSwitch() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_geofenceMasterKey);
+  }
+
+  static const String _iconKeysKey = 'switch_icon_keys';
+
+  static Future<void> saveIconKeys(Map<String, String> iconKeys) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_iconKeysKey, jsonEncode(iconKeys));
+  }
+
+  static Future<Map<String, String>> getIconKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_iconKeysKey);
+    if (data == null) return {};
+    return Map<String, String>.from(jsonDecode(data));
   }
 }

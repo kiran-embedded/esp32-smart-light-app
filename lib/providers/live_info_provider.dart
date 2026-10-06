@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/live_info.dart';
 import '../providers/device_id_provider.dart';
 import 'package:flutter/foundation.dart';
@@ -146,6 +148,7 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
   Future<void> _loadWeather() async {
     try {
       double lat = 0;
+      double lon = 0;
 
       // 1. Check Service Status FIRST
       // This prevents Android from asking "Turn on Location" if GPS is off.
@@ -161,34 +164,65 @@ class LiveInfoNotifier extends StateNotifier<LiveInfo> {
               timeLimit: const Duration(seconds: 5),
             );
             lat = pos.latitude;
+            lon = pos.longitude;
           } catch (e) {
             if (kDebugMode) print('Location fetch failed: $e');
           }
         }
       }
 
-      // 2. Fetch Weather (Simulating API hit with location context or fallback)
-      final now = DateTime.now();
-      final hour = now.hour;
-
       String icon = 'Sun';
       String desc = 'Clear Sky';
       double temp = 24.5;
 
-      if (hour < 6 || hour >= 19) {
-        icon = 'Moon';
-        desc = 'Clear Night';
-        temp = 21.0;
-      } else if (hour >= 14 && hour < 17) {
-        icon = 'Sun';
-        desc = 'Hot & Sunny';
-        temp = 32.0;
-      } else if (lat != 0) {
-        // Industry Level: Location context
-        desc = lat > 0 ? 'Optimal Conditions' : 'Stable Microclimate';
+      if (lat != 0 && lon != 0) {
+        // Fetch from Open-Meteo
+        final url = Uri.parse(
+            'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true');
+        final response = await http.get(url).timeout(const Duration(seconds: 10));
+        
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final cw = data['current_weather'];
+          if (cw != null) {
+            temp = (cw['temperature'] as num).toDouble();
+            final code = cw['weathercode'] as int;
+            final isDay = cw['is_day'] == 1;
+
+            if (code == 0) {
+              desc = 'Clear Sky';
+              icon = isDay ? 'Sun' : 'Moon';
+            } else if (code == 1 || code == 2 || code == 3) {
+              desc = 'Partly Cloudy';
+              icon = 'Cloudy'; // Or mapping to what the UI supports
+            } else if (code >= 45 && code <= 48) {
+              desc = 'Foggy';
+              icon = 'Cloudy';
+            } else if (code >= 51 && code <= 67) {
+              desc = 'Rain';
+              icon = 'Rain';
+            } else if (code >= 71 && code <= 77) {
+              desc = 'Snow';
+              icon = 'Snow';
+            } else if (code >= 95) {
+              desc = 'Thunderstorm';
+              icon = 'Lightning';
+            }
+          }
+        }
       } else {
-        // Fallback for when location is not available
-        desc = 'Satellite Sync Active';
+        // Fallback
+        final now = DateTime.now();
+        final hour = now.hour;
+        if (hour < 6 || hour >= 19) {
+          icon = 'Moon';
+          desc = 'Clear Night';
+          temp = 21.0;
+        } else if (hour >= 14 && hour < 17) {
+          icon = 'Sun';
+          desc = 'Hot & Sunny';
+          temp = 32.0;
+        }
       }
 
       state = state.copyWith(

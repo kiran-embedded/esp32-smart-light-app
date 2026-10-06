@@ -19,7 +19,7 @@ class _HelpBotOverlayState extends State<HelpBotOverlay> {
 
   final List<HelpStep> _steps = [
     HelpStep(
-      title: "I am Nebula AI",
+      title: "I am Aurexa AI",
       message:
           "Welcome to your professional smart ecosystem. I'm here to help you master the core's advanced neuro-logic.",
       icon: Icons.auto_awesome,

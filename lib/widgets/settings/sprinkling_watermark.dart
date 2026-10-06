@@ -28,6 +28,8 @@ class SprinklingWatermark extends ConsumerWidget {
             final size = 1.0 + random.nextDouble() * 2.5;
 
             return Positioned(
+              left: (MediaQuery.of(context).size.width / 2) + x,
+              top: 30 + y,
               child:
                   Container(
                         width: size,
@@ -49,8 +51,6 @@ class SprinklingWatermark extends ConsumerWidget {
                         duration: (2000 + random.nextDouble() * 1000).ms,
                       )
                       .fadeOut(duration: 80.ms),
-              left: (MediaQuery.of(context).size.width / 2) + x,
-              top: 30 + y,
             );
           }),
 

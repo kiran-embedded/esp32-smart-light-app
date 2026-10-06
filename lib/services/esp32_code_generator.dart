@@ -16,7 +16,7 @@ class Esp32CodeGenerator {
     buffer.writeln('#include <ArduinoJson.h>');
     buffer.writeln('#include <time.h>');
     buffer.writeln('');
-    buffer.writeln('// NEBULA CORE - Auto-generated ESP32 Firmware');
+    buffer.writeln('// AUREXA HOME - Auto-generated ESP32 Firmware');
     buffer.writeln('// Generated for ${devices.length} switch(es)');
     buffer.writeln('');
 
@@ -162,7 +162,7 @@ class Esp32CodeGenerator {
 
     buffer.write('''
 /*
- * NEBULA CORE – COMPLETE SYSTEM (SERVER RACK EDITION)
+ * AUREXA HOME – COMPLETE SYSTEM (SERVER RACK EDITION)
  * ------------------------------------------------
  * Optimized for High-End Power Management & Safety
  */
@@ -243,10 +243,23 @@ void applyRelays() {
 
 void connectivityTask(void *pvParameters) {
   for (;;) {
-    int delayTime = 8000;
+    int delayTime = 2000;
     if (WiFi.status() != WL_CONNECTED) {
       isInternetLive = false;
-      delayTime = 1000;
+      digitalWrite(LED_PIN_BLUE, LOW);
+      digitalWrite(LED_PIN_GREEN, LOW);
+      // Blink RED for disconnected
+      digitalWrite(LED_PIN_RED, HIGH);
+      vTaskDelay(100 / portTICK_PERIOD_MS);
+      digitalWrite(LED_PIN_RED, LOW);
+      vTaskDelay(100 / portTICK_PERIOD_MS);
+      
+      // Bullet-proof WiFi recovery
+      WiFi.disconnect(true);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+      WiFi.begin(WIFI_SSID, WIFI_PASS);
+      
+      delayTime = 5000;
     } else if (!isInternetLive) {
       WiFiClient client;
       client.setTimeout(1500);
@@ -256,6 +269,20 @@ void connectivityTask(void *pvParameters) {
       } else {
         delayTime = 3000;
       }
+    } else {
+      // Active and connected: Blue flash strobe
+      digitalWrite(LED_PIN_RED, LOW);
+      digitalWrite(LED_PIN_GREEN, LOW);
+      
+      digitalWrite(LED_PIN_BLUE, HIGH);
+      vTaskDelay(30 / portTICK_PERIOD_MS);
+      digitalWrite(LED_PIN_BLUE, LOW);
+      vTaskDelay(60 / portTICK_PERIOD_MS);
+      digitalWrite(LED_PIN_BLUE, HIGH);
+      vTaskDelay(30 / portTICK_PERIOD_MS);
+      digitalWrite(LED_PIN_BLUE, LOW);
+      
+      delayTime = 1880; // Total 2 seconds loop
     }
     vTaskDelay(delayTime / portTICK_PERIOD_MS);
   }
@@ -336,9 +363,17 @@ void setup() {
 
     buffer.write('''
   initLEDs();
+  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) delay(100);
   
+  // Non-blocking WiFi wait, let the connectivity task handle it if it takes too long
+  int waitCount = 0;
+  while (WiFi.status() != WL_CONNECTED && waitCount < 20) {
+    digitalWrite(LED_PIN_RED, !digitalRead(LED_PIN_RED)); // Toggle red while booting
+    delay(500);
+    waitCount++;
+  }
+  digitalWrite(LED_PIN_RED, LOW);
   deviceId = String((uint32_t)ESP.getEfuseMac(), HEX);
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
